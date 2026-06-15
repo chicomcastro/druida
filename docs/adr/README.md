@@ -24,3 +24,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0017](0017-pois-collectibles.md) | POIs (acampamentos) e colhíveis | Aceito |
 | [0018](0018-dynamic-events.md) | Eventos dinâmicos por região | Aceito |
 | [0019](0019-onboarding.md) | Onboarding por dicas contextuais | Aceito |
+| [0020](0020-lore-codex.md) | Colecionáveis de lore (codex) | Aceito |

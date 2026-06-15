@@ -19,7 +19,7 @@ foram implementados; `[~]` parcial. Ver `docs/adr/` para as decisões.
 - **M4 Mundo aberto** — 🟡 ~55% (zonas/biomas + pseudo-streaming + hub + santuários/marcos; falta POIs, masmorras, fast-travel, persistência)
 - **M5 Coop local** — ✅ completo
 - **M6 Inimigos/IA/Chefe** — ✅ ~90% (5 inimigos + invocações + mini-chefe + chefe com 3 fases; falta object pooling)
-- **M7 História** — ✅ ~85% (campanha completa: NPC, diálogo, santuários, gating de formas, mini-chefe e chefe final, vitória; falta eventos dinâmicos e lore extra)
+- **M7 História** — ✅ completo (campanha + gating de formas + chefe; eventos dinâmicos + lore/codex)
 - **M8 UI/Save** — ✅ ~80% (menu principal, pausa, inventário/equipamento/encantamento, salvage, minimapa, save/continuar; falta tela de mapa-mundi e rebind)
 - **M9 Áudio/Polish** — 🟡 ~50% (áudio procedural + screen shake + VFX; falta partículas, profiling/spatial hash, balanceamento fino)
 - **M10 Release** — 🟡 deploy GitHub Pages configurado (falta playtest/telemetria)
@@ -108,7 +108,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 📖 Arco principal: purificar Clareira → santuários → chefes → vitória
 - [x] 📖 HUD: rastreador de objetivo, prompt de interação, diálogo, tela de vitória
 - [x] 📖 Eventos dinâmicos por região (Surto de Corrupção, Espírito do Tesouro) — ADR 0018
-- [ ] 📖 Lore/colecionáveis extras
+- [x] 📖 Lore/colecionáveis (codex, persistido) — ADR 0020
 
 ## M8 — UI/UX, menus e save 🟡
 - [x] 🖥️ Menu principal (novo/continuar)

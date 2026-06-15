@@ -3,6 +3,7 @@ import { C, Transform, Collider } from '../core/ecs/components.js';
 import { BIOMES } from '../data/biomes.js';
 import { makeRng } from '../utils/math.js';
 import { createLootOrb } from '../entities/factories.js';
+import { LORE } from '../data/lore.js';
 
 /**
  * Mundo aberto: zonas de bioma dispostas em anéis concêntricos a partir do
@@ -227,26 +228,49 @@ export class WorldManager {
 
   _updateShards(c) {
     const { game } = this;
+    this._loreActive = this._loreActive ?? new Set();
     // Remove colhidos (entidade não existe mais) e os muito distantes.
     for (let i = this.shards.length - 1; i >= 0; i--) {
       const s = this.shards[i];
-      if (!game.world.entities.has(s.id)) { this.shards.splice(i, 1); continue; }
+      if (!game.world.entities.has(s.id)) {
+        if (s.loreId) this._loreActive.delete(s.loreId);
+        this.shards.splice(i, 1);
+        continue;
+      }
       if (Math.hypot(s.x - c.x, s.z - c.z) > this.despawnRadius + 12) {
         const r = game.world.get(s.id, C.Renderable);
         if (r) game.renderer.remove(r.object3d);
         game.world.destroyEntity(s.id);
+        if (s.loreId) this._loreActive.delete(s.loreId);
         this.shards.splice(i, 1);
       }
     }
-    // Gera novos no anel, fora do hub.
-    if (this.shards.length < this.maxShards && this.rng.chance(0.04)) {
+
+    const ringPoint = () => {
       const a = this.rng() * Math.PI * 2;
       const rad = 16 + this.rng() * (this.spawnRadius - 16);
-      const x = c.x + Math.sin(a) * rad;
-      const z = c.z + Math.cos(a) * rad;
-      if (Math.hypot(x, z) < 12) return;
-      const id = createLootOrb(game.world, game.renderer, { x, z, item: { essence: 4 + Math.floor(this.rng() * 4), rarityColor: 0x9fe06a } });
-      this.shards.push({ id, x, z });
+      return { x: c.x + Math.sin(a) * rad, z: c.z + Math.cos(a) * rad };
+    };
+
+    // Página de lore (rara): só entradas ainda não descobertas/ativas.
+    if (this.rng.chance(0.012)) {
+      const entry = LORE.find((l) => !game.lore.found.has(l.id) && !this._loreActive.has(l.id));
+      if (entry) {
+        const p = ringPoint();
+        if (Math.hypot(p.x, p.z) >= 12) {
+          const id = createLootOrb(game.world, game.renderer, { x: p.x, z: p.z, item: { lore: entry, rarityColor: 0xffd56a } });
+          this._loreActive.add(entry.id);
+          this.shards.push({ id, x: p.x, z: p.z, loreId: entry.id });
+        }
+      }
+    }
+
+    // Fragmento de essência (colhível comum).
+    if (this.shards.length < this.maxShards && this.rng.chance(0.04)) {
+      const p = ringPoint();
+      if (Math.hypot(p.x, p.z) < 12) return;
+      const id = createLootOrb(game.world, game.renderer, { x: p.x, z: p.z, item: { essence: 4 + Math.floor(this.rng() * 4), rarityColor: 0x9fe06a } });
+      this.shards.push({ id, x: p.x, z: p.z });
     }
   }
 }
