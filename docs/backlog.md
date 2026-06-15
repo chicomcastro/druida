@@ -15,7 +15,7 @@ foram implementados; `[~]` parcial. Ver `docs/adr/` para as decisões.
 - **M0 Fundação** — ✅ completo
 - **M1 Vertical slice** — ✅ completo
 - **M2 Kit do Druida** — ✅ completo (Seiva, formas, magias, artefatos, dodge)
-- **M3 Loot/Progressão** — 🟡 ~70% (sistemas prontos; falta UI de inventário/encantamento e salvage)
+- **M3 Loot/Progressão** — ✅ completo (loot/raridades/encantamentos, inventário/equip/encantar, salvage)
 - **M4 Mundo aberto** — 🟡 ~55% (zonas/biomas + pseudo-streaming + hub + santuários/marcos; falta POIs, masmorras, fast-travel, persistência)
 - **M5 Coop local** — ✅ completo
 - **M6 Inimigos/IA/Chefe** — ✅ ~90% (5 inimigos + invocações + mini-chefe + chefe com 3 fases; falta object pooling)
@@ -61,14 +61,14 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🎮 Dodge/roll com i-frames
 - [x] 🖥️ HUD: Seiva, artefatos/cooldown, forma atual
 
-## M3 — Loot, itens e encantamentos 🟡
+## M3 — Loot, itens e encantamentos ✅
 - [x] 💎 `loot.js`: armas/armaduras/artefatos + raridades — ADR 0006
 - [x] 💎 `LootSystem` (drops, pickup com ímã, raridade ponderada)
 - [x] 💎 Inventário e equipamento (auto-equip em slots vazios)
 - [x] 💎 Stats derivados do equipamento (`applyEquipment`)
 - [x] 💎 Encantamentos (dados + funcionais: Ferocidade, Vigor, Fotossíntese, Metamorfo)
-- [ ] 🖥️ Tela de inventário/equipamento + tela de encantamento (gastar pontos manualmente)
-- [ ] 💎 Salvage com devolução de pontos (helper existe; falta UI)
+- [x] 🖥️ Tela de inventário/equipamento + tela de encantamento (gastar pontos) — PR #7
+- [x] 💎 Salvage (desmonta itens por essência na tela de inventário)
 
 ## M4 — Mundo aberto 🟡
 - [x] 🗺️ Zonas de bioma radiais + pseudo-streaming de props (`WorldManager`) — ADR 0008
