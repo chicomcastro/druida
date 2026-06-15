@@ -10,6 +10,8 @@ export class VfxManager {
   scene: any;
   fx: any[];
   particles: any[];
+  _pPool: any[];
+  _pGeo: any;
 
   constructor(game) {
     this.game = game;
@@ -26,19 +28,31 @@ export class VfxManager {
     game.on('damage', (e) => { if (e.dot || e.x === undefined) return; this.burst(e.x, e.z, 0xfff0a0, 4); });
 
     this.particles = [];
+    // Pool de partículas: geometria compartilhada + meshes reciclados (evita
+    // alocar/descartar a cada explosão). Ver ADR 0025.
+    this._pPool = [];
+    this._pGeo = new THREE.BoxGeometry(0.14, 0.14, 0.14);
+  }
+
+  _acquireParticle() {
+    let m = this._pPool.pop();
+    if (!m) {
+      m = new THREE.Mesh(this._pGeo, new THREE.MeshBasicMaterial({ transparent: true }));
+      this.scene.add(m);
+    }
+    m.visible = true;
+    return m;
   }
 
   /** Pequeno jato de partículas (caixas voxel) com gravidade e fade. */
   burst(x, z, color, count = 6) {
     for (let i = 0; i < count; i++) {
-      const m = new THREE.Mesh(
-        new THREE.BoxGeometry(0.14, 0.14, 0.14),
-        new THREE.MeshBasicMaterial({ color, transparent: true }),
-      );
+      const m = this._acquireParticle();
+      m.material.color.setHex(color);
+      m.material.opacity = 1;
       m.position.set(x, 0.7, z);
       const a = Math.random() * Math.PI * 2;
       const sp = 2 + Math.random() * 3;
-      this.scene.add(m);
       this.particles.push({
         mesh: m, life: 0.5, max: 0.5,
         vx: Math.sin(a) * sp, vy: 2 + Math.random() * 2, vz: Math.cos(a) * sp,
@@ -49,9 +63,8 @@ export class VfxManager {
 
   _killParticle(i) {
     const p = this.particles[i];
-    this.scene.remove(p.mesh);
-    p.mesh.geometry.dispose();
-    p.mesh.material.dispose();
+    p.mesh.visible = false;        // recicla (não descarta)
+    this._pPool.push(p.mesh);
     this.particles.splice(i, 1);
   }
 
