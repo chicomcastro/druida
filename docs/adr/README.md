@@ -25,4 +25,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0018](0018-dynamic-events.md) | Eventos dinâmicos por região | Aceito |
 | [0019](0019-onboarding.md) | Onboarding por dicas contextuais | Aceito |
 | [0020](0020-lore-codex.md) | Colecionáveis de lore (codex) | Aceito |
-| [0021](0021-type-hardening.md) | Endurecimento gradual dos tipos | Em andamento |
+| [0021](0021-type-hardening.md) | Endurecimento dos tipos | Aceito |

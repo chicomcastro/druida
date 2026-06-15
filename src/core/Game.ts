@@ -46,7 +46,27 @@ import { applyDamage } from '../gameplay/combat.js';
  * usados pelos sistemas (x/z, dano, Seiva, spawn, agenda). Ver docs/adr.
  */
 export class Game {
-  [key: string]: any;
+  // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
+  world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
+  hud: any; menus: any; minimap: any; worldMap: any; tutorial: any;
+  worldManager: any; poi: any; events: any; story: any; loop: any;
+  // Estado.
+  seed: number;
+  progress: { xp: number; level: number; enchantPoints: number };
+  groupCenter: { x: number; z: number };
+  groupSpread: number;
+  checkpoint: { x: number; z: number };
+  sharedChest: any[];
+  shopStock: any[] | null;
+  lore: { found: Set<string> };
+  systems: Array<(g: any, dt: number) => void>;
+  dt: number;
+  paused: boolean;
+  hitStop: number;
+  menuMain: boolean;
+  _assignedPads: Set<number>;
+  _scheduled: Array<{ t: number; fn: () => void }>;
+  _sanctCrystals?: any[];
   constructor(canvas) {
     this.world = new World();
     this.renderer = new Renderer(canvas);
