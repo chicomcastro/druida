@@ -23,3 +23,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0016](0016-hub-economy.md) | Economia do hub: mercador e baú | Aceito |
 | [0017](0017-pois-collectibles.md) | POIs (acampamentos) e colhíveis | Aceito |
 | [0018](0018-dynamic-events.md) | Eventos dinâmicos por região | Aceito |
+| [0019](0019-onboarding.md) | Onboarding por dicas contextuais | Aceito |

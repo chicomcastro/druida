@@ -118,7 +118,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 💾 Save/load (localStorage) com schema versionado
 - [x] 🖥️ Checkpoint/wipe (revive de grupo)
 - [x] 🖥️ Tela de mapa-mundi navegável (fog of war) + fast-travel a marcos descobertos
-- [ ] 🖥️ Tutoriais/onboarding contextual
+- [x] 🖥️ Tutoriais/onboarding contextual (dicas pontuais) — ADR 0019
 - [ ] 🖥️ Rebind de controles · migração para IndexedDB
 
 ## M9 — Áudio, polish e performance 🟡

@@ -18,6 +18,7 @@ function begin(loadSave) {
   }
   game.emit('objective', { text: game.story.objective() });
   game.emit('biomeChanged', { biome: 'clareira', def: { name: game.currentBiomeName() } });
+  game.tutorial.intro();
   game.start();
 }
 
