@@ -16,10 +16,11 @@ foram implementados; `[~]` parcial. Ver `docs/adr/` para as decisões.
 - **M1 Vertical slice** — ✅ completo
 - **M2 Kit do Druida** — ✅ completo (Seiva, formas, magias, artefatos, dodge)
 - **M3 Loot/Progressão** — 🟡 ~70% (sistemas prontos; falta UI de inventário/encantamento e salvage)
-- **M4 Mundo aberto** — 🟡 ~50% (zonas/biomas + pseudo-streaming + hub; falta POIs, masmorras, fast-travel, persistência)
+- **M4 Mundo aberto** — 🟡 ~55% (zonas/biomas + pseudo-streaming + hub + santuários/marcos; falta POIs, masmorras, fast-travel, persistência)
 - **M5 Coop local** — ✅ completo
-- **M6 Inimigos/IA/Chefe** — 🟡 ~60% (5 inimigos + comportamentos + invocações; falta pooling, mini-chefe e fases do chefe)
-- **M7 História** · **M8 UI/Save** · **M9 Áudio/Polish** · **M10 Release** — pendentes
+- **M6 Inimigos/IA/Chefe** — ✅ ~90% (5 inimigos + invocações + mini-chefe + chefe com 3 fases; falta object pooling)
+- **M7 História** — ✅ ~85% (campanha completa: NPC, diálogo, santuários, gating de formas, mini-chefe e chefe final, vitória; falta eventos dinâmicos e lore extra)
+- **M8 UI/Save** · **M9 Áudio/Polish** · **M10 Release** — pendentes
 
 Jogo já **rodável**: `npm install && npm run dev`.
 
@@ -94,16 +95,17 @@ Jogo já **rodável**: `npm install && npm run dev`.
 - [x] 🤖 IA por estados (perseguir, manter distância, recuar, explodir)
 - [x] 🌿 Invocações do Druida (matilha/totem) como aliados IA
 - [ ] 🤖 Object pooling para hordas
-- [ ] 🤖 Mini-chefe de bioma (Árvore-Carniça)
-- [ ] 🤖 Chefe O Apodrecedor com fases (def existe; falta spawn/fases/arena)
+- [x] 🤖 Mini-chefe de bioma (Árvore-Carniça) — golpe em área + raiz
+- [x] 🤖 Chefe O Apodrecedor com 3 fases (slam telegrafado, invocações, enrage)
 
-## M7 — História e campanha ⬜ (narrativa definida — ADR 0010)
-- [ ] 📖 Sistema de missões/objetivos (data-driven)
-- [ ] 📖 Gating: formas/regiões liberadas por marcos (santuários)
-- [ ] 📖 NPCs no hub + diálogos
-- [ ] 📖 Arco principal: purificar regiões → confronto final
-- [ ] 📖 Eventos dinâmicos por região
-- [ ] 📖 Lore/colecionáveis
+## M7 — História e campanha ✅ (narrativa — ADR 0010)
+- [x] 📖 Sistema de missões/objetivos (StoryManager, event-driven)
+- [x] 📖 Gating: Formas Ancestrais liberadas em santuários por passo
+- [x] 📖 NPC no hub (Guardiã) + diálogos
+- [x] 📖 Arco principal: purificar Clareira → santuários → chefes → vitória
+- [x] 📖 HUD: rastreador de objetivo, prompt de interação, diálogo, tela de vitória
+- [ ] 📖 Eventos dinâmicos por região (acampamentos/invasões)
+- [ ] 📖 Lore/colecionáveis extras
 
 ## M8 — UI/UX, menus e save ⬜
 - [ ] 🖥️ Menu principal (novo/continuar/opções)

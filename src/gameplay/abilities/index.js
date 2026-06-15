@@ -1,7 +1,7 @@
 import { C, Factions, Transform, Velocity, Health, Collider, Faction, StatusEffects } from '../../core/ecs/components.js';
 import { createProjectile } from '../../entities/factories.js';
 import { buildMesh } from '../../entities/meshes.js';
-import { applyDamage, healEntity, meleeArc } from '../combat.js';
+import { applyDamage, meleeArc } from '../combat.js';
 
 /**
  * Registro de habilidades data-driven. Cada habilidade tem custo de Seiva,

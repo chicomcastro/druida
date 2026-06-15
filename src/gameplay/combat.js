@@ -76,7 +76,8 @@ function killEntity(game, id, attackerId) {
   hp.dead = true;
   const tr = world.get(id, C.Transform);
   const loot = world.get(id, C.LootTable);
-  game.emit('kill', { id, attackerId, x: tr?.x ?? 0, z: tr?.z ?? 0, loot });
+  const boss = world.get(id, C.Boss);
+  game.emit('kill', { id, attackerId, x: tr?.x ?? 0, z: tr?.z ?? 0, loot, bossName: boss?.name });
   world.destroyEntity(id);
 }
 
