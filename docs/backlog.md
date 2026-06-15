@@ -22,7 +22,7 @@ foram implementados; `[~]` parcial. Ver `docs/adr/` para as decisões.
 - **M7 História** — ✅ ~85% (campanha completa: NPC, diálogo, santuários, gating de formas, mini-chefe e chefe final, vitória; falta eventos dinâmicos e lore extra)
 - **M8 UI/Save** — ✅ ~80% (menu principal, pausa, inventário/equipamento/encantamento, salvage, minimapa, save/continuar; falta tela de mapa-mundi e rebind)
 - **M9 Áudio/Polish** — 🟡 ~50% (áudio procedural + screen shake + VFX; falta partículas, profiling/spatial hash, balanceamento fino)
-- **M10 Release** — pendente
+- **M10 Release** — 🟡 deploy GitHub Pages configurado (falta playtest/telemetria)
 
 Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 
@@ -128,8 +128,8 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [ ] 🚀 LOD/culling + InstancedMesh para props
 - [ ] 🎮 Balanceamento fino
 
-## M10 — Release / Infra ⬜
-- [ ] 🚀 Deploy estático (GitHub Pages/Netlify/Vercel)
+## M10 — Release / Infra 🟡
+- [x] 🚀 Deploy estático (workflow GitHub Pages) + fast-travel ao hub (QoL)
 - [ ] 🚀 Telemetria leve opcional
 - [ ] 🚀 Playtest coop + feedback
 - [ ] 🚀 Pipeline de assets (MagicaVoxel → glb)
