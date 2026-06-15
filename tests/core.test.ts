@@ -12,6 +12,7 @@ import { serialize, apply } from '../src/gameplay/save.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
+import { DungeonManager } from '../src/world/DungeonManager.js';
 
 function stubGame(): any {
   const world = new World();
@@ -294,6 +295,60 @@ describe('Eventos dinâmicos', () => {
     game.emit('kill', { id: bountyId, x: 0, z: 0 });
     const after = [...world.query(C.Pickup)].length;
     expect(after).toBeGreaterThan(before);
+  });
+});
+
+describe('Masmorra', () => {
+  it('progride pelas ondas, dá recompensa e sai restaurando o mundo', () => {
+    const world = new World();
+    const game: any = {
+      world, seed: 5, inDungeon: false,
+      groupCenter: { x: 50, z: 50 },
+      progress: { level: 2 },
+      regionLevel: () => 2,
+      renderer: { add() {}, remove() {}, setBiomeMood() {} },
+      camera: { addShake() {} },
+      story: { objective: () => 'obj' },
+      worldManager: { currentBiome: 'pantano' },
+      emit: () => {},
+      on: () => {},
+      spawnEnemyByKey: (key, x, z) => {
+        const id = world.createEntity();
+        world.add(id, C.Health, Health(5));
+        world.add(id, C.Faction, Faction(Factions.ENEMY));
+        world.add(id, C.Transform, Transform(x, z));
+        return id;
+      },
+    };
+    // Um jogador para o teleporte.
+    const pid = world.createEntity();
+    world.add(pid, C.PlayerControlled, { index: 0, color: 0xffe08a, downed: false });
+    world.add(pid, C.Health, Health(100));
+    world.add(pid, C.Transform, Transform(50, 50));
+
+    const dgn = new DungeonManager(game);
+    const eid = dgn.entrances[0].id;
+    dgn.enter(eid);
+    expect(game.inDungeon).toBe(true);
+
+    let guard = 0;
+    while (dgn.active && dgn.active.phase === 'fighting' && guard++ < 12) {
+      dgn.update(2);
+      for (const id of dgn.active.enemies) {
+        const hp = world.get(id, C.Health);
+        if (hp) hp.dead = true;
+      }
+    }
+    expect(dgn.active.phase).toBe('reward');
+
+    const before = [...world.query(C.Pickup)].length;
+    dgn.claimReward();
+    expect([...world.query(C.Pickup)].length).toBeGreaterThan(before);
+    expect(dgn.cleared.has(eid)).toBe(true);
+
+    dgn.update(3); // timer da fase 'done' -> sai
+    expect(game.inDungeon).toBe(false);
+    expect(dgn.active).toBe(null);
   });
 });
 

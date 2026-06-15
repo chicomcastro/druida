@@ -199,6 +199,7 @@ export class WorldManager {
 
   update(dt) {
     const { game } = this;
+    if (game.inDungeon) return; // mundo aberto suspenso dentro da masmorra
     const c = game.groupCenter ?? { x: 0, z: 0 };
     this._revealAround(c.x, c.z);
 

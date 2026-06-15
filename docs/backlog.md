@@ -78,7 +78,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🗺️ Mercador + baú compartilhado no hub — ADR 0016
 - [x] 🗺️ Fast travel (mapa-mundi + recall ao hub) + fog of war
 - [x] 🗺️ POIs: acampamentos corrompidos (escala por anel, recompensa) — ADR 0017
-- [ ] 🗺️ POIs: masmorras instanciadas dedicadas
+- [x] 🗺️ POIs: masmorras instanciadas (arena, ondas, recompensa Única) — ADR 0022
 - [x] 🗺️ Recursos colhíveis (fragmentos de essência) — ADR 0017
 - [x] 🗺️ Persistência de estado do mundo (fog, baú, acampamentos purificados)
 
