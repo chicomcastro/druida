@@ -20,9 +20,11 @@ foram implementados; `[~]` parcial. Ver `docs/adr/` para as decisões.
 - **M5 Coop local** — ✅ completo
 - **M6 Inimigos/IA/Chefe** — ✅ ~90% (5 inimigos + invocações + mini-chefe + chefe com 3 fases; falta object pooling)
 - **M7 História** — ✅ ~85% (campanha completa: NPC, diálogo, santuários, gating de formas, mini-chefe e chefe final, vitória; falta eventos dinâmicos e lore extra)
-- **M8 UI/Save** · **M9 Áudio/Polish** · **M10 Release** — pendentes
+- **M8 UI/Save** — ✅ ~80% (menu principal, pausa, inventário/equipamento/encantamento, salvage, minimapa, save/continuar; falta tela de mapa-mundi e rebind)
+- **M9 Áudio/Polish** — 🟡 ~50% (áudio procedural + screen shake + VFX; falta partículas, profiling/spatial hash, balanceamento fino)
+- **M10 Release** — pendente
 
-Jogo já **rodável**: `npm install && npm run dev`.
+Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 
 ---
 
@@ -107,21 +109,24 @@ Jogo já **rodável**: `npm install && npm run dev`.
 - [ ] 📖 Eventos dinâmicos por região (acampamentos/invasões)
 - [ ] 📖 Lore/colecionáveis extras
 
-## M8 — UI/UX, menus e save ⬜
-- [ ] 🖥️ Menu principal (novo/continuar/opções)
-- [ ] 🖥️ Pause + opções
-- [ ] 🖥️ Mapa do mundo navegável
-- [ ] 🖥️ Tutoriais/onboarding
-- [ ] 🖥️ Game over / checkpoint
-- [ ] 💾 Save/load (localStorage → IndexedDB) com versionamento
-- [ ] 🖥️ Rebind de controles
+## M8 — UI/UX, menus e save 🟡
+- [x] 🖥️ Menu principal (novo/continuar)
+- [x] 🖥️ Pause + opções (som)
+- [x] 🖥️ Minimapa/radar (hub, jogadores, inimigos, santuários, chefe)
+- [x] 🖥️ Inventário/equipamento + tela de encantamento (gastar pontos) + salvage
+- [x] 💾 Save/load (localStorage) com schema versionado
+- [x] 🖥️ Checkpoint/wipe (revive de grupo)
+- [ ] 🖥️ Tela de mapa-mundi navegável (fog of war)
+- [ ] 🖥️ Tutoriais/onboarding contextual
+- [ ] 🖥️ Rebind de controles · migração para IndexedDB
 
-## M9 — Áudio, polish e performance ⬜
-- [ ] 🔊 Camada de áudio (SFX/música por bioma)
-- [ ] 🎮 Game feel: hit-stop, screen shake, partículas
-- [ ] 🚀 Profiling + spatial hash para colisão/broadphase
-- [ ] 🚀 LOD/culling + carregamento progressivo
-- [ ] 🎮 Balanceamento
+## M9 — Áudio, polish e performance 🟡
+- [x] 🔊 Áudio procedural (SFX + drone ambiente por bioma) — ADR 0011
+- [x] 🎮 Game feel: screen shake + VFX (anéis, arcos, telegrafos)
+- [ ] 🎮 Hit-stop e partículas
+- [ ] 🚀 Profiling + spatial hash para broadphase
+- [ ] 🚀 LOD/culling + InstancedMesh para props
+- [ ] 🎮 Balanceamento fino
 
 ## M10 — Release / Infra ⬜
 - [ ] 🚀 Deploy estático (GitHub Pages/Netlify/Vercel)

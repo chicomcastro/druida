@@ -16,7 +16,12 @@ export class IsoCamera {
     this.offset = new THREE.Vector3(24, 28, 24);
     this.target = new THREE.Vector3(0, 0, 0);
     this._look = new THREE.Vector3();
+    this.shake = 0;
     this.updateProjection();
+  }
+
+  addShake(amount) {
+    this.shake = Math.min(1.2, this.shake + amount);
   }
 
   updateProjection() {
@@ -45,12 +50,21 @@ export class IsoCamera {
       this.updateProjection();
     }
 
+    // Screen shake (decai exponencialmente).
+    let sx = 0, sz = 0;
+    if (this.shake > 0) {
+      const m = this.shake * this.shake * 1.6;
+      sx = (Math.random() * 2 - 1) * m;
+      sz = (Math.random() * 2 - 1) * m;
+      this.shake = Math.max(0, this.shake - dt * 2.2);
+    }
+
     this.cam.position.set(
-      this.target.x + this.offset.x,
+      this.target.x + this.offset.x + sx,
       this.offset.y,
-      this.target.z + this.offset.z,
+      this.target.z + this.offset.z + sz,
     );
-    this._look.set(this.target.x, 0, this.target.z);
+    this._look.set(this.target.x + sx, 0, this.target.z + sz);
     this.cam.lookAt(this._look);
   }
 

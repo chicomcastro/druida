@@ -6,6 +6,9 @@ import { generateItem, RARITIES } from '../src/gameplay/loot.js';
 import { grantXp, xpForLevel } from '../src/gameplay/progression.js';
 import { makeRng, weightedPick } from '../src/utils/math.js';
 import { StoryManager } from '../src/gameplay/story.js';
+import { Sap } from '../src/core/ecs/components.js';
+import { applyEquipment } from '../src/gameplay/equip.js';
+import { serialize, apply } from '../src/gameplay/save.js';
 
 function stubGame() {
   const world = new World();
@@ -164,6 +167,54 @@ describe('Campanha (StoryManager)', () => {
     story.onInteract({ kind: 'sanctuary', form: 'frog' }, 0); // ainda não é a hora
     expect(world.get(pid, C.Form).list).not.toContain('frog');
     expect(story.current().id).toBe('purify_clearing');
+  });
+});
+
+describe('Save/Load', () => {
+  function saveGame() {
+    const world = new World();
+    const game = {
+      world,
+      seed: 7,
+      progress: { xp: 10, level: 5, enchantPoints: 0 },
+      story: { step: 3, kills: 2, _spawned: { miniboss: true } },
+      equip(id, item, slot = null) {
+        const lo = world.get(id, C.Loadout);
+        const eq = world.get(id, C.Equipment);
+        if (item.type === 'weapon') { lo.weapon = item; eq.weapon = item; }
+        else if (item.type === 'armor') { lo.armor = item; eq.armor = item; }
+        else { const s = slot ?? 0; lo.artifacts[s] = item; eq.artifacts[s] = item; }
+        applyEquipment(game, id);
+      },
+    };
+    const pid = world.createEntity();
+    world.add(pid, C.PlayerControlled, { index: 0, color: 0xffe08a });
+    world.add(pid, C.Health, Health(120));
+    world.add(pid, C.Sap, Sap(100));
+    world.add(pid, C.Form, { current: 'humanoid', list: ['humanoid', 'wolf', 'bear'] });
+    world.add(pid, C.Loadout, { weapon: null, armor: null, artifacts: [null, null, null], enchantPoints: 4 });
+    world.add(pid, C.Equipment, { weapon: null, armor: null, artifacts: [null, null, null] });
+    world.add(pid, C.Inventory, { items: [], essence: 25 });
+    return { game, world, pid };
+  }
+
+  it('serializa e restaura progresso, história e jogador', () => {
+    const { game, world, pid } = saveGame();
+    game.equip(pid, { type: 'weapon', name: 'Cajado Teste', element: 'fire', damage: 14, rarity: 'rare', enchants: [] });
+    const data = JSON.parse(JSON.stringify(serialize(game)));
+
+    // "Novo" jogo, depois aplica o save.
+    const fresh = saveGame();
+    fresh.game.progress = { xp: 0, level: 1, enchantPoints: 0 };
+    fresh.game.story = { step: 0, kills: 0, _spawned: {} };
+    const ok = apply(fresh.game, data);
+
+    expect(ok).toBe(true);
+    expect(fresh.game.progress.level).toBe(5);
+    expect(fresh.game.story.step).toBe(3);
+    expect(fresh.world.get(fresh.pid, C.Form).list).toContain('bear');
+    expect(fresh.world.get(fresh.pid, C.Inventory).essence).toBe(25);
+    expect(fresh.world.get(fresh.pid, C.Loadout).weapon.name).toBe('Cajado Teste');
   });
 });
 
