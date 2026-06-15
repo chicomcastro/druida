@@ -20,7 +20,7 @@ foram implementados; `[~]` parcial. Ver `docs/adr/` para as decisões.
 - **M5 Coop local** — ✅ completo
 - **M6 Inimigos/IA/Chefe** — ✅ ~90% (5 inimigos + invocações + mini-chefe + chefe com 3 fases; falta object pooling)
 - **M7 História** — ✅ completo (campanha + gating de formas + chefe; eventos dinâmicos + lore/codex)
-- **M8 UI/Save** — ✅ ~80% (menu principal, pausa, inventário/equipamento/encantamento, salvage, minimapa, save/continuar; falta tela de mapa-mundi e rebind)
+- **M8 UI/Save** — ✅ completo (menus, inventário/encantamento, minimapa, mapa-mundi, onboarding, rebind, save em IndexedDB)
 - **M9 Áudio/Polish** — 🟡 ~50% (áudio procedural + screen shake + VFX; falta partículas, profiling/spatial hash, balanceamento fino)
 - **M10 Release** — 🟡 deploy GitHub Pages configurado (falta playtest/telemetria)
 
@@ -110,17 +110,17 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 📖 Eventos dinâmicos por região (Surto de Corrupção, Espírito do Tesouro) — ADR 0018
 - [x] 📖 Lore/colecionáveis (codex, persistido) — ADR 0020
 
-## M8 — UI/UX, menus e save 🟡
+## M8 — UI/UX, menus e save ✅
 - [x] 🖥️ Menu principal (novo/continuar)
 - [x] 🖥️ Pause + opções (som)
 - [x] 🖥️ Minimapa/radar (hub, jogadores, inimigos, santuários, chefe)
 - [x] 🖥️ Inventário/equipamento + tela de encantamento (gastar pontos) + salvage
-- [x] 💾 Save/load (localStorage) com schema versionado
+- [x] 💾 Save/load com schema versionado (IndexedDB + fallback localStorage) — ADR 0024
 - [x] 🖥️ Checkpoint/wipe (revive de grupo)
 - [x] 🖥️ Tela de mapa-mundi navegável (fog of war) + fast-travel a marcos descobertos
 - [x] 🖥️ Tutoriais/onboarding contextual (dicas pontuais) — ADR 0019
 - [x] 🖥️ Rebind de controles (P1, persistido) — ADR 0023
-- [ ] 🖥️ Migração do save para IndexedDB
+- [x] 🖥️ Migração do save para IndexedDB — ADR 0024
 
 ## M9 — Áudio, polish e performance 🟡
 - [x] 🔊 Áudio procedural (SFX + drone ambiente por bioma) — ADR 0011
