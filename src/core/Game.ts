@@ -387,8 +387,29 @@ export class Game {
       if (s.t <= 0) { s.fn(); this._scheduled.splice(i, 1); }
     }
 
+    this._cleanupDestroyed();
     this.world.flushDestroyed();
     this.input.endFrame();
+  }
+
+  /**
+   * Remove e libera os meshes das entidades prestes a serem destruídas
+   * (projéteis, inimigos, loot, invocações). Sem isso os Object3D ficariam
+   * órfãos na cena (vazamento visual e de memória).
+   */
+  _cleanupDestroyed() {
+    for (const id of this.world._toDestroy) {
+      const r = this.world.get(id, C.Renderable);
+      if (!r?.object3d) continue;
+      this.renderer.remove(r.object3d);
+      r.object3d.traverse((o) => {
+        if (o.isMesh) {
+          o.geometry?.dispose?.();
+          if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose?.());
+          else o.material?.dispose?.();
+        }
+      });
+    }
   }
 
   render(alpha) {
