@@ -7,7 +7,15 @@ import { clamp, lerp } from '../../utils/math.js';
  * — ver docs/adr/0003-coop-camera.md.
  */
 export class IsoCamera {
-  [key: string]: any;
+  frustum: number;
+  minFrustum: number;
+  maxFrustum: number;
+  cam: THREE.OrthographicCamera;
+  offset: THREE.Vector3;
+  target: THREE.Vector3;
+  _look: THREE.Vector3;
+  shake: number;
+
   constructor() {
     this.frustum = 14; // metade da altura visível (em unidades de mundo)
     this.minFrustum = 11;

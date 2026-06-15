@@ -4,7 +4,15 @@
  * interpolação visual (usada opcionalmente pelo render).
  */
 export class GameLoop {
-  [key: string]: any;
+  update: (dt: number) => void;
+  render: (alpha: number) => void;
+  step: number;
+  maxSubSteps: number;
+  _acc: number;
+  _last: number;
+  _raf: number;
+  _running: boolean;
+
   constructor({ update, render, step = 1 / 60, maxSubSteps = 5 }) {
     this.update = update;
     this.render = render;
