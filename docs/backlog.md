@@ -129,7 +129,8 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🎮 Hit-stop e partículas
 - [x] 🚀 Spatial hash para broadphase (colisão + projéteis) — ADR 0015
 - [x] 🚀 InstancedMesh para props — ADR 0015
-- [ ] 🚀 Object pooling (projéteis/inimigos) + profiling
+- [x] 🚀 Object pooling de partículas — ADR 0025
+- [ ] 🚀 Object pooling de projéteis/inimigos (entidades ECS) + profiling
 - [x] 🧱 Endurecer tipos TS (índice `any` removido de todas as classes) — ADR 0021
 - [ ] 🎮 Balanceamento fino
 
@@ -137,7 +138,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🚀 Deploy estático (workflow GitHub Pages) + fast-travel ao hub (QoL)
 - [ ] 🚀 Telemetria leve opcional
 - [ ] 🚀 Playtest coop + feedback
-- [ ] 🚀 Pipeline de assets (MagicaVoxel → glb)
+- [x] 🚀 Pipeline de assets documentado (MagicaVoxel → glb) — `docs/asset-pipeline.md`
 
 ---
 
