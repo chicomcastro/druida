@@ -21,6 +21,7 @@ import { VfxManager } from '../systems/vfx.js';
 
 import { WorldManager } from '../world/WorldManager.js';
 import { PoiManager } from '../world/PoiManager.js';
+import { EventManager } from '../world/EventManager.js';
 import { buildLandmarks } from '../world/landmarks.js';
 import { StoryManager } from '../gameplay/story.js';
 import { Hud } from '../ui/Hud.js';
@@ -70,6 +71,7 @@ export class Game {
 
     this.worldManager = new WorldManager(this);
     this.poi = new PoiManager(this);
+    this.events = new EventManager(this);
     this.story = new StoryManager(this);
     this.hud = new Hud(this);
     this.menus = new Menus(this);
@@ -93,6 +95,7 @@ export class Game {
       (g, dt) => g.worldManager.update(dt),
       (g) => g.story.update(),
       (g) => g.poi.update(),
+      (g, dt) => g.events.update(dt),
       (g, dt) => g.vfx.update(dt),
       idleRegenSystem,
     ];

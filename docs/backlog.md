@@ -107,7 +107,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 📖 NPC no hub (Guardiã) + diálogos
 - [x] 📖 Arco principal: purificar Clareira → santuários → chefes → vitória
 - [x] 📖 HUD: rastreador de objetivo, prompt de interação, diálogo, tela de vitória
-- [ ] 📖 Eventos dinâmicos por região (acampamentos/invasões)
+- [x] 📖 Eventos dinâmicos por região (Surto de Corrupção, Espírito do Tesouro) — ADR 0018
 - [ ] 📖 Lore/colecionáveis extras
 
 ## M8 — UI/UX, menus e save 🟡

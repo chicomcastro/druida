@@ -33,6 +33,7 @@ export const C = {
   Knockback: 'Knockback',
   Tint: 'Tint',
   CampMember: 'CampMember',
+  Bounty: 'Bounty',
 };
 
 export const Factions = { PLAYER: 'player', ENEMY: 'enemy', NEUTRAL: 'neutral' };
