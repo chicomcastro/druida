@@ -17,6 +17,37 @@ export class VfxManager {
     game.on('vfxCone', (e) => this.ring(e.x, e.z, 2.5, e.color, 0.25));
     game.on('formSwap', (e) => this.ring(e.x, e.z, 1.5, 0x9fe06a, 0.4));
     game.on('dodge', (e) => this.ring(e.x, e.z, 1.0, 0xffffff, 0.25));
+    game.on('kill', (e) => this.burst(e.x, e.z, 0xff6a4a, 10));
+    game.on('damage', (e) => { if (e.dot || e.x === undefined) return; this.burst(e.x, e.z, 0xfff0a0, 4); });
+
+    this.particles = [];
+  }
+
+  /** Pequeno jato de partículas (caixas voxel) com gravidade e fade. */
+  burst(x, z, color, count = 6) {
+    for (let i = 0; i < count; i++) {
+      const m = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.14, 0.14),
+        new THREE.MeshBasicMaterial({ color, transparent: true }),
+      );
+      m.position.set(x, 0.7, z);
+      const a = Math.random() * Math.PI * 2;
+      const sp = 2 + Math.random() * 3;
+      this.scene.add(m);
+      this.particles.push({
+        mesh: m, life: 0.5, max: 0.5,
+        vx: Math.sin(a) * sp, vy: 2 + Math.random() * 2, vz: Math.cos(a) * sp,
+      });
+      if (this.particles.length > 220) this._killParticle(0);
+    }
+  }
+
+  _killParticle(i) {
+    const p = this.particles[i];
+    this.scene.remove(p.mesh);
+    p.mesh.geometry.dispose();
+    p.mesh.material.dispose();
+    this.particles.splice(i, 1);
   }
 
   _add(mesh, life, update) {
@@ -58,6 +89,18 @@ export class VfxManager {
   }
 
   update(dt) {
+    // Partículas: integra com gravidade e desaparece.
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.life -= dt;
+      if (p.life <= 0) { this._killParticle(i); continue; }
+      p.vy -= 12 * dt;
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y = Math.max(0.05, p.mesh.position.y + p.vy * dt);
+      p.mesh.position.z += p.vz * dt;
+      p.mesh.material.opacity = p.life / p.max;
+    }
+
     for (let i = this.fx.length - 1; i >= 0; i--) {
       const fx = this.fx[i];
       fx.life -= dt;

@@ -1,4 +1,5 @@
 import { makeRng, weightedPick } from '../utils/math.js';
+import { BALANCE } from '../data/balance.js';
 
 /**
  * Sistema de loot/itens inspirado no MC Dungeons: raridades, armas de
@@ -102,7 +103,7 @@ export function generateItem(level = 1, type = null, seed = null) {
 export function rollDrops(lootTable, level, rng = Math.random) {
   const drops = [];
   // Chance base de dropar um item.
-  if (rng() < (lootTable?.dropChance ?? 0.28)) {
+  if (rng() < (lootTable?.dropChance ?? BALANCE.loot.defaultDropChance)) {
     drops.push(generateItem(level));
   }
   return drops;

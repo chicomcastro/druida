@@ -2,6 +2,7 @@ import { C, Factions } from '../core/ecs/components.js';
 import { weightedPick } from '../utils/math.js';
 import { biomeAt } from '../world/WorldManager.js';
 import { BIOMES } from '../data/biomes.js';
+import { BALANCE } from '../data/balance.js';
 
 /**
  * Mantém uma população de inimigos perto dos jogadores, sorteada da tabela do
@@ -19,12 +20,13 @@ export function spawnerSystem(game, dt) {
   if (players.length === 0) return;
 
   const playerCount = [...world.query(C.PlayerControlled)].length;
-  const cap = Math.round((8 + game.progress.level * 0.8) * (0.7 + playerCount * 0.4));
+  const s = BALANCE.spawn;
+  const cap = Math.round((s.capBase + game.progress.level * s.capPerLevel) * (s.capPlayerBase + playerCount * s.capPerPlayer));
 
   let enemyCount = 0;
   for (const [, fac] of world.query(C.Faction)) if (fac.team === Factions.ENEMY) enemyCount++;
   if (enemyCount >= cap || game._spawnTimer > 0) return;
-  game._spawnTimer = Math.max(0.4, 1.4 - game.progress.level * 0.04);
+  game._spawnTimer = Math.max(s.intervalMin, s.intervalMax - game.progress.level * s.intervalPerLevel);
 
   // Escolhe um jogador e um ponto fora da zona segura/hub.
   const [, , anchor] = players[Math.floor(Math.random() * players.length)];

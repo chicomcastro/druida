@@ -1,7 +1,8 @@
 import { C } from '../core/ecs/components.js';
+import { BALANCE } from '../data/balance.js';
 
-const BASE_HP = 120;
-const BASE_SAP_REGEN = 14;
+const BASE_HP = BALANCE.player.baseHp;
+const BASE_SAP_REGEN = BALANCE.player.baseSapRegen;
 
 /**
  * Recalcula stats derivados do equipamento (vida máx, regen de Seiva,

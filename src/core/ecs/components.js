@@ -41,7 +41,7 @@ export const Velocity = (vx = 0, vz = 0, speed = 5) => ({ vx, vz, speed });
 
 export const Health = (max = 100) => ({ hp: max, max, dead: false, invuln: 0 });
 
-export const Sap = (max = 100) => ({ value: max * 0.4, max, regen: 14 });
+export const Sap = (max = 100) => ({ value: max * 0.5, max, regen: 15 });
 
 export const Collider = (radius = 0.5, solid = true) => ({ radius, solid });
 
