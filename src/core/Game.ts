@@ -22,6 +22,7 @@ import { VfxManager } from '../systems/vfx.js';
 import { WorldManager } from '../world/WorldManager.js';
 import { PoiManager } from '../world/PoiManager.js';
 import { EventManager } from '../world/EventManager.js';
+import { DungeonManager } from '../world/DungeonManager.js';
 import { buildLandmarks } from '../world/landmarks.js';
 import { StoryManager } from '../gameplay/story.js';
 import { Hud } from '../ui/Hud.js';
@@ -49,7 +50,8 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any;
-  worldManager: any; poi: any; events: any; story: any; loop: any;
+  worldManager: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  inDungeon: boolean;
   // Estado.
   seed: number;
   progress: { xp: number; level: number; enchantPoints: number };
@@ -91,9 +93,11 @@ export class Game {
 
     this._bindEvents();
 
+    this.inDungeon = false;
     this.worldManager = new WorldManager(this);
     this.poi = new PoiManager(this);
     this.events = new EventManager(this);
+    this.dungeon = new DungeonManager(this);
     this.story = new StoryManager(this);
     this.hud = new Hud(this);
     this.menus = new Menus(this);
@@ -102,6 +106,7 @@ export class Game {
     this.tutorial = new Tutorial(this);
     this.menuMain = false;
     buildLandmarks(this);
+    this.dungeon.buildEntrances();
 
     this.systems = [
       coopSystem,        // joins, queda/revive, centróide do grupo
@@ -119,6 +124,7 @@ export class Game {
       (g) => g.story.update(),
       (g) => g.poi.update(),
       (g, dt) => g.events.update(dt),
+      (g, dt) => g.dungeon.update(dt),
       (g, dt) => g.vfx.update(dt),
       idleRegenSystem,
     ];

@@ -46,6 +46,7 @@ export class EventManager {
   }
 
   update(dt) {
+    if (this.game.inDungeon) return;
     const c = this.game.groupCenter ?? { x: 0, z: 0 };
     if (Math.hypot(c.x, c.z) < HUB_SAFE || this._activePlayers() === 0) return; // sem eventos no hub
     this.timer -= dt;

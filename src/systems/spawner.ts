@@ -12,6 +12,7 @@ import { BALANCE } from '../data/balance.js';
 const HUB_SAFE_RADIUS = 16;
 
 export function spawnerSystem(game, dt) {
+  if (game.inDungeon) return; // ondas controladas pela masmorra
   const { world } = game;
   game._spawnTimer = (game._spawnTimer ?? 0) - dt;
 

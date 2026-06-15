@@ -19,6 +19,8 @@ export function interactionSystem(game, dt) {
       if (intent.interact) {
         if (inter.kind === 'merchant') game.menus.openShop();
         else if (inter.kind === 'chest') game.menus.openStash();
+        else if (inter.kind === 'dungeon') game.dungeon.enter(inter.entranceId);
+        else if (inter.kind === 'dungeon_reward') game.dungeon.claimReward();
         else game.story.onInteract(inter, pc.index);
         game.emit('interacted', { iid, by: pc.index });
       }

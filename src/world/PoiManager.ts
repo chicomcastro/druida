@@ -105,6 +105,7 @@ export class PoiManager {
   }
 
   update() {
+    if (this.game.inDungeon) return;
     const c = this.game.groupCenter ?? { x: 0, z: 0 };
     for (const camp of this.camps) {
       if (camp.cleared || camp.active || this.cleared.has(camp.id)) continue;

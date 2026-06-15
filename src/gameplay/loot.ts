@@ -68,10 +68,10 @@ function enchantsFor(type, slots, rng) {
   return out;
 }
 
-export function generateItem(level = 1, type = null, seed = null) {
+export function generateItem(level = 1, type = null, seed = null, forceRarity = null) {
   const rng = makeRng(seed ?? (Date.now() ^ (_uid++ * 2654435761)) >>> 0);
   type = type ?? rng.pick(['weapon', 'armor', 'artifact']);
-  const rarityKey = rollRarity(rng);
+  const rarityKey = forceRarity && RARITIES[forceRarity] ? forceRarity : rollRarity(rng);
   const rarity = RARITIES[rarityKey];
   const lvlMul = 1 + (level - 1) * 0.12;
 
