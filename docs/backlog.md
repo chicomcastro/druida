@@ -75,7 +75,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🗺️ `biomes.js` + 5 biomas com clima/spawn
 - [x] 🗺️ Hub central (Carvalho-Mãe) como zona segura
 - [x] 🗺️ Props via InstancedMesh (otimização) — ADR 0015
-- [ ] 🗺️ Mercador + baú compartilhado no hub
+- [x] 🗺️ Mercador + baú compartilhado no hub — ADR 0016
 - [x] 🗺️ Fast travel (mapa-mundi + recall ao hub) + fog of war
 - [ ] 🗺️ POIs: masmorras e acampamentos
 - [ ] 🗺️ Recursos colhíveis

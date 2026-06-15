@@ -17,7 +17,9 @@ export function interactionSystem(game, dt) {
       if (d > (inter.range ?? 3)) continue;
       if (d < promptD) { promptD = d; prompt = inter.prompt; }
       if (intent.interact) {
-        game.story.onInteract(inter, pc.index);
+        if (inter.kind === 'merchant') game.menus.openShop();
+        else if (inter.kind === 'chest') game.menus.openStash();
+        else game.story.onInteract(inter, pc.index);
         game.emit('interacted', { iid, by: pc.index });
       }
     }

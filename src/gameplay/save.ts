@@ -31,6 +31,7 @@ export function serialize(game) {
     progress: { ...game.progress },
     story: { step: game.story.step, kills: game.story.kills, spawned: { ...game.story._spawned } },
     fog: game.worldManager ? [...game.worldManager.explored] : [],
+    chest: game.sharedChest ?? [],
     players,
   };
 }
@@ -42,6 +43,7 @@ export function apply(game, data) {
   game.story.kills = data.story.kills ?? 0;
   game.story._spawned = { ...(data.story.spawned ?? {}) };
   if (data.fog && game.worldManager) game.worldManager.explored = new Set(data.fog);
+  if (data.chest) game.sharedChest = data.chest;
 
   for (const [id, pc] of game.world.query(C.PlayerControlled)) {
     const sp = data.players.find((p) => p.index === pc.index);
