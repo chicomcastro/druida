@@ -24,6 +24,7 @@ export function biomeAt(x, z) {
 }
 
 export class WorldManager {
+  [key: string]: any;
   constructor(game) {
     this.game = game;
     this.rng = makeRng(game.seed ?? 1337);

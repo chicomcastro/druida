@@ -10,7 +10,7 @@ Complementa o [`game-design.md`](game-design.md). Define stack, estrutura de pas
 |--------|---------|---------|
 | Build / dev server | **Vite** | HMR rápido, zero-config, build otimizado. |
 | Render 3D | **Three.js** | 3D no navegador maduro; câmera ortográfica = isométrico. |
-| Linguagem | **JavaScript (ESM)** — TS recomendado | Pedido do projeto. Migração para **TypeScript** fortemente recomendada (ver §7). |
+| Linguagem | **TypeScript (ESM)** | Migrado do JS inicial; config pragmática (ver ADR 0014). Vite/Vitest suportam TS sem config extra. |
 | Arquitetura de jogo | **ECS** (Entity-Component-System) próprio e enxuto | Mundo aberto com muitas entidades + data-driven. |
 | Física/colisão | **Custom leve** (AABB + spatial hash) no MVP; avaliar **Rapier (wasm)** depois | Evita peso desnecessário cedo; Rapier se precisar de física rica. |
 | Input | **Keyboard/Mouse + Gamepad API** | Coop local multi-jogador. |
@@ -130,9 +130,14 @@ druida/
 
 ---
 
-## 7. Recomendação: TypeScript
+## 7. TypeScript
 
-Para um projeto deste tamanho (muitos sistemas, dados estruturados, refactors frequentes), **TypeScript reduz bugs e melhora DX** significativamente. O scaffold inicial é JS (conforme pedido), mas há uma tarefa em M0 para **decidir/migrar para TS** antes do código crescer. Vite suporta TS sem config extra.
+O projeto foi migrado para **TypeScript** (ADR 0014) com config pragmática
+(lenient): tipos reais no núcleo (ECS, combate, loot, progressão, save) e
+`[key: string]: any` nas classes de view/manager para viabilizar a migração sem
+reescrita total. `npm run typecheck` roda no CI junto de lint/test/build.
+Endurecer gradualmente (remover os `any`, ligar `strictNullChecks`) é trabalho
+futuro.
 
 ---
 

@@ -1,17 +1,19 @@
-// Config flat mínima (ESLint 9). Mantém o lint executável no CI sem travar o
-// protótipo com regras agressivas; endurecer conforme o código amadurece.
+// Config flat (ESLint 9 + typescript-eslint). Mantém o lint executável e leve
+// no protótipo: usa o parser de TS e poucas regras, endurecendo conforme o
+// código amadurece.
+import tseslint from 'typescript-eslint';
+
 export default [
+  { ignores: ['dist/**', 'node_modules/**', '*.config.js'] },
   {
-    ignores: ['dist/**', 'node_modules/**'],
-  },
-  {
-    files: ['**/*.js'],
+    files: ['**/*.ts'],
     languageOptions: {
-      ecmaVersion: 2023,
-      sourceType: 'module',
+      parser: tseslint.parser,
+      parserOptions: { ecmaVersion: 2023, sourceType: 'module' },
     },
+    plugins: { '@typescript-eslint': tseslint.plugin },
     rules: {
-      'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_' }],
       'no-undef': 'off',
     },
   },

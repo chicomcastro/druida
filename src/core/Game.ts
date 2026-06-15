@@ -43,6 +43,7 @@ import { applyDamage } from '../gameplay/combat.js';
  * usados pelos sistemas (x/z, dano, Seiva, spawn, agenda). Ver docs/adr.
  */
 export class Game {
+  [key: string]: any;
   constructor(canvas) {
     this.world = new World();
     this.renderer = new Renderer(canvas);

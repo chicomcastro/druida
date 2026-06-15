@@ -10,6 +10,17 @@
  * docs/adr/0002-ecs.md.
  */
 export class World {
+  /** próximo id de entidade */
+  _nextId: number;
+  /** tipo -> (entidade -> componente) */
+  stores: Map<string, Map<number, any>>;
+  /** entidades vivas */
+  entities: Set<number>;
+  /** fila de remoção diferida */
+  _toDestroy: Set<number>;
+  /** event bus: evento -> handlers */
+  _listeners: Map<string, Array<(payload?: any, world?: World) => void>>;
+
   constructor() {
     this._nextId = 1;
     /** @type {Map<string, Map<number, any>>} tipo -> (entidade -> componente) */
@@ -108,7 +119,7 @@ export class World {
     };
   }
 
-  emit(event, payload) {
+  emit(event, payload?) {
     const arr = this._listeners.get(event);
     if (!arr) return;
     for (const fn of arr) fn(payload, this);

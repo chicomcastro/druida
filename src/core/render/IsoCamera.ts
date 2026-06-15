@@ -7,6 +7,7 @@ import { clamp, lerp } from '../../utils/math.js';
  * — ver docs/adr/0003-coop-camera.md.
  */
 export class IsoCamera {
+  [key: string]: any;
   constructor() {
     this.frustum = 14; // metade da altura visível (em unidades de mundo)
     this.minFrustum = 11;
