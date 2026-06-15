@@ -6,25 +6,7 @@
  * Expõe um snapshot por jogador via `getPlayerInput(index)`. O mapeamento de
  * teclas/botões vive aqui; sistemas consomem apenas o estado abstrato.
  */
-const KEYBOARD_MAP = {
-  up: ['KeyW', 'ArrowUp'],
-  down: ['KeyS', 'ArrowDown'],
-  left: ['KeyA', 'ArrowLeft'],
-  right: ['KeyD', 'ArrowRight'],
-  attack: ['KeyJ', 'Space'],
-  dodge: ['ShiftLeft', 'KeyL'],
-  artifact0: ['KeyU', 'Digit1'],
-  artifact1: ['KeyI', 'Digit2'],
-  artifact2: ['KeyO', 'Digit3'],
-  form0: ['Digit5'],
-  form1: ['Digit6'],
-  form2: ['Digit7'],
-  form3: ['Digit8'],
-  form4: ['Digit9'],
-  interact: ['KeyE', 'KeyF'],
-  pause: ['Escape', 'KeyP'],
-  inventory: ['KeyB', 'Tab'],
-};
+import { loadBindings, saveBindings, resetBindings } from './bindings.js';
 
 export class InputManager {
   camera: any;
@@ -34,8 +16,10 @@ export class InputManager {
   _prevKeys: Set<string>;
   _prevPads: Map<number, boolean[]>;
   _gamepadPlayers: number[];
+  bindings: Record<string, string[]>;
 
   constructor(camera) {
+    this.bindings = loadBindings();
     this.camera = camera; // IsoCamera, para mira por mouse
     this.keys = new Set();
     this.mouse = { x: 0, z: 0, down: false };
@@ -82,7 +66,7 @@ export class InputManager {
   }
 
   keyJustPressed(action) {
-    const codes = KEYBOARD_MAP[action] ?? [];
+    const codes = this.bindings[action] ?? [];
     for (const c of codes) if (this.keys.has(c) && !this._prevKeys.has(c)) return true;
     return false;
   }
@@ -109,6 +93,17 @@ export class InputManager {
     this._gamepadPlayers[playerIndex - 1] = padIndex;
   }
 
+  /** Redefine a tecla de uma ação (rebind do P1) e persiste. */
+  setBinding(action, code) {
+    this.bindings[action] = [code];
+    saveBindings(this.bindings);
+  }
+
+  resetBindings() {
+    resetBindings();
+    this.bindings = loadBindings();
+  }
+
   _empty() {
     return {
       moveX: 0, moveZ: 0, aimX: 0, aimZ: 0, hasAim: false,
@@ -118,8 +113,8 @@ export class InputManager {
   }
 
   _keyboardInput() {
-    const mx = (this._anyKey(KEYBOARD_MAP.right) ? 1 : 0) - (this._anyKey(KEYBOARD_MAP.left) ? 1 : 0);
-    const mz = (this._anyKey(KEYBOARD_MAP.down) ? 1 : 0) - (this._anyKey(KEYBOARD_MAP.up) ? 1 : 0);
+    const mx = (this._anyKey(this.bindings.right) ? 1 : 0) - (this._anyKey(this.bindings.left) ? 1 : 0);
+    const mz = (this._anyKey(this.bindings.down) ? 1 : 0) - (this._anyKey(this.bindings.up) ? 1 : 0);
     let switchForm = 0;
     for (let i = 0; i < 5; i++) if (this.keyJustPressed(`form${i}`)) switchForm = i + 1;
     return {
@@ -129,7 +124,7 @@ export class InputManager {
       aimZ: this.mouse.z,
       hasAim: true, // mira por posição do mouse (mundo)
       aimIsWorldPoint: true,
-      attack: this.mouse.down || this._anyKey(KEYBOARD_MAP.attack),
+      attack: this.mouse.down || this._anyKey(this.bindings.attack),
       dodge: this.keyJustPressed('dodge'),
       artifact: [
         this.keyJustPressed('artifact0'),

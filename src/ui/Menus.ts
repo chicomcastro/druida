@@ -3,6 +3,7 @@ import { FORMS } from '../gameplay/forms.js';
 import { ENCHANTMENTS, salvageValue } from '../gameplay/loot.js';
 import { applyEquipment } from '../gameplay/equip.js';
 import { saveToStorage, hasSave } from '../gameplay/save.js';
+import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -38,7 +39,8 @@ const RCOLOR = { common: '#d6d6d6', rare: '#5aa0ff', unique: '#ffc83a' };
 export class Menus {
   game: any;
   main: any; pause: any; inv: any;
-  shop: any; stash: any;
+  shop: any; stash: any; controls: any;
+  _rebinding: string | null;
   constructor(game) {
     this.game = game;
     const style = document.createElement('style');
@@ -50,10 +52,24 @@ export class Menus {
     this.inv = this._make('menu-inv');
     this.shop = this._make('menu-shop');
     this.stash = this._make('menu-stash');
-    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash);
+    this.controls = this._make('menu-controls');
+    this._rebinding = null;
+    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls);
 
     addEventListener('keydown', (e) => {
       if (game.menuMain) return; // bloqueia até iniciar
+      // Tela de controles: captura a próxima tecla (rebind) ou fecha.
+      if (this.controls.classList.contains('show')) {
+        e.preventDefault();
+        if (this._rebinding) {
+          if (e.code !== 'Escape') this.game.input.setBinding(this._rebinding, e.code);
+          this._rebinding = null;
+          this.refreshControls();
+        } else if (e.code === 'Escape') {
+          this.closeControls();
+        }
+        return;
+      }
       // Loja/baú: E, F ou Esc fecham.
       if (this.shop.classList.contains('show')) {
         if (['Escape', 'KeyE', 'KeyF'].includes(e.code)) this.closeShop();
@@ -109,6 +125,7 @@ export class Menus {
       <button class="btn" id="p-resume" style="text-align:center">▶ Continuar</button>
       <button class="btn" id="p-save" style="text-align:center">💾 Salvar</button>
       <button class="btn" id="p-mute" style="text-align:center">🔊 Som: ${this.game.audio.muted ? 'desligado' : 'ligado'}</button>
+      <button class="btn" id="p-controls" style="text-align:center">🎮 Controles</button>
     </div>`;
     this.pause.querySelector('#p-resume').onclick = () => this.togglePause();
     this.pause.querySelector('#p-save').onclick = (ev) => {
@@ -119,6 +136,44 @@ export class Menus {
       this.game.audio.setMuted(!this.game.audio.muted);
       ev.target.textContent = `🔊 Som: ${this.game.audio.muted ? 'desligado' : 'ligado'}`;
     };
+    this.pause.querySelector('#p-controls').onclick = () => { this.pause.classList.remove('show'); this.openControls(); };
+  }
+
+  // --- Controles (rebind do P1) -------------------------------------------
+  openControls() {
+    this.controls.classList.add('show');
+    this.game.paused = true;
+    this._rebinding = null;
+    this.refreshControls();
+  }
+
+  refreshControls() {
+    const b = this.game.input.bindings;
+    const rows = REBINDABLE.map(({ action, label }) => {
+      const cur = keyLabel((b[action] ?? [])[0]);
+      const active = this._rebinding === action;
+      return `<div class="row" style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin:4px 0">
+        <span>${label}</span>
+        <button class="mini" data-rb="${action}">${active ? '› pressione ‹' : cur}</button></div>`;
+    }).join('');
+    this.controls.innerHTML = `<div class="panel" style="min-width:340px">
+      <span class="close" id="ct-close">✕ (Esc)</span>
+      <h2>🎮 Controles (P1)</h2>
+      <p class="sub">Clique numa ação e pressione a nova tecla. Mira é sempre pelo mouse.</p>
+      ${rows}
+      <button class="btn" id="ct-reset" style="text-align:center;margin-top:12px">↺ Restaurar padrão</button>
+    </div>`;
+    this.controls.querySelector('#ct-close').onclick = () => this.closeControls();
+    this.controls.querySelector('#ct-reset').onclick = () => { this.game.input.resetBindings(); this._rebinding = null; this.refreshControls(); };
+    this.controls.querySelectorAll('.mini[data-rb]').forEach((el) => {
+      el.onclick = () => { this._rebinding = el.dataset.rb; this.refreshControls(); };
+    });
+  }
+
+  closeControls() {
+    this.controls.classList.remove('show');
+    this._rebinding = null;
+    this.game.paused = false;
   }
 
   // --- Inventário / Equipamento / Encantamento -----------------------------

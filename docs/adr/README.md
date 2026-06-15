@@ -27,3 +27,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0020](0020-lore-codex.md) | Colecionáveis de lore (codex) | Aceito |
 | [0021](0021-type-hardening.md) | Endurecimento dos tipos | Aceito |
 | [0022](0022-dungeons.md) | Masmorras instanciadas | Aceito |
+| [0023](0023-rebind.md) | Rebind de controles (P1) | Aceito |

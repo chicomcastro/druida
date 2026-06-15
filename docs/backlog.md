@@ -119,7 +119,8 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🖥️ Checkpoint/wipe (revive de grupo)
 - [x] 🖥️ Tela de mapa-mundi navegável (fog of war) + fast-travel a marcos descobertos
 - [x] 🖥️ Tutoriais/onboarding contextual (dicas pontuais) — ADR 0019
-- [ ] 🖥️ Rebind de controles · migração para IndexedDB
+- [x] 🖥️ Rebind de controles (P1, persistido) — ADR 0023
+- [ ] 🖥️ Migração do save para IndexedDB
 
 ## M9 — Áudio, polish e performance 🟡
 - [x] 🔊 Áudio procedural (SFX + drone ambiente por bioma) — ADR 0011
