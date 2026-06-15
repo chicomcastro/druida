@@ -27,7 +27,14 @@ const KEYBOARD_MAP = {
 };
 
 export class InputManager {
-  [key: string]: any;
+  camera: any;
+  keys: Set<string>;
+  mouse: { x: number; z: number; down: boolean };
+  _justPressed: Set<string>;
+  _prevKeys: Set<string>;
+  _prevPads: Map<number, boolean[]>;
+  _gamepadPlayers: number[];
+
   constructor(camera) {
     this.camera = camera; // IsoCamera, para mira por mouse
     this.keys = new Set();

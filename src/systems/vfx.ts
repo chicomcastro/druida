@@ -6,7 +6,11 @@ import * as THREE from 'three';
  * curta, atualizados/limpos por frame. Pooling fica para o polimento (M9).
  */
 export class VfxManager {
-  [key: string]: any;
+  game: any;
+  scene: any;
+  fx: any[];
+  particles: any[];
+
   constructor(game) {
     this.game = game;
     this.scene = game.renderer.scene;

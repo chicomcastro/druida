@@ -8,7 +8,14 @@
  * navegadores), então `resume()` é chamado no clique/tecla inicial.
  */
 export class AudioManager {
-  [key: string]: any;
+  game: any;
+  ctx: AudioContext | null;
+  master: GainNode | null;
+  muted: boolean;
+  volume: number;
+  _ambient: { osc: OscillatorNode; g: GainNode } | null;
+  _tmp?: any;
+
   constructor(game) {
     this.game = game;
     this.ctx = null;
@@ -51,7 +58,7 @@ export class AudioManager {
     if (this.master) this.master.gain.value = m ? 0 : this.volume;
   }
 
-  blip(freq, dur, type = 'sine', gain = 0.2) {
+  blip(freq, dur, type: OscillatorType = 'sine', gain = 0.2) {
     if (!this.ctx || this.muted) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
@@ -66,7 +73,7 @@ export class AudioManager {
     osc.stop(t + dur);
   }
 
-  arp(freqs, step = 0.08, type = 'sine') {
+  arp(freqs, step = 0.08, type: OscillatorType = 'sine') {
     freqs.forEach((f, i) => setTimeout(() => this.blip(f, step * 1.6, type, 0.16), i * step * 1000));
   }
 
