@@ -74,7 +74,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🗺️ Zonas de bioma radiais + pseudo-streaming de props (`WorldManager`) — ADR 0008
 - [x] 🗺️ `biomes.js` + 5 biomas com clima/spawn
 - [x] 🗺️ Hub central (Carvalho-Mãe) como zona segura
-- [ ] 🗺️ Props via InstancedMesh (otimização)
+- [x] 🗺️ Props via InstancedMesh (otimização) — ADR 0015
 - [ ] 🗺️ Mercador + baú compartilhado no hub
 - [x] 🗺️ Fast travel (mapa-mundi + recall ao hub) + fog of war
 - [ ] 🗺️ POIs: masmorras e acampamentos
@@ -124,8 +124,9 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🔊 Áudio procedural (SFX + drone ambiente por bioma) — ADR 0011
 - [x] 🎮 Game feel: screen shake + VFX (anéis, arcos, telegrafos)
 - [ ] 🎮 Hit-stop e partículas
-- [ ] 🚀 Profiling + spatial hash para broadphase
-- [ ] 🚀 LOD/culling + InstancedMesh para props
+- [x] 🚀 Spatial hash para broadphase (colisão + projéteis) — ADR 0015
+- [x] 🚀 InstancedMesh para props — ADR 0015
+- [ ] 🚀 Object pooling (projéteis/inimigos) + profiling
 - [ ] 🎮 Balanceamento fino
 
 ## M10 — Release / Infra 🟡

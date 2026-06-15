@@ -45,8 +45,67 @@ export class WorldManager {
     ground.receiveShadow = true;
     game.renderer.add(ground);
 
+    this._initInstancedProps();
     this._buildHub();
     game.renderer.setBiomeMood(BIOMES.clareira);
+  }
+
+  /**
+   * Pools de InstancedMesh para os props (tronco+folhas de árvore e rochas).
+   * Um draw call por tipo em vez de um por prop. Cores por bioma via
+   * instanceColor. Ver docs/adr/0015-performance.md.
+   */
+  _initInstancedProps() {
+    const cap = this.maxProps + 16;
+    this._dummy = new THREE.Object3D();
+    const mk = (geo) => {
+      const inst = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: 0.9 }), cap);
+      inst.castShadow = true;
+      inst.receiveShadow = true;
+      inst.frustumCulled = false; // instâncias espalhadas; evita sumiço por culling
+      this.game.renderer.add(inst);
+      return inst;
+    };
+    this.trunkInst = mk(new THREE.CylinderGeometry(0.25, 0.35, 2.2, 6));
+    this.leafInst = mk(new THREE.IcosahedronGeometry(1.2, 0));
+    this.rockInst = mk(new THREE.DodecahedronGeometry(0.8, 0));
+    this._freeTree = [];
+    this._freeRock = [];
+    for (let i = 0; i < cap; i++) {
+      this._freeTree.push(i);
+      this._freeRock.push(i);
+      this._hideInstance(this.trunkInst, i);
+      this._hideInstance(this.leafInst, i);
+      this._hideInstance(this.rockInst, i);
+    }
+    this._flushInstances();
+  }
+
+  _setInstance(inst, slot, x, y, z, rot, s, colorHex) {
+    this._dummy.position.set(x, y, z);
+    this._dummy.rotation.set(0, rot, 0);
+    this._dummy.scale.setScalar(s);
+    this._dummy.updateMatrix();
+    inst.setMatrixAt(slot, this._dummy.matrix);
+    if (colorHex !== undefined) {
+      this._tmpColor = this._tmpColor ?? new THREE.Color();
+      inst.setColorAt(slot, this._tmpColor.setHex(colorHex));
+    }
+  }
+
+  _hideInstance(inst, slot) {
+    this._dummy.position.set(0, -1000, 0);
+    this._dummy.scale.setScalar(0);
+    this._dummy.rotation.set(0, 0, 0);
+    this._dummy.updateMatrix();
+    inst.setMatrixAt(slot, this._dummy.matrix);
+  }
+
+  _flushInstances() {
+    for (const inst of [this.trunkInst, this.leafInst, this.rockInst]) {
+      inst.instanceMatrix.needsUpdate = true;
+      if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    }
   }
 
   _buildHub() {
@@ -69,28 +128,42 @@ export class WorldManager {
   _spawnProp(x, z, biome) {
     const { game } = this;
     const def = BIOMES[biome];
-    const id = game.world.createEntity();
-    const group = new THREE.Group();
-    if (this.rng.chance(0.7)) {
-      // Árvore
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 2.2, 6), new THREE.MeshStandardMaterial({ color: 0x4a3424 }));
-      trunk.position.y = 1.1; trunk.castShadow = true;
-      const leaves = new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 0), new THREE.MeshStandardMaterial({ color: def.propColor }));
-      leaves.position.y = 2.6; leaves.castShadow = true;
-      group.add(trunk); group.add(leaves);
+    const rot = this.rng() * Math.PI * 2;
+    let rec;
+    if (this.rng.chance(0.7) && this._freeTree.length) {
+      const slot = this._freeTree.pop();
+      const s = 0.8 + this.rng() * 0.5;
+      this._setInstance(this.trunkInst, slot, x, 1.1 * s, z, rot, s, 0x4a3424);
+      this._setInstance(this.leafInst, slot, x, 2.6 * s, z, rot, s, def.propColor);
+      const id = game.world.createEntity();
+      game.world.add(id, C.Transform, Transform(x, z));
       game.world.add(id, C.Collider, Collider(0.5, true));
+      rec = { id, x, z, type: 'tree', slot };
+    } else if (this._freeRock.length) {
+      const slot = this._freeRock.pop();
+      const s = 0.7 + this.rng() * 0.6;
+      this._setInstance(this.rockInst, slot, x, 0.5 * s, z, rot, s, 0x6b6b6b);
+      const id = game.world.createEntity();
+      game.world.add(id, C.Transform, Transform(x, z));
+      game.world.add(id, C.Collider, Collider(0.7 * s, true));
+      rec = { id, x, z, type: 'rock', slot };
     } else {
-      // Rocha
-      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8, 0), new THREE.MeshStandardMaterial({ color: 0x6b6b6b }));
-      rock.position.y = 0.5; rock.castShadow = true;
-      group.add(rock);
-      game.world.add(id, C.Collider, Collider(0.8, true));
+      return; // sem slot livre
     }
-    group.position.set(x, 0, z);
-    game.renderer.add(group);
-    game.world.add(id, C.Transform, Transform(x, z));
-    game.world.add(id, C.Renderable, { object3d: group, baseScale: 1, isProp: true });
-    this.props.push({ id, x, z });
+    this._flushInstances();
+    this.props.push(rec);
+  }
+
+  _despawnProp(rec) {
+    if (rec.type === 'tree') {
+      this._hideInstance(this.trunkInst, rec.slot);
+      this._hideInstance(this.leafInst, rec.slot);
+      this._freeTree.push(rec.slot);
+    } else {
+      this._hideInstance(this.rockInst, rec.slot);
+      this._freeRock.push(rec.slot);
+    }
+    this.game.world.destroyEntity(rec.id);
   }
 
   isExplored(x, z) {
@@ -121,16 +194,17 @@ export class WorldManager {
       game.emit('biomeChanged', { biome: b, def: BIOMES[b] });
     }
 
-    // Descartar props distantes.
+    // Descartar props distantes (libera o slot instanciado).
+    let despawned = false;
     for (let i = this.props.length - 1; i >= 0; i--) {
       const p = this.props[i];
       if (Math.hypot(p.x - c.x, p.z - c.z) > this.despawnRadius) {
-        const r = game.world.get(p.id, C.Renderable);
-        if (r) game.renderer.remove(r.object3d);
-        game.world.destroyEntity(p.id);
+        this._despawnProp(p);
         this.props.splice(i, 1);
+        despawned = true;
       }
     }
+    if (despawned) this._flushInstances();
 
     // Gerar props novos no anel ao redor do grupo (longe do hub).
     let guard = 0;

@@ -9,6 +9,7 @@ import { StoryManager } from '../src/gameplay/story.js';
 import { Sap } from '../src/core/ecs/components.js';
 import { applyEquipment } from '../src/gameplay/equip.js';
 import { serialize, apply } from '../src/gameplay/save.js';
+import { SpatialHash } from '../src/utils/SpatialHash.js';
 
 function stubGame(): any {
   const world = new World();
@@ -223,6 +224,26 @@ describe('Save/Load', () => {
     expect(fresh.world.get(fresh.pid, C.Inventory).essence).toBe(25);
     expect(fresh.world.get(fresh.pid, C.Loadout).weapon.name).toBe('Cajado Teste');
     expect(fresh.game.worldManager.explored.has('1,-5')).toBe(true);
+  });
+});
+
+describe('SpatialHash', () => {
+  it('retorna vizinhos próximos e exclui distantes', () => {
+    const g = new SpatialHash(4);
+    g.insert(1, 0, 0);
+    g.insert(2, 1, 1);
+    g.insert(3, 100, 100);
+    const near = g.queryRadius(0, 0, 2);
+    expect(near).toContain(1);
+    expect(near).toContain(2);
+    expect(near).not.toContain(3);
+  });
+
+  it('clear esvazia o índice', () => {
+    const g = new SpatialHash(4);
+    g.insert(1, 0, 0);
+    g.clear();
+    expect(g.queryRadius(0, 0, 5)).toEqual([]);
   });
 });
 
