@@ -1,0 +1,33 @@
+{
+  "name": "druida",
+  "version": "0.0.1",
+  "description": "Action-RPG dungeon-crawler de mundo aberto inspirado em Minecraft Dungeons, sobre a classe Druida. Web, isométrico 2.5D, coop local.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .js",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "game",
+    "threejs",
+    "dungeon-crawler",
+    "action-rpg",
+    "coop",
+    "druid"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0"
+  }
+}
