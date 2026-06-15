@@ -1,4 +1,5 @@
 import { C } from '../core/ecs/components.js';
+import { kvGet, kvSet, kvDel } from './storage.js';
 
 /**
  * Save/load em localStorage. Persiste progresso de grupo, passo da história e,
@@ -74,28 +75,18 @@ export function apply(game, data) {
   return true;
 }
 
-export function saveToStorage(game) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(serialize(game)));
-    return true;
-  } catch {
-    return false;
-  }
+export async function saveToStorage(game) {
+  try { return await kvSet(KEY, serialize(game)); } catch { return false; }
 }
 
-export function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+export async function loadFromStorage() {
+  try { return await kvGet(KEY); } catch { return null; }
 }
 
-export function hasSave() {
-  try { return !!localStorage.getItem(KEY); } catch { return false; }
+export async function hasSave() {
+  try { return !!(await kvGet(KEY)); } catch { return false; }
 }
 
-export function clearSave() {
-  try { localStorage.removeItem(KEY); } catch { /* noop */ }
+export async function clearSave() {
+  try { await kvDel(KEY); } catch { /* noop */ }
 }

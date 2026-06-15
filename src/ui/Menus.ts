@@ -105,13 +105,15 @@ export class Menus {
       <h1>🌿 Druida</h1>
       <p class="sub">Um dungeon-crawler de mundo aberto · classe Druida · coop local</p>
       <button class="btn" id="m-new" style="text-align:center">🌱 Novo jogo</button>
-      <button class="btn" id="m-cont" style="text-align:center" ${hasSave() ? '' : 'disabled'}>📖 Continuar</button>
+      <button class="btn" id="m-cont" style="text-align:center" disabled>📖 Continuar</button>
       <p class="sub" style="margin-top:14px">WASD mover · Mouse mirar · Clique atacar · 5–9 formas · U/I/O artefatos · Shift esquivar · E interagir · B inventário · Esc pausar</p>
     </div>`;
     this.main.classList.add('show');
     this.main.querySelector('#m-new').onclick = () => { this.main.classList.remove('show'); this.game.menuMain = false; this.game.paused = false; onNew(); };
     const cont = this.main.querySelector('#m-cont');
-    if (!cont.disabled) cont.onclick = () => { this.main.classList.remove('show'); this.game.menuMain = false; this.game.paused = false; onContinue(); };
+    cont.onclick = () => { if (cont.disabled) return; this.main.classList.remove('show'); this.game.menuMain = false; this.game.paused = false; onContinue(); };
+    // Save é assíncrono (IndexedDB): habilita "Continuar" quando confirmado.
+    hasSave().then((has) => { if (has) cont.disabled = false; });
   }
 
   // --- Pausa ---------------------------------------------------------------
@@ -128,8 +130,9 @@ export class Menus {
       <button class="btn" id="p-controls" style="text-align:center">🎮 Controles</button>
     </div>`;
     this.pause.querySelector('#p-resume').onclick = () => this.togglePause();
-    this.pause.querySelector('#p-save').onclick = (ev) => {
-      const ok = saveToStorage(this.game);
+    this.pause.querySelector('#p-save').onclick = async (ev) => {
+      ev.target.textContent = 'Salvando…';
+      const ok = await saveToStorage(this.game);
       ev.target.textContent = ok ? '✓ Salvo!' : '✗ Erro ao salvar';
     };
     this.pause.querySelector('#p-mute').onclick = (ev) => {

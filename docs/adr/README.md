@@ -28,3 +28,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0021](0021-type-hardening.md) | Endurecimento dos tipos | Aceito |
 | [0022](0022-dungeons.md) | Masmorras instanciadas | Aceito |
 | [0023](0023-rebind.md) | Rebind de controles (P1) | Aceito |
+| [0024](0024-indexeddb-save.md) | Save em IndexedDB (com fallback) | Aceito |
