@@ -32,3 +32,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0025](0025-particle-pool.md) | Object pooling de partículas | Aceito |
 | [0026](0026-shared-orb-resources.md) | Geometria/material compartilhados em orbes | Aceito |
 | [0027](0027-ci-coverage.md) | Cobertura no CI com comentário fixo no PR | Aceito |
+| [0028](0028-e2e-cypress.md) | E2E com Cypress + evidência visual no PR | Aceito |
