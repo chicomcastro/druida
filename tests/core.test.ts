@@ -11,6 +11,7 @@ import { applyEquipment } from '../src/gameplay/equip.js';
 import { serialize, apply } from '../src/gameplay/save.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
+import { EventManager } from '../src/world/EventManager.js';
 
 function stubGame(): any {
   const world = new World();
@@ -263,6 +264,33 @@ describe('POIs (acampamentos)', () => {
     for (const id of members) game.emit('kill', { id });
     expect(poi.camps[0].cleared).toBe(true);
     expect(poi.cleared.has('t')).toBe(true);
+  });
+});
+
+describe('Eventos dinâmicos', () => {
+  it('Espírito do Tesouro solta loot extra ao ser abatido', () => {
+    const world = new World();
+    const game: any = {
+      world, seed: 3, groupCenter: { x: 0, z: 0 },
+      renderer: { add() {}, remove() {} },
+      camera: { addShake() {} },
+      regionLevel: () => 1,
+      progress: { level: 1 },
+      on: (e, fn) => world.on(e, fn),
+      emit: (e, p) => world.emit(e, p),
+      _scaleEnemy: (d) => d,
+      spawnEnemyByKey: () => 0,
+    };
+    const ev = new EventManager(game);
+    ev._treasure({ x: 0, z: 0 });
+    const bounty = [...world.query(C.Bounty)];
+    expect(bounty.length).toBe(1);
+    const bountyId = bounty[0][0];
+
+    const before = [...world.query(C.Pickup)].length;
+    game.emit('kill', { id: bountyId, x: 0, z: 0 });
+    const after = [...world.query(C.Pickup)].length;
+    expect(after).toBeGreaterThan(before);
   });
 });
 
