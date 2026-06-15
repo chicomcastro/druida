@@ -49,8 +49,13 @@ export class Menus {
 
     addEventListener('keydown', (e) => {
       if (game.menuMain) return; // bloqueia até iniciar
-      if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();
-      else if (e.code === 'KeyB' || e.code === 'Tab') { e.preventDefault(); this.toggleInventory(); }
+      const mapOpen = this.game.worldMap?.wrap.style.display === 'flex';
+      if (e.code === 'KeyM' && !this.pause.classList.contains('show') && !this.inv.classList.contains('show')) {
+        this.game.worldMap.toggle();
+      } else if (e.code === 'Escape' && mapOpen) {
+        this.game.worldMap.toggle();
+      } else if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();
+      else if ((e.code === 'KeyB' || e.code === 'Tab') && !mapOpen) { e.preventDefault(); this.toggleInventory(); }
       else if (e.code === 'KeyT' && !this.game.paused) this.game.recallToHub();
     });
   }

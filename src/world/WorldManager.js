@@ -33,6 +33,10 @@ export class WorldManager {
     this.despawnRadius = 48;
     this.maxProps = 90;
 
+    // Fog of war: células de grade exploradas (revela ao redor do grupo).
+    this.fogCell = 14;
+    this.explored = new Set();
+
     // Chão grande recolorido conforme o bioma.
     this.groundMat = new THREE.MeshStandardMaterial({ color: BIOMES.clareira.ground, roughness: 1 });
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), this.groundMat);
@@ -88,9 +92,24 @@ export class WorldManager {
     this.props.push({ id, x, z });
   }
 
+  isExplored(x, z) {
+    const cx = Math.round(x / this.fogCell);
+    const cz = Math.round(z / this.fogCell);
+    return this.explored.has(`${cx},${cz}`);
+  }
+
+  _revealAround(x, z) {
+    const cx = Math.round(x / this.fogCell);
+    const cz = Math.round(z / this.fogCell);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) this.explored.add(`${cx + dx},${cz + dz}`);
+    }
+  }
+
   update(dt) {
     const { game } = this;
     const c = game.groupCenter ?? { x: 0, z: 0 };
+    this._revealAround(c.x, c.z);
 
     // Bioma atual -> clima/cor.
     const b = biomeAt(c.x, c.z);

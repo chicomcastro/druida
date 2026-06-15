@@ -183,6 +183,7 @@ describe('Save/Load', () => {
       seed: 7,
       progress: { xp: 10, level: 5, enchantPoints: 0 },
       story: { step: 3, kills: 2, _spawned: { miniboss: true } },
+      worldManager: { explored: new Set(['0,0', '1,-5']) },
       equip(id, item, slot = null) {
         const lo = world.get(id, C.Loadout);
         const eq = world.get(id, C.Equipment);
@@ -212,6 +213,7 @@ describe('Save/Load', () => {
     const fresh = saveGame();
     fresh.game.progress = { xp: 0, level: 1, enchantPoints: 0 };
     fresh.game.story = { step: 0, kills: 0, _spawned: {} };
+    fresh.game.worldManager.explored = new Set();
     const ok = apply(fresh.game, data);
 
     expect(ok).toBe(true);
@@ -220,6 +222,7 @@ describe('Save/Load', () => {
     expect(fresh.world.get(fresh.pid, C.Form).list).toContain('bear');
     expect(fresh.world.get(fresh.pid, C.Inventory).essence).toBe(25);
     expect(fresh.world.get(fresh.pid, C.Loadout).weapon.name).toBe('Cajado Teste');
+    expect(fresh.game.worldManager.explored.has('1,-5')).toBe(true);
   });
 });
 
