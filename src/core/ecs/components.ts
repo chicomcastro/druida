@@ -32,6 +32,7 @@ export const C = {
   Interactable: 'Interactable',
   Knockback: 'Knockback',
   Tint: 'Tint',
+  CampMember: 'CampMember',
 };
 
 export const Factions = { PLAYER: 'player', ENEMY: 'enemy', NEUTRAL: 'neutral' };

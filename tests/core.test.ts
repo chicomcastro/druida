@@ -10,6 +10,7 @@ import { Sap } from '../src/core/ecs/components.js';
 import { applyEquipment } from '../src/gameplay/equip.js';
 import { serialize, apply } from '../src/gameplay/save.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
+import { PoiManager } from '../src/world/PoiManager.js';
 
 function stubGame(): any {
   const world = new World();
@@ -228,6 +229,40 @@ describe('Save/Load', () => {
     expect(fresh.game.sharedChest[0].name).toBe('Manto Guardado');
     expect(fresh.world.get(fresh.pid, C.Loadout).weapon.name).toBe('Cajado Teste');
     expect(fresh.game.worldManager.explored.has('1,-5')).toBe(true);
+  });
+});
+
+describe('POIs (acampamentos)', () => {
+  it('ativa ao aproximar, limpa ao matar os guardas e fica purificado', () => {
+    const world = new World();
+    const game: any = {
+      world, seed: 1,
+      groupCenter: { x: 0, z: 0 },
+      renderer: { add() {}, remove() {} },
+      camera: { addShake() {} },
+      regionLevel: () => 1,
+      on: (e, fn) => world.on(e, fn),
+      emit: (e, p) => world.emit(e, p),
+      spawnEnemyByKey: (key, x, z) => {
+        const id = world.createEntity();
+        world.add(id, C.Health, Health(10));
+        world.add(id, C.Faction, Faction(Factions.ENEMY));
+        world.add(id, C.Transform, Transform(x, z));
+        return id;
+      },
+    };
+    const poi = new PoiManager(game);
+    poi.camps = [{ id: 't', x: 0, z: 0, biome: 'clareira', active: false, cleared: false, remaining: 0, mesh: null }];
+
+    poi.update();
+    expect(poi.camps[0].active).toBe(true);
+    const members = [...world.query(C.CampMember)].map((t) => t[0]);
+    expect(members.length).toBe(poi.camps[0].remaining);
+    expect(members.length).toBeGreaterThan(0);
+
+    for (const id of members) game.emit('kill', { id });
+    expect(poi.camps[0].cleared).toBe(true);
+    expect(poi.cleared.has('t')).toBe(true);
   });
 });
 
