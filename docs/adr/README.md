@@ -21,3 +21,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0014](0014-typescript.md) | Migração para TypeScript | Aceito |
 | [0015](0015-performance.md) | Performance: spatial hash + InstancedMesh | Aceito |
 | [0016](0016-hub-economy.md) | Economia do hub: mercador e baú | Aceito |
+| [0017](0017-pois-collectibles.md) | POIs (acampamentos) e colhíveis | Aceito |

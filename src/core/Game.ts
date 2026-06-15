@@ -20,6 +20,7 @@ import { renderSyncSystem } from '../systems/render.js';
 import { VfxManager } from '../systems/vfx.js';
 
 import { WorldManager } from '../world/WorldManager.js';
+import { PoiManager } from '../world/PoiManager.js';
 import { buildLandmarks } from '../world/landmarks.js';
 import { StoryManager } from '../gameplay/story.js';
 import { Hud } from '../ui/Hud.js';
@@ -68,6 +69,7 @@ export class Game {
     this._bindEvents();
 
     this.worldManager = new WorldManager(this);
+    this.poi = new PoiManager(this);
     this.story = new StoryManager(this);
     this.hud = new Hud(this);
     this.menus = new Menus(this);
@@ -90,6 +92,7 @@ export class Game {
       spawnerSystem,
       (g, dt) => g.worldManager.update(dt),
       (g) => g.story.update(),
+      (g) => g.poi.update(),
       (g, dt) => g.vfx.update(dt),
       idleRegenSystem,
     ];

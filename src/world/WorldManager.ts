@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { C, Transform, Collider } from '../core/ecs/components.js';
 import { BIOMES } from '../data/biomes.js';
 import { makeRng } from '../utils/math.js';
+import { createLootOrb } from '../entities/factories.js';
 
 /**
  * Mundo aberto: zonas de bioma dispostas em anéis concêntricos a partir do
@@ -37,6 +38,10 @@ export class WorldManager {
     // Fog of war: células de grade exploradas (revela ao redor do grupo).
     this.fogCell = 14;
     this.explored = new Set();
+
+    // Colhíveis (fragmentos de essência espalhados pelo mundo).
+    this.shards = [];
+    this.maxShards = 12;
 
     // Chão grande recolorido conforme o bioma.
     this.groundMat = new THREE.MeshStandardMaterial({ color: BIOMES.clareira.ground, roughness: 1 });
@@ -215,6 +220,33 @@ export class WorldManager {
       const z = c.z + Math.cos(a) * rad;
       if (Math.hypot(x, z) < 8) continue; // mantém o hub limpo
       this._spawnProp(x, z, biomeAt(x, z));
+    }
+
+    this._updateShards(c);
+  }
+
+  _updateShards(c) {
+    const { game } = this;
+    // Remove colhidos (entidade não existe mais) e os muito distantes.
+    for (let i = this.shards.length - 1; i >= 0; i--) {
+      const s = this.shards[i];
+      if (!game.world.entities.has(s.id)) { this.shards.splice(i, 1); continue; }
+      if (Math.hypot(s.x - c.x, s.z - c.z) > this.despawnRadius + 12) {
+        const r = game.world.get(s.id, C.Renderable);
+        if (r) game.renderer.remove(r.object3d);
+        game.world.destroyEntity(s.id);
+        this.shards.splice(i, 1);
+      }
+    }
+    // Gera novos no anel, fora do hub.
+    if (this.shards.length < this.maxShards && this.rng.chance(0.04)) {
+      const a = this.rng() * Math.PI * 2;
+      const rad = 16 + this.rng() * (this.spawnRadius - 16);
+      const x = c.x + Math.sin(a) * rad;
+      const z = c.z + Math.cos(a) * rad;
+      if (Math.hypot(x, z) < 12) return;
+      const id = createLootOrb(game.world, game.renderer, { x, z, item: { essence: 4 + Math.floor(this.rng() * 4), rarityColor: 0x9fe06a } });
+      this.shards.push({ id, x, z });
     }
   }
 }

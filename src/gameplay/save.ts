@@ -32,6 +32,7 @@ export function serialize(game) {
     story: { step: game.story.step, kills: game.story.kills, spawned: { ...game.story._spawned } },
     fog: game.worldManager ? [...game.worldManager.explored] : [],
     chest: game.sharedChest ?? [],
+    camps: game.poi ? [...game.poi.cleared] : [],
     players,
   };
 }
@@ -44,6 +45,10 @@ export function apply(game, data) {
   game.story._spawned = { ...(data.story.spawned ?? {}) };
   if (data.fog && game.worldManager) game.worldManager.explored = new Set(data.fog);
   if (data.chest) game.sharedChest = data.chest;
+  if (data.camps && game.poi) {
+    game.poi.cleared = new Set(data.camps);
+    for (const camp of game.poi.camps) if (game.poi.cleared.has(camp.id)) camp.cleared = true;
+  }
 
   for (const [id, pc] of game.world.query(C.PlayerControlled)) {
     const sp = data.players.find((p) => p.index === pc.index);
