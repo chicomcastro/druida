@@ -13,6 +13,42 @@ export function buildLandmarks(game) {
   buildSanctuary(game, LANDMARKS.sanctuary_bear, 'bear');
   buildSanctuary(game, LANDMARKS.sanctuary_raven, 'raven');
   buildSanctuary(game, LANDMARKS.sanctuary_frog, 'frog');
+  buildMerchant(game, { x: -6, z: -8 });
+  buildChest(game, { x: 6, z: -8 });
+}
+
+function buildMerchant(game, pos) {
+  const g = new THREE.Group();
+  const robe = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.6, 8), new THREE.MeshStandardMaterial({ color: 0xb8863f }));
+  robe.position.y = 0.8; robe.castShadow = true;
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshStandardMaterial({ color: 0xe8d0a8 }));
+  head.position.y = 1.7;
+  const stall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 1.0), new THREE.MeshStandardMaterial({ color: 0x7a4a2a }));
+  stall.position.set(0, 1.0, 0.9);
+  g.add(robe); g.add(head); g.add(stall);
+  g.position.set(pos.x, 0, pos.z);
+  game.renderer.add(g);
+  const id = game.world.createEntity();
+  game.world.add(id, C.Transform, Transform(pos.x, pos.z));
+  game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
+  game.world.add(id, C.Collider, Collider(0.6, true));
+  game.world.add(id, C.Interactable, { kind: 'merchant', prompt: 'E — Mercador', range: 3, used: false });
+}
+
+function buildChest(game, pos) {
+  const g = new THREE.Group();
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.7, 0.7), new THREE.MeshStandardMaterial({ color: 0x8a5a2a }));
+  box.position.y = 0.45; box.castShadow = true;
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.2, 0.75), new THREE.MeshStandardMaterial({ color: 0xc8a23a }));
+  lid.position.y = 0.85;
+  g.add(box); g.add(lid);
+  g.position.set(pos.x, 0, pos.z);
+  game.renderer.add(g);
+  const id = game.world.createEntity();
+  game.world.add(id, C.Transform, Transform(pos.x, pos.z));
+  game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
+  game.world.add(id, C.Collider, Collider(0.6, true));
+  game.world.add(id, C.Interactable, { kind: 'chest', prompt: 'E — Baú compartilhado', range: 3, used: false });
 }
 
 function buildNpc(game, pos) {

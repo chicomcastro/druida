@@ -57,6 +57,8 @@ export class Game {
     this.groupCenter = { x: 0, z: 0 };
     this.groupSpread = 0;
     this.checkpoint = { x: 0, z: -6 };
+    this.sharedChest = []; // baú compartilhado (itens)
+    this.shopStock = null; // estoque do mercador (lazy)
     this._scheduled = [];
     this._assignedPads = new Set();
     this.dt = 1 / 60;
@@ -122,12 +124,18 @@ export class Game {
     this.on('itemPickup', (e) => {
       // Auto-equipa se o slot estiver vazio (qualidade de vida no protótipo).
       const loadout = this.world.get(e.id, C.Loadout);
-      const eq = this.world.get(e.id, C.Equipment);
-      if (e.item.type === 'weapon' && !loadout.weapon) this.equip(e.id, e.item);
-      else if (e.item.type === 'armor' && !loadout.armor) this.equip(e.id, e.item);
+      let equipped = false;
+      if (e.item.type === 'weapon' && !loadout.weapon) { this.equip(e.id, e.item); equipped = true; }
+      else if (e.item.type === 'armor' && !loadout.armor) { this.equip(e.id, e.item); equipped = true; }
       else if (e.item.type === 'artifact') {
         const slot = loadout.artifacts.findIndex((a) => !a);
-        if (slot >= 0) this.equip(e.id, e.item, slot);
+        if (slot >= 0) { this.equip(e.id, e.item, slot); equipped = true; }
+      }
+      // Evita duplicar: se auto-equipou, remove da mochila.
+      if (equipped) {
+        const inv = this.world.get(e.id, C.Inventory);
+        const i = inv?.items.indexOf(e.item);
+        if (i >= 0) inv.items.splice(i, 1);
       }
     });
 
@@ -305,6 +313,39 @@ export class Game {
     let e = 0;
     for (const [, inv] of this.world.query(C.Inventory)) e += inv.essence;
     return e;
+  }
+
+  /** Gasta essência do grupo (deduz das mochilas em ordem). */
+  spendEssence(amount) {
+    if (this.partyEssence() < amount) return false;
+    let left = amount;
+    for (const [, inv] of this.world.query(C.Inventory)) {
+      if (left <= 0) break;
+      const take = Math.min(inv.essence, left);
+      inv.essence -= take;
+      left -= take;
+    }
+    return true;
+  }
+
+  /** Adiciona um item à mochila do jogador 1 (alvo de compras/saques). */
+  giveItem(item) {
+    for (const [id, pc] of this.world.query(C.PlayerControlled, C.Inventory)) {
+      if (pc.index === 0) { this.world.get(id, C.Inventory).items.push(item); return true; }
+    }
+    return false;
+  }
+
+  /** (Re)gera o estoque do mercador: itens no nível da região + preço. */
+  rerollShop() {
+    const lvl = this.regionLevel();
+    const price = { common: 12, rare: 30, unique: 70 };
+    this.shopStock = [];
+    for (let i = 0; i < 4; i++) {
+      const it = generateItem(lvl);
+      this.shopStock.push({ item: it, price: Math.round((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
+    }
+    return this.shopStock;
   }
 
   // --- Loop ---------------------------------------------------------------

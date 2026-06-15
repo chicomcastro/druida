@@ -46,10 +46,21 @@ export class Menus {
     this.main = this._make('menu-main');
     this.pause = this._make('menu-pause');
     this.inv = this._make('menu-inv');
-    document.body.append(this.main, this.pause, this.inv);
+    this.shop = this._make('menu-shop');
+    this.stash = this._make('menu-stash');
+    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash);
 
     addEventListener('keydown', (e) => {
       if (game.menuMain) return; // bloqueia até iniciar
+      // Loja/baú: E, F ou Esc fecham.
+      if (this.shop.classList.contains('show')) {
+        if (['Escape', 'KeyE', 'KeyF'].includes(e.code)) this.closeShop();
+        return;
+      }
+      if (this.stash.classList.contains('show')) {
+        if (['Escape', 'KeyE', 'KeyF'].includes(e.code)) this.closeStash();
+        return;
+      }
       const mapOpen = this.game.worldMap?.wrap.style.display === 'flex';
       if (e.code === 'KeyM' && !this.pause.classList.contains('show') && !this.inv.classList.contains('show')) {
         this.game.worldMap.toggle();
@@ -225,5 +236,96 @@ export class Menus {
     inv.items.splice(i, 1);
     inv.essence += salvageValue(item);
     this.refreshInventory();
+  }
+
+  // --- Mercador ------------------------------------------------------------
+  openShop() {
+    if (this.game.paused) return;
+    if (!this.game.shopStock) this.game.rerollShop();
+    this.shop.classList.add('show');
+    this.game.paused = true;
+    this.refreshShop();
+  }
+
+  refreshShop() {
+    const essence = this.game.partyEssence();
+    const rows = this.game.shopStock.map((s, i) => {
+      const it = s.item;
+      const afford = essence >= s.price;
+      const stat = it.type === 'weapon' ? `dano ${it.damage} · ${it.element}` : it.type === 'armor' ? `arm ${(it.armor * 100) | 0}%` : 'artefato';
+      return `<div class="it" style="cursor:default"><span><span class="dot" style="background:${RCOLOR[it.rarity]}"></span>${it.name} <span class="sub">${stat}</span></span>
+        <button class="mini" data-buy="${i}" ${afford ? '' : 'disabled'}>${s.price} ✦</button></div>`;
+    }).join('');
+    this.shop.innerHTML = `<div class="panel">
+      <span class="close" id="sh-close">✕ (E/Esc)</span>
+      <h2>🪙 Mercador</h2>
+      <p class="sub">Essência do grupo: <b>${essence}</b> ✦</p>
+      <div class="items" style="min-width:380px">${rows}</div>
+      <button class="btn" id="sh-reroll" style="text-align:center;margin-top:10px" ${essence >= 5 ? '' : 'disabled'}>🔄 Renovar estoque (5 ✦)</button>
+    </div>`;
+    this.shop.querySelector('#sh-close').onclick = () => this.closeShop();
+    this.shop.querySelector('#sh-reroll').onclick = () => {
+      if (this.game.spendEssence(5)) { this.game.rerollShop(); this.refreshShop(); }
+    };
+    this.shop.querySelectorAll('.mini[data-buy]').forEach((el) => {
+      el.onclick = () => this._buy(+el.dataset.buy);
+    });
+  }
+
+  _buy(i) {
+    const s = this.game.shopStock[i];
+    if (!s || !this.game.spendEssence(s.price)) return;
+    this.game.giveItem(s.item);
+    this.game.shopStock.splice(i, 1);
+    this.refreshShop();
+  }
+
+  closeShop() {
+    this.shop.classList.remove('show');
+    this.game.paused = false;
+  }
+
+  // --- Baú compartilhado ---------------------------------------------------
+  openStash() {
+    if (this.game.paused) return;
+    this.stash.classList.add('show');
+    this.game.paused = true;
+    this.refreshStash();
+  }
+
+  _p1Inv() {
+    for (const [id, pc] of this.game.world.query(C.PlayerControlled)) if (pc.index === 0) return this.game.world.get(id, C.Inventory);
+    return null;
+  }
+
+  refreshStash() {
+    const inv = this._p1Inv();
+    const chest = this.game.sharedChest;
+    const itemRow = (it, attr) => {
+      const stat = it.type === 'weapon' ? `dano ${it.damage}` : it.type === 'armor' ? `arm ${(it.armor * 100) | 0}%` : 'artefato';
+      return `<div class="it" ${attr}><span><span class="dot" style="background:${RCOLOR[it.rarity]}"></span>${it.name}</span><span class="sub">${stat}</span></div>`;
+    };
+    this.stash.innerHTML = `<div class="panel">
+      <span class="close" id="st-close">✕ (E/Esc)</span>
+      <h2>📦 Baú compartilhado</h2>
+      <div class="inv">
+        <div><div class="lbl" style="margin-bottom:4px">Mochila (P1) — clique para guardar</div>
+          <div class="items" id="st-bag">${inv.items.length ? inv.items.map((it, i) => itemRow(it, `data-dep="${i}"`)).join('') : '<div class="sub">Vazia.</div>'}</div></div>
+        <div><div class="lbl" style="margin-bottom:4px">Baú — clique para retirar</div>
+          <div class="items" id="st-chest">${chest.length ? chest.map((it, i) => itemRow(it, `data-wd="${i}"`)).join('') : '<div class="sub">Vazio.</div>'}</div></div>
+      </div>
+    </div>`;
+    this.stash.querySelector('#st-close').onclick = () => this.closeStash();
+    this.stash.querySelectorAll('.it[data-dep]').forEach((el) => {
+      el.onclick = () => { chest.push(inv.items.splice(+el.dataset.dep, 1)[0]); this.refreshStash(); };
+    });
+    this.stash.querySelectorAll('.it[data-wd]').forEach((el) => {
+      el.onclick = () => { inv.items.push(chest.splice(+el.dataset.wd, 1)[0]); this.refreshStash(); };
+    });
+  }
+
+  closeStash() {
+    this.stash.classList.remove('show');
+    this.game.paused = false;
   }
 }
