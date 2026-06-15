@@ -1,0 +1,72 @@
+name: E2E
+
+on:
+  pull_request:
+
+permissions:
+  contents: write # publica screenshots numa branch
+  pull-requests: write # comentário fixo
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+
+      - name: Cypress (Chrome + SwiftShader)
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          start: npm run preview
+          wait-on: 'http://localhost:4173'
+          wait-on-timeout: 90
+
+      - name: Upload screenshots (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: warn
+
+      # Publica as capturas numa branch dedicada para embedar inline no PR.
+      - name: Publish screenshots to branch
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: screenshots
+          publish_dir: ./cypress/screenshots
+          destination_dir: pr-${{ github.event.pull_request.number }}
+          keep_files: true
+          commit_message: 'screenshots: PR #${{ github.event.pull_request.number }} @ ${{ github.sha }}'
+
+      - name: Sticky comment com evidências visuais
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: e2e-screenshots
+          message: |
+            ## 📸 Evidências visuais (e2e)
+            Capturas desta versão (atualizadas a cada push) — commit `${{ github.sha }}`.
+
+            | Tela | |
+            |---|---|
+            | **Menu principal** | ![](https://raw.githubusercontent.com/${{ github.repository }}/screenshots/pr-${{ github.event.pull_request.number }}/smoke.cy.ts/01-menu-principal.png?v=${{ github.sha }}) |
+            | **HUD (em jogo)** | ![](https://raw.githubusercontent.com/${{ github.repository }}/screenshots/pr-${{ github.event.pull_request.number }}/smoke.cy.ts/02-hud-inicial.png?v=${{ github.sha }}) |
+            | **Inventário/Encantamento** | ![](https://raw.githubusercontent.com/${{ github.repository }}/screenshots/pr-${{ github.event.pull_request.number }}/smoke.cy.ts/03-inventario.png?v=${{ github.sha }}) |
+            | **Mapa-mundi** | ![](https://raw.githubusercontent.com/${{ github.repository }}/screenshots/pr-${{ github.event.pull_request.number }}/smoke.cy.ts/04-mapa-mundi.png?v=${{ github.sha }}) |
+            | **Diálogo** | ![](https://raw.githubusercontent.com/${{ github.repository }}/screenshots/pr-${{ github.event.pull_request.number }}/smoke.cy.ts/05-dialogo.png?v=${{ github.sha }}) |
+            | **Pausa** | ![](https://raw.githubusercontent.com/${{ github.repository }}/screenshots/pr-${{ github.event.pull_request.number }}/smoke.cy.ts/06-pausa.png?v=${{ github.sha }}) |
+
+            <sub>Geradas pelo workflow E2E (Cypress). Artifact completo disponível na run.</sub>
