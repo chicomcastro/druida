@@ -20,14 +20,29 @@ A aposta de design maior: **cada jogo da série gira em torno de uma única clas
 | [`docs/technical-architecture.md`](docs/technical-architecture.md) | Stack, estrutura de pastas, sistemas (ECS), pipeline de assets, performance |
 | [`docs/backlog.md`](docs/backlog.md) | Épicos, milestones (M0–M10) e tarefas acionáveis |
 
-## 🚀 Começando (scaffold)
-
-> ⚠️ Scaffold inicial (M0). Ainda **não foi instalado/rodado** neste ambiente — é o ponto de partida descrito no backlog.
+## 🚀 Começando
 
 ```bash
 npm install
-npm run dev
+npm run dev      # abre o jogo no navegador
+npm test         # roda a suíte de testes (Vitest)
+npm run build    # build de produção
 ```
+
+### 🎮 Controles (P1 teclado/mouse)
+
+| Ação | Tecla |
+|------|-------|
+| Mover | `WASD` / setas |
+| Mirar | Mouse |
+| Atacar / conjurar | Clique esq. / `J` / `Espaço` |
+| Esquivar (i-frames) | `Shift` |
+| Artefatos | `U` `I` `O` (ou `1` `2` `3`) |
+| Trocar de forma | `5`–`9` (Druida/Lobo/Urso/Corvo/Sapo) |
+| Interagir | `E` / `F` · Inventário `B` · Pausar `Esc` |
+
+**Coop:** jogadores 2–4 entram apertando qualquer botão num gamepad
+(same-screen, câmera de grupo com zoom dinâmico).
 
 ## 🧱 Stack
 

@@ -1,0 +1,38 @@
+/** Catálogo de inimigos (data-driven). Ver docs/adr/0007-content-data.md. */
+export const ENEMIES = {
+  rotboar: {
+    name: 'Javali Apodrecido', mesh: 'rotboar', behavior: 'melee',
+    hp: 34, speed: 3.4, damage: 9, radius: 0.55, aggroRange: 16, attackRange: 1.5,
+    attackCooldown: 1.3, xp: 6, loot: { dropChance: 0.22 },
+  },
+  shadecrow: {
+    name: 'Corvo-Sombra', mesh: 'shadecrow', behavior: 'ranged',
+    hp: 18, speed: 3.0, damage: 7, radius: 0.4, aggroRange: 17, attackRange: 9,
+    attackCooldown: 1.8, projectileColor: 0x6a3a7a, xp: 7, loot: { dropChance: 0.24 },
+  },
+  fungling: {
+    name: 'Fungo Explosivo', mesh: 'fungling', behavior: 'exploder',
+    hp: 14, speed: 4.2, damage: 16, radius: 0.45, aggroRange: 18, attackRange: 1.3,
+    attackCooldown: 0.1, xp: 5, loot: { dropChance: 0.18 },
+  },
+  husk: {
+    name: 'Casca Oca', mesh: 'husk', behavior: 'melee',
+    hp: 70, speed: 2.2, damage: 14, radius: 0.6, scale: 1.15, aggroRange: 15, attackRange: 1.7,
+    attackCooldown: 1.7, xp: 12, loot: { dropChance: 0.34 },
+  },
+  shaman: {
+    name: 'Xamã Corrompido', mesh: 'shaman', behavior: 'summoner',
+    hp: 55, speed: 2.6, damage: 6, radius: 0.5, aggroRange: 18, attackRange: 10,
+    attackCooldown: 4.5, summon: 'rotboar', xp: 18, loot: { dropChance: 0.5 },
+  },
+};
+
+/** Chefe da campanha — fases em escala. */
+export const BOSSES = {
+  rotlord: {
+    name: 'O Apodrecedor', mesh: 'rotlord', behavior: 'melee', boss: true,
+    hp: 900, speed: 2.4, damage: 22, radius: 1.6, scale: 1.0,
+    aggroRange: 40, attackRange: 3.0, attackCooldown: 1.6, xp: 300,
+    loot: { dropChance: 1 },
+  },
+};
