@@ -26,7 +26,18 @@ export function biomeAt(x, z) {
 }
 
 export class WorldManager {
-  [key: string]: any;
+  game: any;
+  rng: any;
+  currentBiome: string;
+  props: any[]; shards: any[];
+  spawnRadius: number; despawnRadius: number; maxProps: number; maxShards: number;
+  fogCell: number;
+  explored: Set<string>;
+  groundMat: any;
+  _dummy: any; _tmpColor?: any;
+  trunkInst: any; leafInst: any; rockInst: any;
+  _freeTree: number[]; _freeRock: number[];
+  _loreActive: Set<string>;
   constructor(game) {
     this.game = game;
     this.rng = makeRng(game.seed ?? 1337);
