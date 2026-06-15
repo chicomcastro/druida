@@ -254,6 +254,30 @@ export class Game {
     return { ...def, hp: Math.round(def.hp * hpMul), damage: Math.round(def.damage * dmgMul) };
   }
 
+  /** Fast-travel: recall do grupo ao hub, bloqueado se há inimigos por perto. */
+  recallToHub() {
+    const c = this.groupCenter ?? { x: 0, z: 0 };
+    for (const [, tr, fac, hp] of this.world.query(C.Transform, C.Faction, C.Health)) {
+      if (fac.team !== 'enemy' || hp.dead) continue;
+      const dx = tr.x - c.x, dz = tr.z - c.z;
+      if (dx * dx + dz * dz < 20 * 20) {
+        this.emit('objective', { text: 'Não dá para recuar com inimigos por perto!' });
+        return false;
+      }
+    }
+    const hub = { x: 0, z: -6 };
+    let i = 0;
+    for (const [, tr, pc, hp] of this.world.query(C.Transform, C.PlayerControlled, C.Health)) {
+      tr.x = hub.x + (i % 2 ? 1.5 : -1.5);
+      tr.z = hub.z + Math.floor(i / 2) * 1.5;
+      if (!pc.downed && !hp.dead) hp.invuln = Math.max(hp.invuln, 0.5);
+      i++;
+    }
+    this.emit('objective', { text: 'Você recuou para o Carvalho-Mãe.' });
+    this.emit('formSwap', { id: 0, form: 'humanoid', x: hub.x, z: hub.z });
+    return true;
+  }
+
   regionLevel() {
     const b = BIOMES[this.worldManager?.currentBiome ?? 'clareira'];
     return Math.max(1, Math.round((this.progress.level + (b?.level ?? 1)) / 2));

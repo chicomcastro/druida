@@ -51,6 +51,7 @@ export class Menus {
       if (game.menuMain) return; // bloqueia até iniciar
       if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();
       else if (e.code === 'KeyB' || e.code === 'Tab') { e.preventDefault(); this.toggleInventory(); }
+      else if (e.code === 'KeyT' && !this.game.paused) this.game.recallToHub();
     });
   }
 

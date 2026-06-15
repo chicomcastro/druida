@@ -60,7 +60,7 @@ export class Hud {
       <div id="hud-dialogue"></div>
       <div id="hud-toast"></div>
       <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
-      <div id="hud-hint">WASD mover · Mouse mirar · Clique atacar<br>5–9 trocar forma · U/I/O artefatos · Shift esquivar · E interagir · B inventário</div>`;
+      <div id="hud-hint">WASD mover · Mouse mirar · Clique atacar<br>5–9 trocar forma · U/I/O artefatos · Shift esquivar · E interagir · B inventário · T recuar ao hub</div>`;
     document.body.appendChild(this.root);
     this.objEl = this.root.querySelector('#hud-objective .o');
     this.promptEl = this.root.querySelector('#hud-prompt');

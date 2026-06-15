@@ -39,10 +39,34 @@ npm run build    # build de produção
 | Esquivar (i-frames) | `Shift` |
 | Artefatos | `U` `I` `O` (ou `1` `2` `3`) |
 | Trocar de forma | `5`–`9` (Druida/Lobo/Urso/Corvo/Sapo) |
-| Interagir | `E` / `F` · Inventário `B` · Pausar `Esc` |
+| Interagir | `E` / `F` |
+| Inventário/Encantamento | `B` / `Tab` |
+| Recuar ao hub (fast-travel) | `T` |
+| Pausar / Salvar | `Esc` |
 
 **Coop:** jogadores 2–4 entram apertando qualquer botão num gamepad
 (same-screen, câmera de grupo com zoom dinâmico).
+
+## ✅ Estado do protótipo
+
+Jogo jogável com **começo, meio e fim**, construído de forma autônoma a partir
+do backlog. Veja [`docs/backlog.md`](docs/backlog.md) para o estado detalhado.
+
+- **Pronto:** engine (ECS, loop, render iso), kit completo do Druida (Seiva, 5
+  formas, magias elementais, 8 artefatos, dodge), combate com status, loot e
+  encantamentos, mundo aberto com biomas radiais, coop local same-screen,
+  inimigos com IA, mini-chefe e chefe final com fases, **campanha completa**
+  (santuários desbloqueiam formas → confronto com O Apodrecedor → vitória),
+  menus, inventário/encantamento, minimapa, save/continuar, áudio e screen shake.
+- **Próximos:** mapa-mundi com fog of war, partículas/hit-stop, otimizações
+  (spatial hash, InstancedMesh), balanceamento fino, eventos dinâmicos.
+
+## 🌐 Deploy
+
+`vite build` gera um site estático em `dist/`. O workflow
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) publica no
+**GitHub Pages** a cada push na `main` — basta habilitar *Settings → Pages →
+Source = "GitHub Actions"*.
 
 ## 🧱 Stack
 
