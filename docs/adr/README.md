@@ -17,3 +17,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0010](0010-narrativa-campanha.md) | Narrativa e estrutura da campanha | Aceito |
 | [0011](0011-audio-procedural.md) | Áudio procedural (Web Audio) | Aceito |
 | [0012](0012-balance.md) | Balanceamento centralizado | Aceito |
+| [0013](0013-world-map.md) | Mapa-mundi com fog of war e fast-travel | Aceito |

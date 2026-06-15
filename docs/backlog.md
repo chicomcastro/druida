@@ -76,7 +76,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🗺️ Hub central (Carvalho-Mãe) como zona segura
 - [ ] 🗺️ Props via InstancedMesh (otimização)
 - [ ] 🗺️ Mercador + baú compartilhado no hub
-- [ ] 🗺️ Fast travel via santuários + mapa com fog of war
+- [x] 🗺️ Fast travel (mapa-mundi + recall ao hub) + fog of war
 - [ ] 🗺️ POIs: masmorras e acampamentos
 - [ ] 🗺️ Recursos colhíveis
 - [ ] 🗺️ Persistência de estado do mundo
@@ -116,7 +116,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🖥️ Inventário/equipamento + tela de encantamento (gastar pontos) + salvage
 - [x] 💾 Save/load (localStorage) com schema versionado
 - [x] 🖥️ Checkpoint/wipe (revive de grupo)
-- [ ] 🖥️ Tela de mapa-mundi navegável (fog of war)
+- [x] 🖥️ Tela de mapa-mundi navegável (fog of war) + fast-travel a marcos descobertos
 - [ ] 🖥️ Tutoriais/onboarding contextual
 - [ ] 🖥️ Rebind de controles · migração para IndexedDB
 

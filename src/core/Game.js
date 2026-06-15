@@ -25,6 +25,7 @@ import { StoryManager } from '../gameplay/story.js';
 import { Hud } from '../ui/Hud.js';
 import { Menus } from '../ui/Menus.js';
 import { Minimap } from '../ui/Minimap.js';
+import { WorldMap } from '../ui/WorldMap.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { BALANCE } from '../data/balance.js';
 import { BIOMES } from '../data/biomes.js';
@@ -68,6 +69,7 @@ export class Game {
     this.hud = new Hud(this);
     this.menus = new Menus(this);
     this.minimap = new Minimap(this);
+    this.worldMap = new WorldMap(this);
     this.menuMain = false;
     buildLandmarks(this);
 
@@ -261,27 +263,32 @@ export class Game {
     return { ...def, hp: Math.round(def.hp * hpMul), damage: Math.round(def.damage * dmgMul) };
   }
 
-  /** Fast-travel: recall do grupo ao hub, bloqueado se há inimigos por perto. */
+  /** Fast-travel ao hub (atalho do recall). */
   recallToHub() {
+    return this.fastTravelTo(0, -6, 'Carvalho-Mãe');
+  }
+
+  /** Fast-travel a um ponto, bloqueado se há inimigos por perto do grupo. */
+  fastTravelTo(x, z, label = 'destino') {
     const c = this.groupCenter ?? { x: 0, z: 0 };
     for (const [, tr, fac, hp] of this.world.query(C.Transform, C.Faction, C.Health)) {
       if (fac.team !== 'enemy' || hp.dead) continue;
       const dx = tr.x - c.x, dz = tr.z - c.z;
       if (dx * dx + dz * dz < 20 * 20) {
-        this.emit('objective', { text: 'Não dá para recuar com inimigos por perto!' });
+        this.emit('objective', { text: 'Não dá para viajar com inimigos por perto!' });
         return false;
       }
     }
-    const hub = { x: 0, z: -6 };
     let i = 0;
     for (const [, tr, pc, hp] of this.world.query(C.Transform, C.PlayerControlled, C.Health)) {
-      tr.x = hub.x + (i % 2 ? 1.5 : -1.5);
-      tr.z = hub.z + Math.floor(i / 2) * 1.5;
+      tr.x = x + (i % 2 ? 1.5 : -1.5);
+      tr.z = z + Math.floor(i / 2) * 1.5;
       if (!pc.downed && !hp.dead) hp.invuln = Math.max(hp.invuln, 0.5);
       i++;
     }
-    this.emit('objective', { text: 'Você recuou para o Carvalho-Mãe.' });
-    this.emit('formSwap', { id: 0, form: 'humanoid', x: hub.x, z: hub.z });
+    this.groupCenter = { x, z };
+    this.emit('objective', { text: `Viajou para: ${label}.` });
+    this.emit('vfxRing', { x, z, radius: 3, color: 0x9fe06a });
     return true;
   }
 
