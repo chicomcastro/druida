@@ -14,6 +14,7 @@ import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
 import { DungeonManager } from '../src/world/DungeonManager.js';
 import { keyLabel, loadBindings, DEFAULT_BINDINGS } from '../src/core/input/bindings.js';
+import { buildOrb } from '../src/entities/meshes.js';
 
 function stubGame(): any {
   const world = new World();
@@ -368,6 +369,20 @@ describe('Bindings (rebind)', () => {
       expect(Array.isArray(b[k])).toBe(true);
     }
     expect(b.attack).toContain('KeyJ');
+  });
+});
+
+describe('Orbe (projétil/loot) — recursos compartilhados', () => {
+  it('reusa geometria por raio e material por cor, e marca como shared', () => {
+    const a = buildOrb(0xff0000, 0.35);
+    const b = buildOrb(0xff0000, 0.35);
+    expect(a.geometry).toBe(b.geometry); // mesma geometria (mesmo raio)
+    expect(a.material).toBe(b.material); // mesmo material (mesma cor)
+    expect(a.userData.shared).toBe(true);
+
+    const c = buildOrb(0x00ff00, 0.35);
+    expect(c.material).not.toBe(a.material); // cor diferente -> material próprio
+    expect(c.geometry).toBe(a.geometry); // mesmo raio -> geometria compartilhada
   });
 });
 
