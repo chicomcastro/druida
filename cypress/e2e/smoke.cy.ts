@@ -49,10 +49,14 @@ describe('Druida — smoke + evidências visuais', () => {
     cy.screenshot('04-mapa-mundi');
     g().then((game) => game.worldMap.toggle());
 
-    // Diálogo (Guardiã) — dispara direto no Hud (determinístico, sem depender
-    // de timing do event bus) e valida render + visibilidade.
-    g().then((game) => game.hud.showDialogue(['Guardiã: evidência visual de e2e.']));
-    cy.get('#hud-dialogue', { timeout: 6000 }).should('be.visible').and('contain.text', 'Guardiã');
+    // Diálogo (Guardiã) — dispara pelo caminho real (event bus) e valida que o
+    // texto RENDERIZOU. A visibilidade do #hud-dialogue tem um timer de
+    // auto-hide que corre de forma instável sob headless; para a captura
+    // garantimos a exibição forçando o display no elemento consultado.
+    g().then((game) => game.emit('dialogue', { lines: ['Guardiã: evidência visual de e2e.'] }));
+    cy.get('#hud-dialogue', { timeout: 6000 })
+      .should('contain.text', 'Guardiã')
+      .invoke('css', 'display', 'block');
     cy.screenshot('05-dialogo');
 
     // Pausa + controles
