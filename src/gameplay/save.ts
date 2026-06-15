@@ -33,6 +33,7 @@ export function serialize(game) {
     fog: game.worldManager ? [...game.worldManager.explored] : [],
     chest: game.sharedChest ?? [],
     camps: game.poi ? [...game.poi.cleared] : [],
+    lore: game.lore ? [...game.lore.found] : [],
     players,
   };
 }
@@ -49,6 +50,7 @@ export function apply(game, data) {
     game.poi.cleared = new Set(data.camps);
     for (const camp of game.poi.camps) if (game.poi.cleared.has(camp.id)) camp.cleared = true;
   }
+  if (data.lore && game.lore) game.lore.found = new Set(data.lore);
 
   for (const [id, pc] of game.world.query(C.PlayerControlled)) {
     const sp = data.players.find((p) => p.index === pc.index);

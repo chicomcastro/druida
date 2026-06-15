@@ -62,6 +62,7 @@ export class Game {
     this.checkpoint = { x: 0, z: -6 };
     this.sharedChest = []; // baú compartilhado (itens)
     this.shopStock = null; // estoque do mercador (lazy)
+    this.lore = { found: new Set() }; // codex de lore descoberta
     this._scheduled = [];
     this._assignedPads = new Set();
     this.dt = 1 / 60;

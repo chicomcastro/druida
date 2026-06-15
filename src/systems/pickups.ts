@@ -27,7 +27,14 @@ export function pickupSystem(game, dt) {
 
 function collect(game, playerId, item) {
   const inv = game.world.get(playerId, C.Inventory);
-  if (item.essence) {
+  if (item.lore) {
+    if (!game.lore.found.has(item.lore.id)) {
+      game.lore.found.add(item.lore.id);
+      game.emit('dialogue', { lines: [`📜 ${item.lore.title}`, item.lore.text] });
+      game.emit('objective', { text: `Lore descoberta (${game.lore.found.size}) — codex no mapa` });
+    }
+    inv.essence += 3;
+  } else if (item.essence) {
     inv.essence += item.essence;
     game.emit('essence', { id: playerId, amount: item.essence });
   } else {
