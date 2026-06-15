@@ -124,7 +124,8 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 ## M9 — Áudio, polish e performance 🟡
 - [x] 🔊 Áudio procedural (SFX + drone ambiente por bioma) — ADR 0011
 - [x] 🎮 Game feel: screen shake + VFX (anéis, arcos, telegrafos)
-- [ ] 🎮 Hit-stop e partículas
+- [x] 🐛 Liberar meshes ao destruir entidades (evita vazamento de Object3D)
+- [x] 🎮 Hit-stop e partículas
 - [x] 🚀 Spatial hash para broadphase (colisão + projéteis) — ADR 0015
 - [x] 🚀 InstancedMesh para props — ADR 0015
 - [ ] 🚀 Object pooling (projéteis/inimigos) + profiling
