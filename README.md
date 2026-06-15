@@ -1,8 +1,11 @@
 # 🌿 Druida
 
+[![CI](https://github.com/chicomcastro/druida/actions/workflows/ci.yml/badge.svg)](https://github.com/chicomcastro/druida/actions/workflows/ci.yml)
+[![E2E](https://github.com/chicomcastro/druida/actions/workflows/e2e.yml/badge.svg)](https://github.com/chicomcastro/druida/actions/workflows/e2e.yml)
+
 > Um action-RPG / dungeon-crawler **de mundo aberto** inspirado amplamente em **Minecraft Dungeons**, com uma grande virada de conceito: **um jogo por classe**. Este primeiro jogo é sobre o **Druida** — natureza, magia elemental e transformação em animais.
 
-Web (JavaScript + Three.js), visual **isométrico 2.5D voxel**, **coop local same-screen**.
+Web (TypeScript + Three.js), visual **isométrico 2.5D voxel**, **coop local same-screen**.
 
 ---
 

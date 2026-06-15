@@ -33,3 +33,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0026](0026-shared-orb-resources.md) | Geometria/material compartilhados em orbes | Aceito |
 | [0027](0027-ci-coverage.md) | Cobertura no CI com comentário fixo no PR | Aceito |
 | [0028](0028-e2e-cypress.md) | E2E com Cypress + evidência visual no PR | Aceito |
+| [0029](0029-bundle-size-guard.md) | Guarda de tamanho de bundle no CI | Aceito |

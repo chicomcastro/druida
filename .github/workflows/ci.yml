@@ -28,6 +28,8 @@ jobs:
       - run: npm run lint
       - run: npm run test:coverage
       - run: npm run build
+      # Guarda de tamanho do bundle (falha se exceder o orçamento).
+      - run: npm run size
       # Comentário fixo (sticky) de cobertura no PR — atualiza a cada push.
       - name: Coverage report (sticky PR comment)
         if: ${{ github.event_name == 'pull_request' }}

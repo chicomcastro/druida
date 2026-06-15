@@ -139,6 +139,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🚀 Deploy estático (workflow GitHub Pages) + fast-travel ao hub (QoL)
 - [x] 🚀 CI: cobertura com comentário fixo no PR — ADR 0027
 - [x] 🚀 CI: e2e Cypress com evidência visual (capturas inline no PR) — ADR 0028
+- [x] 🚀 CI: guarda de tamanho de bundle (size-limit) + badges — ADR 0029
 - [ ] 🚀 Telemetria leve opcional
 - [ ] 🚀 Playtest coop + feedback
 - [x] 🚀 Pipeline de assets documentado (MagicaVoxel → glb) — `docs/asset-pipeline.md`
