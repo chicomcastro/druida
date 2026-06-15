@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.9",
-    "cypress": "^13.17.0",
+    "cypress": "^15.17.0",
     "eslint": "^9.0.0",
     "prettier": "^3.3.0",
     "typescript": "^5.9.3",
