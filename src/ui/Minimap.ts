@@ -6,7 +6,11 @@ import { LANDMARKS } from '../gameplay/story.js';
  * inimigos, santuários e o chefe num raio ao redor do centróide do grupo.
  */
 export class Minimap {
-  [key: string]: any;
+  game: any;
+  range: number;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+
   constructor(game) {
     this.game = game;
     this.range = 60; // unidades de mundo visíveis (raio)
