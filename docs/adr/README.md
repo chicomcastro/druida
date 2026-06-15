@@ -19,3 +19,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0012](0012-balance.md) | Balanceamento centralizado | Aceito |
 | [0013](0013-world-map.md) | Mapa-mundi com fog of war e fast-travel | Aceito |
 | [0014](0014-typescript.md) | Migração para TypeScript | Aceito |
+| [0015](0015-performance.md) | Performance: spatial hash + InstancedMesh | Aceito |

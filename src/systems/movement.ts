@@ -1,4 +1,5 @@
 import { C } from '../core/ecs/components.js';
+import { SpatialHash } from '../utils/SpatialHash.js';
 
 /**
  * Integra velocidade -> posição, aplica knockback e resolve colisão por
@@ -39,30 +40,42 @@ export function movementSystem(game, dt) {
 function resolveCollisions(game) {
   const { world } = game;
   const ents = [];
+  let maxR = 0.5;
   for (const [id, tr, col] of world.query(C.Transform, C.Collider)) {
     if (!col.solid) continue;
-    ents.push({ id, tr, col, fac: world.get(id, C.Faction)?.team });
+    ents.push({ id, tr, col, static: !world.has(id, C.Velocity) });
+    if (col.radius > maxR) maxR = col.radius;
   }
-  // O(n^2) é aceitável para a contagem do protótipo; trocar por spatial hash
-  // quando hordas crescerem (ver backlog M9).
-  for (let i = 0; i < ents.length; i++) {
-    for (let j = i + 1; j < ents.length; j++) {
-      const a = ents[i], b = ents[j];
+
+  // Broadphase com spatial hash (~O(n)); célula >= 2x o maior raio para que
+  // colisores próximos caiam em células vizinhas. Cada par é resolvido uma vez
+  // (id < otherId).
+  const grid = game._collisionGrid ?? (game._collisionGrid = new SpatialHash(Math.max(2, maxR * 2)));
+  grid.cell = Math.max(2, maxR * 2);
+  grid.clear();
+  const byId = new Map();
+  for (const e of ents) { grid.insert(e.id, e.tr.x, e.tr.z); byId.set(e.id, e); }
+
+  const scratch = [];
+  for (const a of ents) {
+    scratch.length = 0;
+    grid.queryRadius(a.tr.x, a.tr.z, a.col.radius + maxR, scratch);
+    for (const otherId of scratch) {
+      if (otherId <= a.id) continue; // resolve cada par uma vez
+      const b = byId.get(otherId);
+      if (!b) continue;
       const dx = b.tr.x - a.tr.x;
       const dz = b.tr.z - a.tr.z;
       const min = a.col.radius + b.col.radius;
-      let d2 = dx * dx + dz * dz;
+      const d2 = dx * dx + dz * dz;
       if (d2 >= min * min || d2 === 0) continue;
       const d = Math.sqrt(d2) || 0.0001;
       const overlap = (min - d) / 2;
       const nx = dx / d, nz = dz / d;
-      // Obstáculos estáticos (sem Velocity) não se movem.
-      const aStatic = !world.has(a.id, C.Velocity);
-      const bStatic = !world.has(b.id, C.Velocity);
-      if (aStatic && bStatic) continue;
-      if (aStatic) {
+      if (a.static && b.static) continue;
+      if (a.static) {
         b.tr.x += nx * overlap * 2; b.tr.z += nz * overlap * 2;
-      } else if (bStatic) {
+      } else if (b.static) {
         a.tr.x -= nx * overlap * 2; a.tr.z -= nz * overlap * 2;
       } else {
         a.tr.x -= nx * overlap; a.tr.z -= nz * overlap;
