@@ -141,6 +141,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🚀 CI: e2e Cypress com evidência visual (capturas inline no PR) — ADR 0028
 - [x] 🚀 CI: guarda de tamanho de bundle (size-limit) + badges — ADR 0029
 - [x] 🚀 CI: Dependabot (npm + github-actions, agrupado)
+- [x] 🚀 CI: Lighthouse (orçamento de performance, warn) — ADR 0030
 - [ ] 🚀 Telemetria leve opcional
 - [ ] 🚀 Playtest coop + feedback
 - [x] 🚀 Pipeline de assets documentado (MagicaVoxel → glb) — `docs/asset-pipeline.md`
