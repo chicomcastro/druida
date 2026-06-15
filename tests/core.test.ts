@@ -13,6 +13,7 @@ import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
 import { DungeonManager } from '../src/world/DungeonManager.js';
+import { keyLabel, loadBindings, DEFAULT_BINDINGS } from '../src/core/input/bindings.js';
 
 function stubGame(): any {
   const world = new World();
@@ -349,6 +350,24 @@ describe('Masmorra', () => {
     dgn.update(3); // timer da fase 'done' -> sai
     expect(game.inDungeon).toBe(false);
     expect(dgn.active).toBe(null);
+  });
+});
+
+describe('Bindings (rebind)', () => {
+  it('keyLabel encurta os códigos de tecla', () => {
+    expect(keyLabel('KeyW')).toBe('W');
+    expect(keyLabel('Digit5')).toBe('5');
+    expect(keyLabel('Space')).toBe('Espaço');
+    expect(keyLabel('ArrowUp')).toBe('Up');
+    expect(keyLabel('')).toBe('—');
+  });
+
+  it('loadBindings retorna o mapa padrão completo (sem storage)', () => {
+    const b = loadBindings();
+    for (const k of Object.keys(DEFAULT_BINDINGS)) {
+      expect(Array.isArray(b[k])).toBe(true);
+    }
+    expect(b.attack).toContain('KeyJ');
   });
 });
 
