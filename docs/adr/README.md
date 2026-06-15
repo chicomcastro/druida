@@ -1,0 +1,17 @@
+# Architecture Decision Records (ADRs)
+
+Registro das decisões de arquitetura/design tomadas durante o desenvolvimento
+autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
+
+| # | Título | Status |
+|---|--------|--------|
+| [0001](0001-stack-perspectiva-coop.md) | Stack, perspectiva e modelo de coop | Aceito |
+| [0002](0002-ecs.md) | Arquitetura ECS própria e enxuta | Aceito |
+| [0003](0003-coop-camera.md) | Câmera de grupo same-screen | Aceito |
+| [0004](0004-druid-fantasy.md) | Fantasia do Druida: Seiva + formas + elementos | Aceito |
+| [0005](0005-ability-system.md) | Sistema de habilidades data-driven | Aceito |
+| [0006](0006-loot-enchant.md) | Loot, raridades e encantamentos | Aceito |
+| [0007](0007-content-data.md) | Conteúdo data-driven (inimigos/biomas) | Aceito |
+| [0008](0008-open-world.md) | Mundo aberto: zonas radiais + pseudo-streaming | Aceito |
+| [0009](0009-ui-dom-overlay.md) | HUD como overlay DOM | Aceito |
+| [0010](0010-narrativa-campanha.md) | Narrativa e estrutura da campanha | Aceito |
