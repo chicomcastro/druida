@@ -23,6 +23,9 @@ import { WorldManager } from '../world/WorldManager.js';
 import { buildLandmarks } from '../world/landmarks.js';
 import { StoryManager } from '../gameplay/story.js';
 import { Hud } from '../ui/Hud.js';
+import { Menus } from '../ui/Menus.js';
+import { Minimap } from '../ui/Minimap.js';
+import { AudioManager } from './audio/AudioManager.js';
 import { BIOMES } from '../data/biomes.js';
 import { ENEMIES, BOSSES } from '../data/enemies.js';
 import { createPlayer, createEnemy, createLootOrb } from '../entities/factories.js';
@@ -44,6 +47,7 @@ export class Game {
     this.camera = new IsoCamera();
     this.input = new InputManager(this.camera);
     this.vfx = new VfxManager(this);
+    this.audio = new AudioManager(this);
 
     this.seed = (Math.random() * 1e9) >>> 0;
     this.progress = { xp: 0, level: 1, enchantPoints: 0 };
@@ -60,6 +64,9 @@ export class Game {
     this.worldManager = new WorldManager(this);
     this.story = new StoryManager(this);
     this.hud = new Hud(this);
+    this.menus = new Menus(this);
+    this.minimap = new Minimap(this);
+    this.menuMain = false;
     buildLandmarks(this);
 
     this.systems = [
@@ -117,6 +124,16 @@ export class Game {
         if (slot >= 0) this.equip(e.id, e.item, slot);
       }
     });
+
+    this.on('damage', (e) => {
+      // Screen shake quando um jogador toma dano relevante.
+      if (e.dot) return;
+      if (this.world.has(e.id, C.PlayerControlled) && e.amount >= 8) {
+        this.camera.addShake(Math.min(0.5, e.amount / 45));
+      }
+    });
+    this.on('playerDowned', () => this.camera.addShake(0.6));
+    this.on('kill', (e) => { if (e.bossName) this.camera.addShake(0.8); });
 
     this.on('formSwap', (e) => {
       // Encantamento Metamorfo: onda de dano ao trocar de forma.
@@ -298,6 +315,7 @@ export class Game {
     this.camera.follow(this.groupCenter, this.groupSpread, this.dt);
     this.renderer.render(this.camera.cam);
     this.hud.update();
+    this.minimap.update();
   }
 }
 
