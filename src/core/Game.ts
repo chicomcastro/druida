@@ -432,7 +432,7 @@ export class Game {
       if (!r?.object3d) continue;
       this.renderer.remove(r.object3d);
       r.object3d.traverse((o) => {
-        if (o.isMesh) {
+        if (o.isMesh && !o.userData.shared) { // recursos compartilhados não são descartados
           o.geometry?.dispose?.();
           if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose?.());
           else o.material?.dispose?.();

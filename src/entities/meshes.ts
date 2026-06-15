@@ -111,17 +111,35 @@ export function buildMesh(kind) {
   return g;
 }
 
-/** Pequena esfera/cristal usada para projéteis e loot. */
-export function buildOrb(color = 0x88e0ff, radius = 0.22) {
-  const m = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(radius, 0),
-    new THREE.MeshStandardMaterial({
-      color,
-      emissive: color,
-      emissiveIntensity: 0.6,
-      roughness: 0.4,
-    }),
-  );
-  m.castShadow = true;
+/**
+ * Pequena esfera/cristal usada para projéteis e loot. Geometria (por raio) e
+ * material (por cor) são COMPARTILHADOS via cache — projéteis nascem/morrem em
+ * alta frequência e não precisam de recursos próprios. O mesh é marcado com
+ * `userData.shared` para o cleanup NÃO dar dispose (quebraria os demais).
+ * Ver docs/profiling-projectiles.md e ADR 0026.
+ */
+const _orbGeo = new Map();
+const _orbMat = new Map();
+
+function orbGeometry(radius) {
+  const key = Math.round(radius * 100);
+  let g = _orbGeo.get(key);
+  if (!g) { g = new THREE.IcosahedronGeometry(radius, 0); _orbGeo.set(key, g); }
+  return g;
+}
+function orbMaterial(color) {
+  let m = _orbMat.get(color);
+  if (!m) {
+    m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.6, roughness: 0.4 });
+    _orbMat.set(color, m);
+  }
   return m;
 }
+
+export function buildOrb(color = 0x88e0ff, radius = 0.22) {
+  const m = new THREE.Mesh(orbGeometry(radius), orbMaterial(color));
+  m.castShadow = true;
+  m.userData.shared = true; // recursos compartilhados: não descartar no cleanup
+  return m;
+}
+

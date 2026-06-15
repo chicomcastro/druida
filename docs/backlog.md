@@ -130,6 +130,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🚀 Spatial hash para broadphase (colisão + projéteis) — ADR 0015
 - [x] 🚀 InstancedMesh para props — ADR 0015
 - [x] 🚀 Object pooling de partículas — ADR 0025
+- [x] 🚀 Geometria/material compartilhados em projéteis/loot — ADR 0026 (−52% alloc, −83% CPU)
 - [ ] 🚀 Object pooling de projéteis/inimigos (entidades ECS) + profiling
 - [x] 🧱 Endurecer tipos TS (índice `any` removido de todas as classes) — ADR 0021
 - [ ] 🎮 Balanceamento fino

@@ -30,3 +30,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0023](0023-rebind.md) | Rebind de controles (P1) | Aceito |
 | [0024](0024-indexeddb-save.md) | Save em IndexedDB (com fallback) | Aceito |
 | [0025](0025-particle-pool.md) | Object pooling de partículas | Aceito |
+| [0026](0026-shared-orb-resources.md) | Geometria/material compartilhados em orbes | Aceito |
