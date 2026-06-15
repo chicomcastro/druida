@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { C, Factions, Transform, Velocity, Health, Sap, Collider, Faction, Intent, StatusEffects, Cooldowns } from '../core/ecs/components.js';
 import { buildMesh, buildOrb } from './meshes.js';
+import { BALANCE } from '../data/balance.js';
 
 const PLAYER_COLORS = [0xffe08a, 0x8ad0ff, 0xff9a8a, 0xb6ff8a];
 
@@ -22,8 +23,8 @@ export function createPlayer(world, renderer, { index = 0, x = 0, z = 0 } = {}) 
   world.add(id, C.Transform, Transform(x, z));
   world.add(id, C.Velocity, Velocity(0, 0, 6));
   world.add(id, C.Renderable, { object3d: container, body, ring, kind: 'druid', baseScale: 1 });
-  world.add(id, C.Health, Health(120));
-  world.add(id, C.Sap, Sap(100));
+  world.add(id, C.Health, Health(BALANCE.player.baseHp));
+  world.add(id, C.Sap, Sap(BALANCE.player.sapMax));
   world.add(id, C.Collider, Collider(0.5));
   world.add(id, C.Faction, Faction(Factions.PLAYER));
   world.add(id, C.Intent, Intent());

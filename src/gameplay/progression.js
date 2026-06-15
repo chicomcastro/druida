@@ -1,4 +1,5 @@
 import { C } from '../core/ecs/components.js';
+import { BALANCE } from '../data/balance.js';
 
 /**
  * Progressão de grupo (party). XP é compartilhado; subir de nível concede
@@ -6,7 +7,8 @@ import { C } from '../core/ecs/components.js';
  * stats brutos do nível — fiel ao MC Dungeons. Ver docs/game-design.md §9.
  */
 export function xpForLevel(level) {
-  return Math.round(40 * Math.pow(level, 1.5));
+  const { xpBase, xpExp } = BALANCE.progression;
+  return Math.round(xpBase * Math.pow(level, xpExp));
 }
 
 export function grantXp(game, amount) {
@@ -16,10 +18,12 @@ export function grantXp(game, amount) {
   while (p.xp >= xpForLevel(p.level)) {
     p.xp -= xpForLevel(p.level);
     p.level++;
-    p.enchantPoints += 1;
+    p.enchantPoints += BALANCE.progression.enchantPointsPerLevel;
     leveled = true;
     // Distribui ponto de encanto a cada jogador.
-    for (const [, loadout] of game.world.query(C.Loadout)) loadout.enchantPoints += 1;
+    for (const [, loadout] of game.world.query(C.Loadout)) {
+      loadout.enchantPoints += BALANCE.progression.enchantPointsPerLevel;
+    }
   }
   if (leveled) game.emit('levelUp', { level: p.level });
 }

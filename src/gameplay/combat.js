@@ -20,7 +20,8 @@ export function applyDamage(game, targetId, amount, opts = {}) {
   if (fdr) amount *= 1 - fdr;
 
   hp.hp -= amount;
-  game.emit('damage', { id: targetId, amount, ...opts });
+  const dtr = world.get(targetId, C.Transform);
+  game.emit('damage', { id: targetId, amount, x: dtr?.x, z: dtr?.z, ...opts });
 
   const tint = world.get(targetId, C.Tint);
   if (tint) tint.flash = 0.12;

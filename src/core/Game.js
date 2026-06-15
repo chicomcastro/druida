@@ -26,6 +26,7 @@ import { Hud } from '../ui/Hud.js';
 import { Menus } from '../ui/Menus.js';
 import { Minimap } from '../ui/Minimap.js';
 import { AudioManager } from './audio/AudioManager.js';
+import { BALANCE } from '../data/balance.js';
 import { BIOMES } from '../data/biomes.js';
 import { ENEMIES, BOSSES } from '../data/enemies.js';
 import { createPlayer, createEnemy, createLootOrb } from '../entities/factories.js';
@@ -58,6 +59,7 @@ export class Game {
     this._assignedPads = new Set();
     this.dt = 1 / 60;
     this.paused = false;
+    this.hitStop = 0;
 
     this._bindEvents();
 
@@ -106,7 +108,8 @@ export class Game {
       // XP + essência + drops.
       const def = e.loot ?? {};
       grantXp(this, def.xp ?? ENEMIES[e.killKind]?.xp ?? 6);
-      const essence = Math.max(1, Math.round(1 + Math.random() * 3));
+      const { essenceMin, essenceMax } = BALANCE.loot;
+      const essence = Math.max(1, Math.round(essenceMin + Math.random() * (essenceMax - essenceMin)));
       createLootOrb(this.world, this.renderer, { x: e.x + 0.4, z: e.z, item: { essence, rarityColor: 0x9fe06a } });
       for (const item of rollDrops(def, this.regionLevel(), Math.random)) {
         createLootOrb(this.world, this.renderer, { x: e.x - 0.5 + Math.random(), z: e.z + Math.random() - 0.5, item });
@@ -133,7 +136,10 @@ export class Game {
       }
     });
     this.on('playerDowned', () => this.camera.addShake(0.6));
-    this.on('kill', (e) => { if (e.bossName) this.camera.addShake(0.8); });
+    this.on('kill', (e) => {
+      this.camera.addShake(e.bossName ? 0.8 : 0.18);
+      this.hitStop = Math.max(this.hitStop, e.bossName ? 0.12 : 0.045); // hit-stop
+    });
 
     this.on('formSwap', (e) => {
       // Encantamento Metamorfo: onda de dano ao trocar de forma.
@@ -181,7 +187,7 @@ export class Game {
   z(id) { return this.world.get(id, C.Transform)?.z ?? 0; }
 
   dmgMul(id) {
-    let mul = 1 + (this.progress.level - 1) * 0.05;
+    let mul = 1 + (this.progress.level - 1) * BALANCE.player.levelDamageScale;
     const eq = this.world.get(id, C.Equipment);
     const fero = eq?.weapon?.enchants?.find((e) => e.id === 'ferocidade');
     if (fero) mul += 0.25 * fero.level;
@@ -249,8 +255,9 @@ export class Game {
   _scaleEnemy(def) {
     const lvl = this.progress.level;
     const players = Math.max(1, [...this.world.query(C.PlayerControlled)].length);
-    const hpMul = (1 + (lvl - 1) * 0.18) * (0.65 + players * 0.45);
-    const dmgMul = 1 + (lvl - 1) * 0.08;
+    const e = BALANCE.enemy;
+    const hpMul = (1 + (lvl - 1) * e.hpPerLevel) * (e.hpPlayerBase + players * e.hpPerPlayer);
+    const dmgMul = 1 + (lvl - 1) * e.damagePerLevel;
     return { ...def, hp: Math.round(def.hp * hpMul), damage: Math.round(def.damage * dmgMul) };
   }
 
@@ -312,6 +319,8 @@ export class Game {
 
   update(dt) {
     if (this.paused) { this.input.endFrame(); return; }
+    // Hit-stop: desacelera a simulação por instantes após impactos fortes.
+    if (this.hitStop > 0) { this.hitStop -= dt; dt *= 0.08; }
     this.dt = dt;
     this.gatherInput();
     for (const sys of this.systems) sys(this, dt);

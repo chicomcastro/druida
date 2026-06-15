@@ -16,3 +16,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0009](0009-ui-dom-overlay.md) | HUD como overlay DOM | Aceito |
 | [0010](0010-narrativa-campanha.md) | Narrativa e estrutura da campanha | Aceito |
 | [0011](0011-audio-procedural.md) | Áudio procedural (Web Audio) | Aceito |
+| [0012](0012-balance.md) | Balanceamento centralizado | Aceito |

@@ -106,6 +106,11 @@ describe('Loot', () => {
 });
 
 describe('Progressão', () => {
+  it('xpForLevel usa a curva de balanceamento central', () => {
+    expect(xpForLevel(1)).toBe(38);
+    expect(xpForLevel(4)).toBe(Math.round(38 * Math.pow(4, 1.5)));
+  });
+
   it('XP suficiente sobe de nível e concede pontos de encanto', () => {
     const g = stubGame();
     g.progress = { xp: 0, level: 1, enchantPoints: 0 };
