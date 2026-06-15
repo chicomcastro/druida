@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 /** Wrapper fino do Three.js: cena, renderer WebGL, luzes e resize. */
 export class Renderer {
+  [key: string]: any;
   constructor(canvas) {
     this.canvas = canvas;
     this.three = new THREE.WebGLRenderer({ canvas, antialias: true });

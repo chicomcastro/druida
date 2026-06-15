@@ -36,6 +36,7 @@ const css = `
 const RCOLOR = { common: '#d6d6d6', rare: '#5aa0ff', unique: '#ffc83a' };
 
 export class Menus {
+  [key: string]: any;
   constructor(game) {
     this.game = game;
     const style = document.createElement('style');

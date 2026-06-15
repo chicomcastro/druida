@@ -4,6 +4,7 @@
  * interpolação visual (usada opcionalmente pelo render).
  */
 export class GameLoop {
+  [key: string]: any;
   constructor({ update, render, step = 1 / 60, maxSubSteps = 5 }) {
     this.update = update;
     this.render = render;

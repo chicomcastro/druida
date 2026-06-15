@@ -40,6 +40,7 @@ export const NPC_LINES = [
 ];
 
 export class StoryManager {
+  [key: string]: any;
   constructor(game) {
     this.game = game;
     this.step = 0;

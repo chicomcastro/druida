@@ -3,7 +3,7 @@ import { normalize } from '../utils/math.js';
 import { FORMS } from './forms.js';
 
 /** Aplica dano a um alvo, tratando invulnerabilidade, status, morte/queda. */
-export function applyDamage(game, targetId, amount, opts = {}) {
+export function applyDamage(game, targetId, amount, opts: any = {}) {
   const { world } = game;
   const hp = world.get(targetId, C.Health);
   if (!hp || hp.dead) return false;
@@ -50,7 +50,7 @@ export function applyStatus(world, targetId, effect) {
   const st = world.get(targetId, C.StatusEffects);
   if (!st) return;
   for (const [k, v] of Object.entries(effect)) {
-    st[k] = Math.max(st[k] ?? 0, v);
+    st[k] = Math.max(st[k] ?? 0, v as number);
   }
 }
 
@@ -86,7 +86,8 @@ function killEntity(game, id, attackerId) {
  * Ataque corpo-a-corpo instantâneo em arco: aplica dano a inimigos do time
  * oposto dentro de `range` e do semiângulo `arc` em torno de `angle`.
  */
-export function meleeArc(game, attackerId, { angle, range, arc, damage, team, effect, knockback }) {
+export function meleeArc(game, attackerId, opts: any) {
+  const { angle, range, arc, damage, team, effect, knockback } = opts;
   const { world } = game;
   const tr = world.get(attackerId, C.Transform);
   const dirX = Math.sin(angle);

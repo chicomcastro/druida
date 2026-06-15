@@ -27,6 +27,7 @@ const KEYBOARD_MAP = {
 };
 
 export class InputManager {
+  [key: string]: any;
   constructor(camera) {
     this.camera = camera; // IsoCamera, para mira por mouse
     this.keys = new Set();

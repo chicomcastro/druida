@@ -22,6 +22,7 @@ const RING_COLORS = ['#3e6b3a', '#40492f', '#4a4036', '#8aa0b0', '#2a1f2a'];
 const RING_MAX = [55, 110, 165, 220, 290];
 
 export class WorldMap {
+  [key: string]: any;
   constructor(game) {
     this.game = game;
     const wrap = document.createElement('div');

@@ -27,4 +27,4 @@ game.menus.showMain(
 );
 
 // Exposto para depuração no console.
-window.DRUIDA = game;
+(window as any).DRUIDA = game;

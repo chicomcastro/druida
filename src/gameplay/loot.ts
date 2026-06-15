@@ -75,7 +75,7 @@ export function generateItem(level = 1, type = null, seed = null) {
   const rarity = RARITIES[rarityKey];
   const lvlMul = 1 + (level - 1) * 0.12;
 
-  let item = { uid: _uid++, type, rarity: rarityKey, rarityColor: rarity.color, level, enchants: [] };
+  const item: any = { uid: _uid++, type, rarity: rarityKey, rarityColor: rarity.color, level, enchants: [] };
 
   if (type === 'weapon') {
     const base = rng.pick(WEAPON_BASES);

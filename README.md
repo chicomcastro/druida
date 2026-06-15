@@ -72,6 +72,6 @@ Source = "GitHub Actions"*.
 
 - **Build:** Vite
 - **Render:** Three.js (câmera ortográfica isométrica)
-- **Linguagem:** JavaScript (migração para TypeScript recomendada — ver `docs/technical-architecture.md`)
+- **Linguagem:** TypeScript (config pragmática — ver `docs/adr/0014-typescript.md`)
 - **Arquitetura:** ECS (Entity-Component-System) data-driven
 - **Input:** Keyboard + Gamepad API (multi-jogador local)

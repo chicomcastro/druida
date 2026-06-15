@@ -8,6 +8,7 @@
  * navegadores), então `resume()` é chamado no clique/tecla inicial.
  */
 export class AudioManager {
+  [key: string]: any;
   constructor(game) {
     this.game = game;
     this.ctx = null;
@@ -37,7 +38,7 @@ export class AudioManager {
 
   _ensure() {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
-    const AC = window.AudioContext || window.webkitAudioContext;
+    const AC = window.AudioContext || (window as any).webkitAudioContext;
     if (!AC) return;
     this.ctx = new AC();
     this.master = this.ctx.createGain();

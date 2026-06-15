@@ -43,6 +43,7 @@ const css = `
 const FORM_ICON = { humanoid: '🧙', wolf: '🐺', bear: '🐻', raven: '🐦‍⬛', frog: '🐸' };
 
 export class Hud {
+  [key: string]: any;
   constructor(game) {
     this.game = game;
     const style = document.createElement('style');

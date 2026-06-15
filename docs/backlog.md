@@ -30,7 +30,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 
 ## M0 — Fundação técnica ✅
 - [x] 🧱 Scaffold Vite + Three.js rodando
-- [x] 🧱 Decisão JS vs TS (mantido **JS** no protótipo; migração futura — ADR pendente se/quando)
+- [x] 🧱 Migração para **TypeScript** (config lenient + typecheck no CI) — ADR 0014
 - [x] 🧱 ESLint + Prettier
 - [x] 🧱 Vitest configurado + suíte de testes (`tests/core.test.js`, 10 testes)
 - [x] 🧱 `GameLoop` com timestep fixo + render interpolado

@@ -10,7 +10,7 @@ import { Sap } from '../src/core/ecs/components.js';
 import { applyEquipment } from '../src/gameplay/equip.js';
 import { serialize, apply } from '../src/gameplay/save.js';
 
-function stubGame() {
+function stubGame(): any {
   const world = new World();
   const events = [];
   return { world, events, emit: (e, p) => events.push({ e, p }) };
@@ -124,7 +124,7 @@ describe('Campanha (StoryManager)', () => {
   function storyGame() {
     const world = new World();
     const events = [];
-    const game = {
+    const game: any = {
       world,
       events,
       groupCenter: { x: 0, z: 0 },
@@ -178,7 +178,7 @@ describe('Campanha (StoryManager)', () => {
 describe('Save/Load', () => {
   function saveGame() {
     const world = new World();
-    const game = {
+    const game: any = {
       world,
       seed: 7,
       progress: { xp: 10, level: 5, enchantPoints: 0 },
