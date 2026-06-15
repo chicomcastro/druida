@@ -5,6 +5,7 @@ import { applyDamage, meleeArc, applyStatus } from '../src/gameplay/combat.js';
 import { generateItem, RARITIES } from '../src/gameplay/loot.js';
 import { grantXp, xpForLevel } from '../src/gameplay/progression.js';
 import { makeRng, weightedPick } from '../src/utils/math.js';
+import { StoryManager } from '../src/gameplay/story.js';
 
 function stubGame() {
   const world = new World();
@@ -108,6 +109,61 @@ describe('Progressão', () => {
     grantXp(g, xpForLevel(1) + xpForLevel(2));
     expect(g.progress.level).toBe(3);
     expect(g.progress.enchantPoints).toBe(2);
+  });
+});
+
+describe('Campanha (StoryManager)', () => {
+  function storyGame() {
+    const world = new World();
+    const events = [];
+    const game = {
+      world,
+      events,
+      groupCenter: { x: 0, z: 0 },
+      on: (e, fn) => world.on(e, fn),
+      emit: (e, p) => { events.push({ e, p }); world.emit(e, p); },
+      spawnMiniBoss: () => {},
+      spawnBossFight: () => {},
+    };
+    const pid = world.createEntity();
+    world.add(pid, C.Form, { current: 'humanoid', list: ['humanoid', 'wolf'] });
+    return { game, world, pid, events };
+  }
+
+  it('avança do diálogo ao confronto final e desbloqueia formas', () => {
+    const { game, world, pid, events } = storyGame();
+    const story = new StoryManager(game);
+    expect(story.current().id).toBe('talk');
+
+    story.onInteract({ kind: 'npc' }, 0);
+    expect(story.current().id).toBe('purify_clearing');
+
+    for (let i = 0; i < 8; i++) game.emit('kill', { id: 99, x: 0, z: 0 });
+    expect(story.current().id).toBe('find_bear');
+
+    story.onInteract({ kind: 'sanctuary', form: 'bear' }, 0);
+    expect(world.get(pid, C.Form).list).toContain('bear');
+    expect(story.current().id).toBe('slay_miniboss');
+
+    game.emit('kill', { id: 50, x: 0, z: 0, bossName: 'Árvore-Carniça' });
+    expect(story.current().id).toBe('find_raven');
+
+    story.onInteract({ kind: 'sanctuary', form: 'raven' }, 0);
+    story.onInteract({ kind: 'sanctuary', form: 'frog' }, 0);
+    expect(story.current().id).toBe('confront');
+
+    game.emit('kill', { id: 1, x: 0, z: 0, bossName: 'O Apodrecedor' });
+    expect(story.current().id).toBe('victory');
+    expect(events.some((ev) => ev.e === 'victory')).toBe(true);
+  });
+
+  it('santuário fora de ordem não desbloqueia', () => {
+    const { game, world, pid } = storyGame();
+    const story = new StoryManager(game);
+    story.onInteract({ kind: 'npc' }, 0); // -> purify_clearing
+    story.onInteract({ kind: 'sanctuary', form: 'frog' }, 0); // ainda não é a hora
+    expect(world.get(pid, C.Form).list).not.toContain('frog');
+    expect(story.current().id).toBe('purify_clearing');
   });
 });
 

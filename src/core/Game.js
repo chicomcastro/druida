@@ -14,10 +14,14 @@ import { druidSystem } from '../systems/druid.js';
 import { pickupSystem } from '../systems/pickups.js';
 import { coopSystem } from '../systems/coop.js';
 import { spawnerSystem } from '../systems/spawner.js';
+import { interactionSystem } from '../systems/interaction.js';
+import { bossSystem } from '../systems/boss.js';
 import { renderSyncSystem } from '../systems/render.js';
 import { VfxManager } from '../systems/vfx.js';
 
 import { WorldManager } from '../world/WorldManager.js';
+import { buildLandmarks } from '../world/landmarks.js';
+import { StoryManager } from '../gameplay/story.js';
 import { Hud } from '../ui/Hud.js';
 import { BIOMES } from '../data/biomes.js';
 import { ENEMIES, BOSSES } from '../data/enemies.js';
@@ -54,12 +58,16 @@ export class Game {
     this._bindEvents();
 
     this.worldManager = new WorldManager(this);
+    this.story = new StoryManager(this);
     this.hud = new Hud(this);
+    buildLandmarks(this);
 
     this.systems = [
       coopSystem,        // joins, queda/revive, centróide do grupo
       playerControlSystem,
+      interactionSystem, // prompts e ativação de NPC/santuários
       aiSystem,
+      bossSystem,        // fases e golpes de chefe/mini-chefe
       druidSystem,       // seiva, formas, cooldowns, invocações
       movementSystem,    // integra + colisão
       projectileSystem,
@@ -67,6 +75,7 @@ export class Game {
       pickupSystem,
       spawnerSystem,
       (g, dt) => g.worldManager.update(dt),
+      (g) => g.story.update(),
       (g, dt) => g.vfx.update(dt),
       idleRegenSystem,
     ];
@@ -95,7 +104,6 @@ export class Game {
       for (const item of rollDrops(def, this.regionLevel(), Math.random)) {
         createLootOrb(this.world, this.renderer, { x: e.x - 0.5 + Math.random(), z: e.z + Math.random() - 0.5, item });
       }
-      if (e.bossDefeated) this.emit('victory', {});
     });
 
     this.on('itemPickup', (e) => {
@@ -119,10 +127,6 @@ export class Game {
       }
     });
 
-    this.on('kill', (e) => {
-      const b = this.world.get(e.id, C.Boss);
-      if (b) this.emit('victory', {});
-    });
   }
 
   // --- Player setup --------------------------------------------------------
@@ -202,8 +206,27 @@ export class Game {
     return id;
   }
 
-  spawnBoss(key, x, z) {
-    return this.spawnEnemyByKey(key, x, z);
+  spawnBossFight(x, z) {
+    const id = this.spawnEnemyByKey('rotlord', x, z);
+    const boss = this.world.get(id, C.Boss);
+    if (boss) boss.name = BOSSES.rotlord.name;
+    this.emit('objective', { text: `${BOSSES.rotlord.name} ergue-se da podridão!` });
+    return id;
+  }
+
+  spawnMiniBoss(x, z) {
+    const def = {
+      name: 'Árvore-Carniça', mesh: 'husk', behavior: 'melee', boss: true,
+      hp: 420, speed: 1.6, damage: 16, radius: 1.3, scale: 1.8,
+      aggroRange: 30, attackRange: 2.6, attackCooldown: 1.8, xp: 120,
+      loot: { dropChance: 1 },
+    };
+    const scaled = this._scaleEnemy(def);
+    const id = createEnemy(this.world, this.renderer, scaled, { x, z });
+    this.world.get(id, C.LootTable).xp = scaled.xp;
+    const boss = this.world.get(id, C.Boss);
+    if (boss) { boss.name = def.name; boss.miniBoss = true; }
+    return id;
   }
 
   _scaleEnemy(def) {
@@ -265,6 +288,13 @@ export class Game {
 
   render(alpha) {
     renderSyncSystem(this, alpha);
+    if (this._sanctCrystals) {
+      const t = performance.now() / 1000;
+      for (const c of this._sanctCrystals) {
+        c.rotation.y = t;
+        c.position.y = 3.1 + Math.sin(t * 2) * 0.12;
+      }
+    }
     this.camera.follow(this.groupCenter, this.groupSpread, this.dt);
     this.renderer.render(this.camera.cam);
     this.hud.update();

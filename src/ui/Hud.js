@@ -31,6 +31,13 @@ const css = `
 #hud-boss .bar > i{background:linear-gradient(90deg,#a64ad0,#ff5a2a)}
 #hud-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:800;text-shadow:0 2px 6px #000;opacity:0;transition:opacity .3s}
 #hud-hint{position:absolute;bottom:12px;right:12px;text-align:right;font-size:12px;opacity:.7;line-height:1.5;text-shadow:0 1px 2px #000}
+#hud-objective{position:absolute;top:14px;left:14px;max-width:300px;background:rgba(8,16,10,.66);border-left:3px solid #ffd56a;border-radius:6px;padding:7px 10px;font-size:13px;text-shadow:0 1px 2px #000}
+#hud-objective .t{font-size:10px;letter-spacing:.08em;opacity:.7;text-transform:uppercase}
+#hud-prompt{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(8,16,10,.8);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 14px;font-size:14px;display:none}
+#hud-dialogue{position:absolute;bottom:140px;left:50%;transform:translateX(-50%);width:min(620px,80vw);background:rgba(6,12,8,.92);border:1px solid rgba(159,224,106,.4);border-radius:10px;padding:14px 18px;font-size:15px;line-height:1.45;display:none}
+#hud-victory{position:absolute;inset:0;background:radial-gradient(circle,rgba(20,40,24,.85),rgba(4,8,5,.97));display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#hud-victory h1{font-size:48px;margin:0;color:#9fe06a;text-shadow:0 3px 12px #000}
+#hud-victory p{opacity:.85;max-width:520px}
 `;
 
 const FORM_ICON = { humanoid: '🧙', wolf: '🐺', bear: '🐻', raven: '🐦‍⬛', frog: '🐸' };
@@ -46,11 +53,20 @@ export class Hud {
     this.root.id = 'hud-root';
     this.root.innerHTML = `
       <div id="hud-top"><div class="biome"></div><div class="lvl"></div><div id="hud-xp"><i></i></div></div>
+      <div id="hud-objective"><div class="t">Objetivo</div><div class="o"></div></div>
       <div id="hud-boss"><div class="nm"></div><div class="bar"><i></i></div></div>
       <div id="hud-players"></div>
+      <div id="hud-prompt"></div>
+      <div id="hud-dialogue"></div>
       <div id="hud-toast"></div>
+      <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
       <div id="hud-hint">WASD mover · Mouse mirar · Clique atacar<br>5–9 trocar forma · U/I/O artefatos · Shift esquivar · E interagir · B inventário</div>`;
     document.body.appendChild(this.root);
+    this.objEl = this.root.querySelector('#hud-objective .o');
+    this.promptEl = this.root.querySelector('#hud-prompt');
+    this.dialogueEl = this.root.querySelector('#hud-dialogue');
+    this.victoryEl = this.root.querySelector('#hud-victory');
+    this._dialogueQueue = [];
     this.playersEl = this.root.querySelector('#hud-players');
     this.biomeEl = this.root.querySelector('#hud-top .biome');
     this.lvlEl = this.root.querySelector('#hud-top .lvl');
@@ -61,6 +77,24 @@ export class Hud {
 
     game.on('biomeChanged', (e) => this.toast(e.def.name));
     game.on('levelUp', (e) => this.toast(`Nível ${e.level}!`));
+    game.on('objective', (e) => this.toast(e.text, 2200));
+    game.on('formUnlocked', (e) => this.toast('Nova forma desbloqueada!'));
+    game.on('dialogue', (e) => this.showDialogue(e.lines));
+    game.on('victory', () => { this.victoryEl.style.display = 'flex'; });
+  }
+
+  showDialogue(lines) {
+    this._dialogueQueue = [...lines];
+    this._nextDialogue();
+  }
+
+  _nextDialogue() {
+    clearTimeout(this._dlgT);
+    const line = this._dialogueQueue.shift();
+    if (!line) { this.dialogueEl.style.display = 'none'; return; }
+    this.dialogueEl.style.display = 'block';
+    this.dialogueEl.textContent = line;
+    this._dlgT = setTimeout(() => this._nextDialogue(), 3200);
   }
 
   toast(text, ms = 1400) {
@@ -124,6 +158,22 @@ export class Hud {
       this.bossEl.querySelector('.bar > i').style.width = Math.max(0, (hp.hp / hp.max) * 100) + '%';
     } else {
       this.bossEl.style.display = 'none';
+    }
+
+    // Objetivo da campanha (+ progresso de abate quando aplicável).
+    if (game.story) {
+      const step = game.story.current();
+      let txt = game.story.objective();
+      if (step.id === 'purify_clearing') txt += ` (${game.story.kills}/${step.kills})`;
+      this.objEl.textContent = txt;
+    }
+
+    // Prompt de interação.
+    if (game.interactPrompt) {
+      this.promptEl.style.display = 'block';
+      this.promptEl.textContent = game.interactPrompt;
+    } else {
+      this.promptEl.style.display = 'none';
     }
   }
 }
