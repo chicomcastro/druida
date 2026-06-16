@@ -16,7 +16,9 @@ ser acompanhadas a cada iteração — complementando a guarda de tamanho de bun
 - Assertions em **`warn`** (performance ≥ 0.8, peso total, bytes de script,
   compressão) — acompanha a tendência **sem bloquear** o merge; o gate rígido de
   tamanho continua sendo o `size-limit`.
-- Relatório publicado em `temporary-public-storage` (link nos logs) + artifact.
+- Relatório publicado em `temporary-public-storage` + artifact, e um
+  **comentário fixo** no PR (via `actions/github-script`) com os scores
+  (performance/acessibilidade/boas práticas/SEO) e link do relatório.
 
 ## Consequências
 - Tendência de performance/peso visível por PR.
