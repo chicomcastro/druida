@@ -58,7 +58,7 @@ export const ABILITIES = {
       const color = { nature: 0x8fe06a, fire: 0xff7a3a, ice: 0x8ad0ff, storm: 0xc9a8ff }[el] ?? 0x8fe06a;
       const effect = { fire: { burn: 2.5 }, ice: { freeze: 1.2 }, nature: { root: 0.6 }, storm: { stun: 0.4 } }[el];
       const d = dir(angle);
-      createProjectile(game, game.renderer, {
+      createProjectile(game.world, game.renderer, {
         x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 16,
         damage: dmg, team: Factions.PLAYER, color, range: 13, effect,
       });
@@ -82,7 +82,7 @@ export const ABILITIES = {
     name: 'Bicada', sap: 0, cooldown: 0,
     execute(game, id, angle) {
       const d = dir(angle);
-      createProjectile(game, game.renderer, { x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 20, damage: 8 * game.dmgMul(id), team: Factions.PLAYER, color: 0x6f6f88, range: 9 });
+      createProjectile(game.world, game.renderer, { x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 20, damage: 8 * game.dmgMul(id), team: Factions.PLAYER, color: 0x6f6f88, range: 9 });
       game.gainSap(id, 4);
     },
   },
@@ -106,14 +106,14 @@ export const ABILITIES = {
     name: 'Chama Selvagem', sap: 14, cooldown: 3,
     execute(game, id, angle) {
       const d = dir(angle);
-      createProjectile(game, game.renderer, { x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 13, damage: 14 * game.dmgMul(id), team: Factions.PLAYER, color: 0xff7a3a, range: 11, effect: { burn: 4 }, radius: 0.35 });
+      createProjectile(game.world, game.renderer, { x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 13, damage: 14 * game.dmgMul(id), team: Factions.PLAYER, color: 0xff7a3a, range: 11, effect: { burn: 4 }, radius: 0.35 });
     },
   },
   ice_lance: {
     name: 'Lança de Gelo', sap: 16, cooldown: 4,
     execute(game, id, angle) {
       const d = dir(angle);
-      createProjectile(game, game.renderer, { x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 22, damage: 18 * game.dmgMul(id), team: Factions.PLAYER, color: 0x8ad0ff, range: 16, effect: { freeze: 2 }, pierce: 3 });
+      createProjectile(game.world, game.renderer, { x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 22, damage: 18 * game.dmgMul(id), team: Factions.PLAYER, color: 0x8ad0ff, range: 16, effect: { freeze: 2 }, pierce: 3 });
     },
   },
   healing_totem: {

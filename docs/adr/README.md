@@ -35,3 +35,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0028](0028-e2e-cypress.md) | E2E com Cypress + evidência visual no PR | Aceito |
 | [0029](0029-bundle-size-guard.md) | Guarda de tamanho de bundle no CI | Aceito |
 | [0030](0030-lighthouse-ci.md) | Lighthouse CI (orçamento de performance) | Aceito |
+| [0031](0031-coverage-scope-threshold.md) | Escopo e threshold de cobertura (>80%) | Aceito |
