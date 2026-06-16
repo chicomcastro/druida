@@ -36,7 +36,7 @@ export function aiSystem(game, dt) {
       vel.vz = rooted ? 0 : n.z * vel.speed * slow * move;
       if (d <= ai.aggroRange && ai.timer <= 0) {
         ai.timer = ai.attackCooldown;
-        createProjectile(game, game.renderer, {
+        createProjectile(game.world, game.renderer, {
           x: tr.x, z: tr.z, dirX: n.x, dirZ: n.z, speed: 10,
           damage: ai.damage, team: Factions.ENEMY, color: ai.projectileColor, range: ai.aggroRange + 2,
         });

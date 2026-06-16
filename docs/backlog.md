@@ -142,6 +142,9 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🚀 CI: guarda de tamanho de bundle (size-limit) + badges — ADR 0029
 - [x] 🚀 CI: Dependabot (npm + github-actions, agrupado)
 - [x] 🚀 CI: Lighthouse (orçamento de performance, warn) — ADR 0030
+- [x] 🚀 CI: delta de cobertura vs main + comentário de perf do Lighthouse
+- [x] 🧪 Testes dos sistemas: cobertura escopada ~94% (threshold 80%) — ADR 0031
+- [x] 🐛 Corrige bug latente de projéteis (createProjectile recebia game)
 - [ ] 🚀 Telemetria leve opcional
 - [ ] 🚀 Playtest coop + feedback
 - [x] 🚀 Pipeline de assets documentado (MagicaVoxel → glb) — `docs/asset-pipeline.md`
