@@ -5,10 +5,12 @@ on:
     branches: [main]
   pull_request:
 
-# Necessário para o comentário fixo de cobertura no PR.
+# Necessário para o comentário fixo de cobertura no PR e para baixar o artefato
+# de cobertura da main (delta).
 permissions:
   contents: read
   pull-requests: write
+  actions: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -30,10 +32,36 @@ jobs:
       - run: npm run build
       # Guarda de tamanho do bundle (falha se exceder o orçamento).
       - run: npm run size
-      # Comentário fixo (sticky) de cobertura no PR — atualiza a cada push.
+
+      # Sobe o resumo de cobertura como artefato (a run da main vira a base
+      # para o delta dos PRs seguintes).
+      - name: Upload coverage summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage/coverage-summary.json
+          if-no-files-found: warn
+
+      # Baixa a cobertura da main para comparar (delta). Na primeira vez ainda
+      # não existe — segue sem comparação.
+      - name: Download base coverage (main)
+        id: base-cov
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          branch: main
+          workflow: ci.yml
+          name: coverage-summary
+          path: coverage-base
+          if_no_artifact_found: warn
+
+      # Comentário fixo (sticky) de cobertura no PR — com delta vs. main quando
+      # a base existe.
       - name: Coverage report (sticky PR comment)
         if: ${{ github.event_name == 'pull_request' }}
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           json-summary-path: ./coverage/coverage-summary.json
           json-final-path: ./coverage/coverage-final.json
+          json-summary-compare-path: ${{ steps.base-cov.outputs.found_artifact == 'true' && './coverage-base/coverage-summary.json' || '' }}

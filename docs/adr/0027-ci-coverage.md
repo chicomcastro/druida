@@ -24,3 +24,10 @@ cada PR, sem travar o fluxo com thresholds rígidos num protótipo.
 - Comparação com a base (delta vs `main`) e thresholds podem ser ligados depois.
 - O e2e do Cypress cobrirá as camadas de UI/integração que os testes de unidade
   não alcançam.
+
+## Atualização — delta vs. main
+A run da `main` publica `coverage-summary.json` como artefato; nos PRs, o CI
+baixa esse artefato (via `dawidd6/action-download-artifact`) e passa
+`json-summary-compare-path` para a action, exibindo o **delta de cobertura** no
+comentário. Na primeira execução (antes de a `main` ter o artefato) o comentário
+sai sem delta.
