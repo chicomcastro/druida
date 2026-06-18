@@ -9,6 +9,7 @@ import { StoryManager } from '../src/gameplay/story.js';
 import { Sap } from '../src/core/ecs/components.js';
 import { applyEquipment } from '../src/gameplay/equip.js';
 import { serialize, apply, setupAutosave } from '../src/gameplay/save.js';
+import { bindGameEvents } from '../src/core/gameEvents.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
@@ -295,6 +296,74 @@ describe('Autosave', () => {
     game.emit('storyStep', { step: 1 });
     await new Promise((r) => setTimeout(r, 1600));
     expect(game.saves).toBe(0);
+  });
+});
+
+describe('Game events (bindGameEvents)', () => {
+  function makeGame() {
+    const world = new World();
+    const handlers: Record<string, Array<(p: any) => void>> = {};
+    const game: any = {
+      world,
+      renderer: { add() {}, remove() {} },
+      camera: { shake: 0, addShake(n: number) { this.shake += n; } },
+      hitStop: 0,
+      progress: { xp: 0, level: 1, enchantPoints: 0 },
+      regionLevel: () => 1,
+      aoe: [] as any[],
+      aoeDamageAt(x: number, z: number, r: number, d: number, id: number) { this.aoe.push({ x, z, r, d, id }); },
+      equip(id: number, item: any, slot: number | null = null) {
+        const lo = world.get(id, C.Loadout);
+        if (item.type === 'weapon') lo.weapon = item;
+        else if (item.type === 'armor') lo.armor = item;
+        else { const s = slot ?? lo.artifacts.findIndex((a: any) => !a); lo.artifacts[s < 0 ? 2 : s] = item; }
+      },
+      on(ev: string, fn: (p: any) => void) { (handlers[ev] ??= []).push(fn); },
+      emit(ev: string, p: any) { (handlers[ev] ?? []).forEach((fn) => fn(p)); },
+    };
+    bindGameEvents(game);
+    return { game, world };
+  }
+
+  it('kill concede XP e cria orbe de essência', () => {
+    const { game, world } = makeGame();
+    game.emit('kill', { x: 1, z: 2, killKind: 'rotboar', loot: { xp: 5 } });
+    expect(game.progress.xp).toBe(5);
+    expect([...world.query(C.Pickup)].length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('kill de chefe aplica screen shake e hit-stop', () => {
+    const { game } = makeGame();
+    game.emit('kill', { x: 0, z: 0, bossName: 'O Apodrecedor', loot: { xp: 1 } });
+    expect(game.camera.shake).toBeGreaterThan(0);
+    expect(game.hitStop).toBeGreaterThan(0);
+  });
+
+  it('itemPickup auto-equipa em slot vazio e remove da mochila', () => {
+    const { game, world } = makeGame();
+    const id = world.createEntity();
+    world.add(id, C.Loadout, { weapon: null, armor: null, artifacts: [null, null, null], enchantPoints: 0 });
+    const weapon = { type: 'weapon', name: 'Teste' };
+    world.add(id, C.Inventory, { items: [weapon], essence: 0 });
+    game.emit('itemPickup', { id, item: weapon });
+    expect(world.get(id, C.Loadout).weapon).toBe(weapon);
+    expect(world.get(id, C.Inventory).items).toHaveLength(0);
+  });
+
+  it('damage relevante em jogador gera screen shake', () => {
+    const { game, world } = makeGame();
+    const id = world.createEntity();
+    world.add(id, C.PlayerControlled, { index: 0 });
+    game.emit('damage', { id, amount: 12 });
+    expect(game.camera.shake).toBeGreaterThan(0);
+  });
+
+  it('formSwap com Metamorfo dispara onda de dano', () => {
+    const { game, world } = makeGame();
+    const id = world.createEntity();
+    world.add(id, C.Loadout, { weapon: null, armor: { enchants: [{ id: 'metamorfo', level: 1 }] }, artifacts: [null, null, null], enchantPoints: 0 });
+    game.emit('formSwap', { id, x: 3, z: 4 });
+    expect(game.aoe).toHaveLength(1);
   });
 });
 
