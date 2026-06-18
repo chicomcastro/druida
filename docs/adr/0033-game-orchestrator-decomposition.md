@@ -23,3 +23,11 @@ passa a chamar `bindGameEvents(this)`.
   `createLootOrb`) — agora locais ao módulo de eventos.
 - Comportamento idêntico (suíte segue verde); base para os próximos passos
   (extrair spawn/scaling e economia para serviços dedicados).
+
+### Passo 2 — spawn/escala (`gameplay/spawn.ts`)
+`spawnEnemyByKey`/`spawnBossFight`/`spawnMiniBoss`/`_scaleEnemy` movem a lógica
+para `gameplay/spawn.ts` como funções sobre `game`. `Game` mantém **métodos
+finos que delegam**, preservando a API usada por sistemas/managers/testes
+(`game.spawnEnemyByKey`, …). `Game.ts` perde mais ~40 linhas e os imports
+`ENEMIES`/`BOSSES`/`createEnemy`; `spawn.ts` fica 100% coberto pelos testes
+existentes (via delegação).
