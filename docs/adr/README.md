@@ -37,3 +37,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0030](0030-lighthouse-ci.md) | Lighthouse CI (orçamento de performance) | Aceito |
 | [0031](0031-coverage-scope-threshold.md) | Escopo e threshold de cobertura (>80%) | Aceito |
 | [0032](0032-domain-model-types.md) | Modelos de domínio centralizados (`src/types.ts`) | Aceito |
+| [0033](0033-game-orchestrator-decomposition.md) | Decomposição do orquestrador `Game` | Aceito |

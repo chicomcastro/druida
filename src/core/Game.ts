@@ -34,13 +34,12 @@ import { AudioManager } from './audio/AudioManager.js';
 import { BALANCE } from '../data/balance.js';
 import { BIOMES } from '../data/biomes.js';
 import { ENEMIES, BOSSES } from '../data/enemies.js';
-import { createPlayer, createEnemy, createLootOrb } from '../entities/factories.js';
+import { createPlayer, createEnemy } from '../entities/factories.js';
 import { ABILITIES } from '../gameplay/abilities/index.js';
-import { FORMS } from '../gameplay/forms.js';
-import { generateItem, rollDrops } from '../gameplay/loot.js';
-import { grantXp } from '../gameplay/progression.js';
+import { generateItem } from '../gameplay/loot.js';
 import { applyEquipment } from '../gameplay/equip.js';
 import { applyDamage } from '../gameplay/combat.js';
+import { bindGameEvents } from './gameEvents.js';
 
 /**
  * Orquestra mundo, render, input, sistemas e estado de jogo. Expõe helpers
@@ -91,7 +90,7 @@ export class Game {
     this.paused = false;
     this.hitStop = 0;
 
-    this._bindEvents();
+    bindGameEvents(this);
 
     this.inDungeon = false;
     this.worldManager = new WorldManager(this);
@@ -142,61 +141,6 @@ export class Game {
   // --- Event wiring --------------------------------------------------------
   on(event, fn) { return this.world.on(event, fn); }
   emit(event, payload) { this.world.emit(event, payload); }
-
-  _bindEvents() {
-    this.on('kill', (e) => {
-      // XP + essência + drops.
-      const def = e.loot ?? {};
-      grantXp(this, def.xp ?? ENEMIES[e.killKind]?.xp ?? 6);
-      const { essenceMin, essenceMax } = BALANCE.loot;
-      const essence = Math.max(1, Math.round(essenceMin + Math.random() * (essenceMax - essenceMin)));
-      createLootOrb(this.world, this.renderer, { x: e.x + 0.4, z: e.z, item: { essence, rarityColor: 0x9fe06a } });
-      for (const item of rollDrops(def, this.regionLevel(), Math.random)) {
-        createLootOrb(this.world, this.renderer, { x: e.x - 0.5 + Math.random(), z: e.z + Math.random() - 0.5, item });
-      }
-    });
-
-    this.on('itemPickup', (e) => {
-      // Auto-equipa se o slot estiver vazio (qualidade de vida no protótipo).
-      const loadout = this.world.get(e.id, C.Loadout);
-      let equipped = false;
-      if (e.item.type === 'weapon' && !loadout.weapon) { this.equip(e.id, e.item); equipped = true; }
-      else if (e.item.type === 'armor' && !loadout.armor) { this.equip(e.id, e.item); equipped = true; }
-      else if (e.item.type === 'artifact') {
-        const slot = loadout.artifacts.findIndex((a) => !a);
-        if (slot >= 0) { this.equip(e.id, e.item, slot); equipped = true; }
-      }
-      // Evita duplicar: se auto-equipou, remove da mochila.
-      if (equipped) {
-        const inv = this.world.get(e.id, C.Inventory);
-        const i = inv?.items.indexOf(e.item);
-        if (i >= 0) inv.items.splice(i, 1);
-      }
-    });
-
-    this.on('damage', (e) => {
-      // Screen shake quando um jogador toma dano relevante.
-      if (e.dot) return;
-      if (this.world.has(e.id, C.PlayerControlled) && e.amount >= 8) {
-        this.camera.addShake(Math.min(0.5, e.amount / 45));
-      }
-    });
-    this.on('playerDowned', () => this.camera.addShake(0.6));
-    this.on('kill', (e) => {
-      this.camera.addShake(e.bossName ? 0.8 : 0.18);
-      this.hitStop = Math.max(this.hitStop, e.bossName ? 0.12 : 0.045); // hit-stop
-    });
-
-    this.on('formSwap', (e) => {
-      // Encantamento Metamorfo: onda de dano ao trocar de forma.
-      const loadout = this.world.get(e.id, C.Loadout);
-      if (loadout?.armor?.enchants?.some((x) => x.id === 'metamorfo' && x.level > 0)) {
-        this.aoeDamageAt(e.x, e.z, 3, 14, e.id);
-        this.emit('vfxRing', { x: e.x, z: e.z, radius: 3, color: 0xb6ff8a });
-      }
-    });
-
-  }
 
   // --- Player setup --------------------------------------------------------
   spawnInitialPlayers() {
