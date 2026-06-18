@@ -33,6 +33,7 @@ const css = `
 #hud-hint{position:absolute;bottom:12px;right:12px;text-align:right;font-size:12px;opacity:.7;line-height:1.5;text-shadow:0 1px 2px #000}
 #hud-objective{position:absolute;top:14px;left:14px;max-width:300px;background:rgba(8,16,10,.66);border-left:3px solid #ffd56a;border-radius:6px;padding:7px 10px;font-size:13px;text-shadow:0 1px 2px #000}
 #hud-objective .t{font-size:10px;letter-spacing:.08em;opacity:.7;text-transform:uppercase}
+#hud-save{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:12px;background:rgba(8,16,10,.72);border:1px solid rgba(159,224,106,.3);border-radius:6px;padding:4px 10px;opacity:0;transition:opacity .35s;text-shadow:0 1px 2px #000}
 #hud-prompt{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(8,16,10,.8);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 14px;font-size:14px;display:none}
 #hud-dialogue{position:absolute;bottom:140px;left:50%;transform:translateX(-50%);width:min(620px,80vw);background:rgba(6,12,8,.92);border:1px solid rgba(159,224,106,.4);border-radius:10px;padding:14px 18px;font-size:15px;line-height:1.45;display:none}
 #hud-victory{position:absolute;inset:0;background:radial-gradient(circle,rgba(20,40,24,.85),rgba(4,8,5,.97));display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center}
@@ -47,10 +48,10 @@ export class Hud {
   root: any;
   playersEl: any; biomeEl: any; lvlEl: any; xpEl: any;
   bossEl: any; objEl: any; promptEl: any;
-  dialogueEl: any; victoryEl: any; toastEl: any;
+  dialogueEl: any; victoryEl: any; toastEl: any; saveEl: any;
   panels: Map<number, any>;
   _dialogueQueue: string[];
-  _dlgT: any; _toastT: any;
+  _dlgT: any; _toastT: any; _saveT: any;
   constructor(game) {
     this.game = game;
     const style = document.createElement('style');
@@ -67,6 +68,7 @@ export class Hud {
       <div id="hud-prompt"></div>
       <div id="hud-dialogue"></div>
       <div id="hud-toast"></div>
+      <div id="hud-save">💾 Salvo</div>
       <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
       <div id="hud-hint">WASD mover · Mouse mirar · Clique atacar<br>5–9 trocar forma · U/I/O artefatos · Shift esquivar · E interagir · B inventário · M mapa · T recuar ao hub</div>`;
     document.body.appendChild(this.root);
@@ -81,6 +83,7 @@ export class Hud {
     this.xpEl = this.root.querySelector('#hud-xp > i');
     this.bossEl = this.root.querySelector('#hud-boss');
     this.toastEl = this.root.querySelector('#hud-toast');
+    this.saveEl = this.root.querySelector('#hud-save');
     this.panels = new Map();
 
     game.on('biomeChanged', (e) => this.toast(e.def.name));
@@ -89,6 +92,13 @@ export class Hud {
     game.on('formUnlocked', (e) => this.toast('Nova forma desbloqueada!'));
     game.on('dialogue', (e) => this.showDialogue(e.lines));
     game.on('victory', () => { this.victoryEl.style.display = 'flex'; });
+    game.on('saved', () => this.flashSaved());
+  }
+
+  flashSaved() {
+    this.saveEl.style.opacity = '1';
+    clearTimeout(this._saveT);
+    this._saveT = setTimeout(() => { this.saveEl.style.opacity = '0'; }, 1200);
   }
 
   showDialogue(lines) {

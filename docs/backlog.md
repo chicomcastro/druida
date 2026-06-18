@@ -116,6 +116,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🖥️ Minimapa/radar (hub, jogadores, inimigos, santuários, chefe)
 - [x] 🖥️ Inventário/equipamento + tela de encantamento (gastar pontos) + salvage
 - [x] 💾 Save/load com schema versionado (IndexedDB + fallback localStorage) — ADR 0024
+- [x] 💾 Autosave (marcos + flush ao sair da aba) + posição do grupo persistida — ADR 0024 (adendo)
 - [x] 🖥️ Checkpoint/wipe (revive de grupo)
 - [x] 🖥️ Tela de mapa-mundi navegável (fog of war) + fast-travel a marcos descobertos
 - [x] 🖥️ Tutoriais/onboarding contextual (dicas pontuais) — ADR 0019

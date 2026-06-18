@@ -100,6 +100,7 @@ export class PoiManager {
     }
     createLootOrb(game.world, game.renderer, { x: camp.x, z: camp.z, item: { essence: 8 + lvl * 2, rarityColor: 0x9fe06a } });
     game.emit('objective', { text: 'Acampamento purificado!' });
+    game.emit('campPurified', { id: camp.id });
     game.emit('vfxRing', { x: camp.x, z: camp.z, radius: 6, color: 0x9fe06a });
     game.camera?.addShake(0.4);
   }

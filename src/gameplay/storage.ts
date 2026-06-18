@@ -52,6 +52,12 @@ export async function kvSet(key: string, val: any): Promise<boolean> {
   });
 }
 
+// Acesso síncrono ao localStorage (mesma chave/JSON do KV). Usado para o
+// flush de autosave em `pagehide`, onde uma escrita assíncrona em IDB não
+// teria tempo de concluir antes da página descarregar.
+export function kvGetLocal(key: string): any { return lsGet(key); }
+export function kvSetLocal(key: string, val: any): boolean { return lsSet(key, val); }
+
 export async function kvDel(key: string): Promise<void> {
   lsDel(key);
   const store = await openStore('readwrite');
