@@ -20,7 +20,7 @@ export class InputManager {
 
   constructor(camera) {
     this.bindings = loadBindings();
-    this.camera = camera; // IsoCamera, para mira por mouse
+    this.camera = camera; // IsoCamera (screenToGround disponível, hoje sem uso para mira)
     this.keys = new Set();
     this.mouse = { x: 0, z: 0, down: false };
     this._justPressed = new Set();
@@ -120,10 +120,12 @@ export class InputManager {
     return {
       moveX: mx,
       moveZ: mz,
-      aimX: this.mouse.x,
-      aimZ: this.mouse.z,
-      hasAim: true, // mira por posição do mouse (mundo)
-      aimIsWorldPoint: true,
+      // Sem mira por cursor: o personagem olha para onde se move (resolvido no
+      // playerControl pela direção do movimento; mantém a última ao parar).
+      aimX: 0,
+      aimZ: 0,
+      hasAim: false,
+      aimIsWorldPoint: false,
       attack: this.mouse.down || this._anyKey(this.bindings.attack),
       dodge: this.keyJustPressed('dodge'),
       artifact: [
@@ -140,8 +142,6 @@ export class InputManager {
     const dz = 0.22;
     const ax = Math.abs(pad.axes[0]) > dz ? pad.axes[0] : 0;
     const az = Math.abs(pad.axes[1]) > dz ? pad.axes[1] : 0;
-    const rx = Math.abs(pad.axes[2]) > dz ? pad.axes[2] : 0;
-    const rz = Math.abs(pad.axes[3]) > dz ? pad.axes[3] : 0;
     const prev = this._prevPads.get(pad.index) ?? [];
     const jp = (i) => pad.buttons[i]?.pressed && !prev[i];
     let switchForm = 0;
@@ -153,9 +153,10 @@ export class InputManager {
     return {
       moveX: ax,
       moveZ: az,
-      aimX: rx,
-      aimZ: rz,
-      hasAim: Math.hypot(rx, rz) > 0.1,
+      // Olha para a direção do movimento (sem mira independente por stick).
+      aimX: 0,
+      aimZ: 0,
+      hasAim: false,
       aimIsWorldPoint: false,
       attack: pad.buttons[0]?.pressed || pad.buttons[7]?.pressed, // A / RT
       dodge: jp(1) || jp(5), // B / RB

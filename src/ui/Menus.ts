@@ -106,7 +106,7 @@ export class Menus {
       <p class="sub">Um dungeon-crawler de mundo aberto · classe Druida · coop local</p>
       <button class="btn" id="m-new" style="text-align:center">🌱 Novo jogo</button>
       <button class="btn" id="m-cont" style="text-align:center" disabled>📖 Continuar</button>
-      <p class="sub" style="margin-top:14px">WASD mover · Mouse mirar · Clique atacar · 5–9 formas · U/I/O artefatos · Shift esquivar · E interagir · B inventário · Esc pausar</p>
+      <p class="sub" style="margin-top:14px">WASD mover (olha p/ onde anda) · J/Clique atacar · 5–9 formas · U/I/O artefatos · Shift esquivar · E interagir · B inventário · Esc pausar</p>
     </div>`;
     this.main.classList.add('show');
     this.main.querySelector('#m-new').onclick = () => { this.main.classList.remove('show'); this.game.menuMain = false; this.game.paused = false; onNew(); };
@@ -162,7 +162,7 @@ export class Menus {
     this.controls.innerHTML = `<div class="panel" style="min-width:340px">
       <span class="close" id="ct-close">✕ (Esc)</span>
       <h2>🎮 Controles (P1)</h2>
-      <p class="sub">Clique numa ação e pressione a nova tecla. Mira é sempre pelo mouse.</p>
+      <p class="sub">Clique numa ação e pressione a nova tecla. O personagem olha para onde se move.</p>
       ${rows}
       <button class="btn" id="ct-reset" style="text-align:center;margin-top:12px">↺ Restaurar padrão</button>
     </div>`;

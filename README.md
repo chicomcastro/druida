@@ -36,9 +36,8 @@ npm run build    # build de produção
 
 | Ação | Tecla |
 |------|-------|
-| Mover | `WASD` / setas |
-| Mirar | Mouse |
-| Atacar / conjurar | Clique esq. / `J` / `Espaço` |
+| Mover (você olha para onde anda) | `WASD` / setas |
+| Atacar / conjurar (na direção que encara) | Clique esq. / `J` / `Espaço` |
 | Esquivar (i-frames) | `Shift` |
 | Artefatos | `U` `I` `O` (ou `1` `2` `3`) |
 | Trocar de forma | `5`–`9` (Druida/Lobo/Urso/Corvo/Sapo) |

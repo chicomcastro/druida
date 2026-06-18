@@ -295,6 +295,21 @@ describe('playerControlSystem', () => {
     expect(g.world.get(id, C.Velocity).vx).toBeGreaterThan(0);
   });
 
+  it('olha para a direção do movimento quando não há mira por cursor', () => {
+    const g = makeGame();
+    const id = addPlayer(g, 0, 0, 0);
+    const pc = g.world.get(id, C.PlayerControlled);
+    const intent = g.world.get(id, C.Intent);
+    // Move para +X (sem aim): facing = atan2(moveX, moveZ) = atan2(1,0) = PI/2.
+    intent.moveX = 1; intent.moveZ = 0; intent.hasAim = false; intent.aimIsWorldPoint = false;
+    playerControlSystem(g, 0.016);
+    expect(pc.facing).toBeCloseTo(Math.PI / 2, 5);
+    // Parado: mantém a última direção encarada.
+    intent.moveX = 0; intent.moveZ = 0;
+    playerControlSystem(g, 0.016);
+    expect(pc.facing).toBeCloseTo(Math.PI / 2, 5);
+  });
+
   it('ataque básico dispara habilidade da forma (gera projétil no humanoide)', () => {
     const g = makeGame();
     const id = addPlayer(g, 0, 0, 0);

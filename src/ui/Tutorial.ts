@@ -53,7 +53,7 @@ export class Tutorial {
 
   /** Sequência inicial (chamada ao começar o jogo). */
   intro() {
-    this.hint('move', 'Bem-vindo, Druida. <span class="k">WASD</span> move, <span class="k">mouse</span> mira, <span class="k">clique</span> ataca.');
+    this.hint('move', 'Bem-vindo, Druida. <span class="k">WASD</span> move — você olha para onde anda. <span class="k">J</span>/<span class="k">clique</span> ataca na direção que encara.');
     this.hint('artifacts', 'Use artefatos com <span class="k">U/I/O</span> e esquive com <span class="k">Shift</span>. Fale com a Guardiã (<span class="k">E</span>) para começar.');
   }
 
