@@ -36,3 +36,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0029](0029-bundle-size-guard.md) | Guarda de tamanho de bundle no CI | Aceito |
 | [0030](0030-lighthouse-ci.md) | Lighthouse CI (orçamento de performance) | Aceito |
 | [0031](0031-coverage-scope-threshold.md) | Escopo e threshold de cobertura (>80%) | Aceito |
+| [0032](0032-domain-model-types.md) | Modelos de domínio centralizados (`src/types.ts`) | Aceito |

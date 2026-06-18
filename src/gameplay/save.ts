@@ -1,5 +1,6 @@
 import { C } from '../core/ecs/components.js';
 import { kvGet, kvSet, kvDel, kvGetLocal, kvSetLocal } from './storage.js';
+import type { SaveV1, PlayerSnapshot } from '../types.js';
 
 /**
  * Save/load em IndexedDB (com fallback/espelho em localStorage — ADR 0024).
@@ -18,8 +19,8 @@ const AUTOSAVE_DEBOUNCE = 1500; // ms — coalesce vários gatilhos próximos
 // Eventos que representam progresso digno de persistir.
 const AUTOSAVE_EVENTS = ['levelUp', 'storyStep', 'formUnlocked', 'campPurified', 'fastTravel', 'victory'];
 
-export function serialize(game) {
-  const players = [];
+export function serialize(game): SaveV1 {
+  const players: PlayerSnapshot[] = [];
   for (const [id, pc] of game.world.query(C.PlayerControlled)) {
     const form = game.world.get(id, C.Form);
     const loadout = game.world.get(id, C.Loadout);
@@ -50,7 +51,7 @@ export function serialize(game) {
   };
 }
 
-export function apply(game, data) {
+export function apply(game, data: SaveV1 | null | undefined): boolean {
   if (!data || data.v !== 1) return false;
   game.progress = { ...data.progress };
   game.story.step = data.story.step ?? 0;
@@ -106,7 +107,7 @@ export function saveSync(game) {
   try { return kvSetLocal(KEY, serialize(game)); } catch { return false; }
 }
 
-export async function loadFromStorage() {
+export async function loadFromStorage(): Promise<SaveV1 | null> {
   try {
     // kvGet já cai para localStorage quando não há IDB; mas um flush síncrono
     // em `pagehide` pode deixar o localStorage mais novo que o IDB. Escolhe o

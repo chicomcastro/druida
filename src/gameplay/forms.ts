@@ -1,9 +1,11 @@
+import type { FormDef, FormId } from '../types.js';
+
 /**
  * Definições das Formas do Druida. Cada forma é praticamente um moveset:
  * troca o ataque básico, a mobilidade e o custo de Seiva por segundo.
  * Ver docs/game-design.md §3.3 e docs/adr/0004-druid-fantasy.md.
  */
-export const FORMS = {
+export const FORMS: Record<FormId, FormDef> = {
   humanoid: {
     name: 'Druida',
     mesh: 'druid',
@@ -53,4 +55,4 @@ export const FORMS = {
   },
 };
 
-export const FORM_ORDER = ['humanoid', 'wolf', 'bear', 'raven', 'frog'];
+export const FORM_ORDER: FormId[] = ['humanoid', 'wolf', 'bear', 'raven', 'frog'];

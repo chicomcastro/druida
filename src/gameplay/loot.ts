@@ -1,12 +1,13 @@
 import { makeRng, weightedPick } from '../utils/math.js';
 import { BALANCE } from '../data/balance.js';
+import type { Item, ItemType, Rarity, RarityDef, EnchantDef } from '../types.js';
 
 /**
  * Sistema de loot/itens inspirado no MC Dungeons: raridades, armas de
  * conjuração, armaduras e artefatos (que concedem habilidades), todos com
  * slots de encantamento. Ver docs/adr/0006-loot-enchant.md.
  */
-export const RARITIES = {
+export const RARITIES: Record<Rarity, RarityDef> = {
   common: { name: 'Comum', color: 0xd6d6d6, mul: 1.0, slots: 1, weight: 70 },
   rare: { name: 'Raro', color: 0x5aa0ff, mul: 1.35, slots: 2, weight: 26 },
   unique: { name: 'Único', color: 0xffc83a, mul: 1.8, slots: 3, weight: 4 },
@@ -37,7 +38,7 @@ const ARTIFACT_BASES = [
   { name: 'Semente Ardente', ability: 'meteor_sap' },
 ];
 
-export const ENCHANTMENTS = {
+export const ENCHANTMENTS: Record<string, EnchantDef> = {
   fotossintese: { name: 'Fotossíntese', desc: 'Regenera vida ao ficar parado.', types: ['armor'] },
   matilha: { name: 'Matilha', desc: 'Invocações duram +50% e ganham vida.', types: ['armor'] },
   metamorfo: { name: 'Metamorfo', desc: 'Trocar de forma libera uma onda de dano.', types: ['armor'] },
@@ -68,7 +69,12 @@ function enchantsFor(type, slots, rng) {
   return out;
 }
 
-export function generateItem(level = 1, type = null, seed = null, forceRarity = null) {
+export function generateItem(
+  level = 1,
+  type: ItemType | null = null,
+  seed: number | null = null,
+  forceRarity: Rarity | null = null,
+): Item {
   const rng = makeRng(seed ?? (Date.now() ^ (_uid++ * 2654435761)) >>> 0);
   type = type ?? rng.pick(['weapon', 'armor', 'artifact']);
   const rarityKey = forceRarity && RARITIES[forceRarity] ? forceRarity : rollRarity(rng);
@@ -97,11 +103,11 @@ export function generateItem(level = 1, type = null, seed = null, forceRarity = 
 
   item.enchants = enchantsFor(type, rarity.slots, rng);
   item.power = item.power ?? rarity.mul;
-  return item;
+  return item as Item;
 }
 
-export function rollDrops(lootTable, level, rng = Math.random) {
-  const drops = [];
+export function rollDrops(lootTable, level: number, rng = Math.random): Item[] {
+  const drops: Item[] = [];
   // Chance base de dropar um item.
   if (rng() < (lootTable?.dropChance ?? BALANCE.loot.defaultDropChance)) {
     drops.push(generateItem(level));
@@ -109,6 +115,6 @@ export function rollDrops(lootTable, level, rng = Math.random) {
   return drops;
 }
 
-export function salvageValue(item) {
+export function salvageValue(item: Item): number {
   return { common: 2, rare: 5, unique: 12 }[item.rarity] ?? 1;
 }
