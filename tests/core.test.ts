@@ -10,6 +10,7 @@ import { Sap } from '../src/core/ecs/components.js';
 import { applyEquipment } from '../src/gameplay/equip.js';
 import { serialize, apply, setupAutosave } from '../src/gameplay/save.js';
 import { bindGameEvents } from '../src/core/gameEvents.js';
+import { partyEssence, spendEssence, giveItem, rerollShop } from '../src/gameplay/economy.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
@@ -364,6 +365,47 @@ describe('Game events (bindGameEvents)', () => {
     world.add(id, C.Loadout, { weapon: null, armor: { enchants: [{ id: 'metamorfo', level: 1 }] }, artifacts: [null, null, null], enchantPoints: 0 });
     game.emit('formSwap', { id, x: 3, z: 4 });
     expect(game.aoe).toHaveLength(1);
+  });
+});
+
+describe('Economia (essência + mercador)', () => {
+  function makeGame(essences: number[]) {
+    const world = new World();
+    essences.forEach((e, i) => {
+      const id = world.createEntity();
+      world.add(id, C.PlayerControlled, { index: i });
+      world.add(id, C.Inventory, { items: [], essence: e });
+    });
+    return { world, game: { world, regionLevel: () => 1, shopStock: null } as any };
+  }
+
+  it('partyEssence soma a essência de todas as mochilas', () => {
+    const { game } = makeGame([10, 5, 3]);
+    expect(partyEssence(game)).toBe(18);
+  });
+
+  it('spendEssence deduz em ordem e falha se insuficiente', () => {
+    const { game } = makeGame([10, 5]);
+    expect(spendEssence(game, 12)).toBe(true);
+    expect(partyEssence(game)).toBe(3);
+    expect(spendEssence(game, 99)).toBe(false);
+    expect(partyEssence(game)).toBe(3); // inalterado quando falha
+  });
+
+  it('giveItem adiciona à mochila do P1', () => {
+    const { game, world } = makeGame([0, 0]);
+    const item = { type: 'weapon', name: 'X' };
+    expect(giveItem(game, item)).toBe(true);
+    const p1 = [...world.query(C.PlayerControlled, C.Inventory)].find((t: any) => t[1].index === 0);
+    expect(world.get(p1![0], C.Inventory).items).toContain(item);
+  });
+
+  it('rerollShop gera 4 itens com preço', () => {
+    const { game } = makeGame([0]);
+    const stock = rerollShop(game);
+    expect(stock).toHaveLength(4);
+    expect(stock.every((s: any) => s.item && s.price > 0)).toBe(true);
+    expect(game.shopStock).toBe(stock);
   });
 });
 

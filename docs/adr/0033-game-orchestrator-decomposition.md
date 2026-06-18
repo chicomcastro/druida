@@ -31,3 +31,10 @@ finos que delegam**, preservando a API usada por sistemas/managers/testes
 (`game.spawnEnemyByKey`, …). `Game.ts` perde mais ~40 linhas e os imports
 `ENEMIES`/`BOSSES`/`createEnemy`; `spawn.ts` fica 100% coberto pelos testes
 existentes (via delegação).
+
+### Passo 3 — economia (`gameplay/economy.ts`)
+`partyEssence`/`spendEssence`/`giveItem`/`rerollShop` movem para
+`gameplay/economy.ts` (funções sobre `game`), com `Game` delegando. Preserva a
+API usada por HUD/menus/testes. Inclui testes de unidade dedicados para o novo
+módulo (essência do grupo, gasto em ordem, dar item ao P1, estoque do
+mercador).
