@@ -1,8 +1,20 @@
 /**
  * Fábricas de componentes (dados puros). Centralizar aqui mantém os nomes de
  * tipo consistentes entre sistemas. O "tipo" do componente é a string usada
- * em world.add/get/query; exportamos constantes para evitar typos.
+ * em world.add/get/query; exportamos constantes para evitar typos. As formas
+ * dos componentes estão tipadas em `src/types.ts`.
  */
+import type {
+  Transform as TTransform,
+  Velocity as TVelocity,
+  Health as THealth,
+  Sap as TSap,
+  Collider as TCollider,
+  Faction as TFaction,
+  StatusEffects as TStatusEffects,
+  Cooldowns as TCooldowns,
+  Team,
+} from '../../types.js';
 
 export const C = {
   Transform: 'Transform',
@@ -36,18 +48,18 @@ export const C = {
   Bounty: 'Bounty',
 };
 
-export const Factions = { PLAYER: 'player', ENEMY: 'enemy', NEUTRAL: 'neutral' };
+export const Factions = { PLAYER: 'player', ENEMY: 'enemy', NEUTRAL: 'neutral' } as const;
 
-export const Transform = (x = 0, z = 0, rot = 0) => ({ x, z, y: 0, rot });
-export const Velocity = (vx = 0, vz = 0, speed = 5) => ({ vx, vz, speed });
+export const Transform = (x = 0, z = 0, rot = 0): TTransform => ({ x, z, y: 0, rot });
+export const Velocity = (vx = 0, vz = 0, speed = 5): TVelocity => ({ vx, vz, speed });
 
-export const Health = (max = 100) => ({ hp: max, max, dead: false, invuln: 0 });
+export const Health = (max = 100): THealth => ({ hp: max, max, dead: false, invuln: 0 });
 
-export const Sap = (max = 100) => ({ value: max * 0.5, max, regen: 15 });
+export const Sap = (max = 100): TSap => ({ value: max * 0.5, max, regen: 15 });
 
-export const Collider = (radius = 0.5, solid = true) => ({ radius, solid });
+export const Collider = (radius = 0.5, solid = true): TCollider => ({ radius, solid });
 
-export const Faction = (team = Factions.NEUTRAL) => ({ team });
+export const Faction = (team: Team = Factions.NEUTRAL): TFaction => ({ team });
 
 export const Intent = () => ({
   moveX: 0,
@@ -61,7 +73,7 @@ export const Intent = () => ({
   interact: false,
 });
 
-export const StatusEffects = () => ({
+export const StatusEffects = (): TStatusEffects => ({
   burn: 0,
   freeze: 0, // fator de slow restante (s)
   poison: 0,
@@ -69,4 +81,4 @@ export const StatusEffects = () => ({
   stun: 0,
 });
 
-export const Cooldowns = () => ({ map: {} });
+export const Cooldowns = (): TCooldowns => ({ map: {} });
