@@ -8,7 +8,7 @@ import { makeRng, weightedPick } from '../src/utils/math.js';
 import { StoryManager } from '../src/gameplay/story.js';
 import { Sap } from '../src/core/ecs/components.js';
 import { applyEquipment } from '../src/gameplay/equip.js';
-import { serialize, apply } from '../src/gameplay/save.js';
+import { serialize, apply, setupAutosave } from '../src/gameplay/save.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
@@ -187,6 +187,8 @@ describe('Save/Load', () => {
     const game: any = {
       world,
       seed: 7,
+      groupCenter: { x: 42, z: -18 },
+      checkpoint: { x: 0, z: -6 },
       progress: { xp: 10, level: 5, enchantPoints: 0 },
       story: { step: 3, kills: 2, _spawned: { miniboss: true } },
       worldManager: { explored: new Set(['0,0', '1,-5']) },
@@ -203,6 +205,7 @@ describe('Save/Load', () => {
     };
     const pid = world.createEntity();
     world.add(pid, C.PlayerControlled, { index: 0, color: 0xffe08a });
+    world.add(pid, C.Transform, Transform(0, -4));
     world.add(pid, C.Health, Health(120));
     world.add(pid, C.Sap, Sap(100));
     world.add(pid, C.Form, { current: 'humanoid', list: ['humanoid', 'wolf', 'bear'] });
@@ -221,6 +224,8 @@ describe('Save/Load', () => {
     const fresh = saveGame();
     fresh.game.progress = { xp: 0, level: 1, enchantPoints: 0 };
     fresh.game.story = { step: 0, kills: 0, _spawned: {} };
+    fresh.game.groupCenter = { x: 0, z: 0 };
+    fresh.game.checkpoint = { x: 0, z: 0 };
     fresh.game.worldManager.explored = new Set();
     fresh.game.sharedChest = [];
     fresh.game.lore = { found: new Set() };
@@ -236,6 +241,60 @@ describe('Save/Load', () => {
     expect(fresh.game.lore.found.has('l3')).toBe(true);
     expect(fresh.world.get(fresh.pid, C.Loadout).weapon.name).toBe('Cajado Teste');
     expect(fresh.game.worldManager.explored.has('1,-5')).toBe(true);
+  });
+
+  it('persiste e restaura a posição do grupo (reaparece onde salvou)', () => {
+    const { game } = saveGame();
+    const data = JSON.parse(JSON.stringify(serialize(game)));
+    expect(data.groupCenter).toEqual({ x: 42, z: -18 });
+
+    const fresh = saveGame();
+    fresh.game.groupCenter = { x: 0, z: 0 };
+    apply(fresh.game, data);
+
+    expect(fresh.game.groupCenter).toEqual({ x: 42, z: -18 });
+    // P1 (index 0) é reposicionado ao redor do centro salvo.
+    const tr = fresh.world.get(fresh.pid, C.Transform);
+    expect(tr.x).toBe(42 - 1.5);
+    expect(tr.z).toBe(-18);
+  });
+});
+
+describe('Autosave', () => {
+  function fakeGame() {
+    const handlers: Record<string, Array<(p: any) => void>> = {};
+    let saves = 0;
+    return {
+      handlers, get saves() { return saves; },
+      menuMain: false,
+      on(ev: string, fn: (p: any) => void) { (handlers[ev] ??= []).push(fn); },
+      emit(ev: string, p: any) { (handlers[ev] ?? []).forEach((fn) => fn(p)); if (ev === 'saved') saves++; },
+      // serialize() lê estes campos; valores mínimos válidos.
+      world: new World(), seed: 1, progress: {}, story: { step: 0, kills: 0, _spawned: {} },
+      groupCenter: { x: 0, z: 0 }, checkpoint: { x: 0, z: 0 },
+    } as any;
+  }
+
+  it('agenda e faz flush ao disparar um marco do jogo', async () => {
+    const game = fakeGame();
+    setupAutosave(game);
+    // Registra listeners para todos os eventos de autosave.
+    expect(game.handlers.levelUp?.length).toBe(1);
+    expect(game.handlers.campPurified?.length).toBe(1);
+
+    game.emit('levelUp', { level: 2 });
+    expect(game.saves).toBe(0); // debounced
+    await new Promise((r) => setTimeout(r, 1600));
+    expect(game.saves).toBe(1); // flush emitiu 'saved'
+  });
+
+  it('não agenda enquanto está no menu principal', async () => {
+    const game = fakeGame();
+    game.menuMain = true;
+    setupAutosave(game);
+    game.emit('storyStep', { step: 1 });
+    await new Promise((r) => setTimeout(r, 1600));
+    expect(game.saves).toBe(0);
   });
 });
 

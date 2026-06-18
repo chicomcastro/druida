@@ -332,6 +332,7 @@ export class Game {
     }
     this.groupCenter = { x, z };
     this.emit('objective', { text: `Viajou para: ${label}.` });
+    this.emit('fastTravel', { x, z, label });
     this.emit('vfxRing', { x, z, radius: 3, color: 0x9fe06a });
     return true;
   }

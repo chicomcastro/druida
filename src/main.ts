@@ -5,7 +5,7 @@
  * Jogadores 2–4 entram apertando um botão no gamepad (coop same-screen).
  */
 import { Game } from './core/Game.js';
-import { apply, loadFromStorage } from './gameplay/save.js';
+import { apply, loadFromStorage, setupAutosave } from './gameplay/save.js';
 
 const canvas = document.getElementById('game');
 const game = new Game(canvas);
@@ -19,6 +19,7 @@ async function begin(loadSave) {
   game.emit('objective', { text: game.story.objective() });
   game.emit('biomeChanged', { biome: 'clareira', def: { name: game.currentBiomeName() } });
   game.tutorial.intro();
+  setupAutosave(game);
   game.start();
 }
 
