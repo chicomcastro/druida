@@ -40,6 +40,7 @@ import { applyEquipment } from '../gameplay/equip.js';
 import { applyDamage } from '../gameplay/combat.js';
 import { bindGameEvents } from './gameEvents.js';
 import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, scaleEnemy } from '../gameplay/spawn.js';
+import { partyEssence as _partyEssence, spendEssence as _spendEssence, giveItem as _giveItem, rerollShop as _rerollShop } from '../gameplay/economy.js';
 
 /**
  * Orquestra mundo, render, input, sistemas e estado de jogo. Expõe helpers
@@ -255,44 +256,12 @@ export class Game {
   currentBiomeName() {
     return BIOMES[this.worldManager?.currentBiome ?? 'clareira']?.name ?? '';
   }
-  partyEssence() {
-    let e = 0;
-    for (const [, inv] of this.world.query(C.Inventory)) e += inv.essence;
-    return e;
-  }
-
-  /** Gasta essência do grupo (deduz das mochilas em ordem). */
-  spendEssence(amount) {
-    if (this.partyEssence() < amount) return false;
-    let left = amount;
-    for (const [, inv] of this.world.query(C.Inventory)) {
-      if (left <= 0) break;
-      const take = Math.min(inv.essence, left);
-      inv.essence -= take;
-      left -= take;
-    }
-    return true;
-  }
-
-  /** Adiciona um item à mochila do jogador 1 (alvo de compras/saques). */
-  giveItem(item) {
-    for (const [id, pc] of this.world.query(C.PlayerControlled, C.Inventory)) {
-      if (pc.index === 0) { this.world.get(id, C.Inventory).items.push(item); return true; }
-    }
-    return false;
-  }
-
-  /** (Re)gera o estoque do mercador: itens no nível da região + preço. */
-  rerollShop() {
-    const lvl = this.regionLevel();
-    const price = { common: 12, rare: 30, unique: 70 };
-    this.shopStock = [];
-    for (let i = 0; i < 4; i++) {
-      const it = generateItem(lvl);
-      this.shopStock.push({ item: it, price: Math.round((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
-    }
-    return this.shopStock;
-  }
+  // Economia (essência do grupo + estoque do mercador) vive em
+  // gameplay/economy.ts; aqui só delegamos. Ver ADR 0033/0016.
+  partyEssence() { return _partyEssence(this); }
+  spendEssence(amount) { return _spendEssence(this, amount); }
+  giveItem(item) { return _giveItem(this, item); }
+  rerollShop() { return _rerollShop(this); }
 
   // --- Loop ---------------------------------------------------------------
   gatherInput() {
