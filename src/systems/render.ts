@@ -35,16 +35,28 @@ export function renderSyncSystem(game, alpha) {
       }
     }
 
-    // Flash de dano (tinge brevemente de branco/vermelho).
+    // Flash de dano tem prioridade; senão, aura de status (queimando/congelado/
+    // envenenado/enraizado) tinge o corpo por emissão. Ambos via Tint._wasLit
+    // para sabermos quando voltar ao normal.
     const tint = world.get(id, C.Tint);
-    if (tint && tint.flash > 0) {
-      applyEmissive(obj, 0xff3030, Math.min(1, tint.flash * 6));
-      tint.flash -= 1 / 60;
-    } else if (tint && tint.flash <= 0 && tint._wasLit) {
-      applyEmissive(obj, 0x000000, 0);
-      tint._wasLit = false;
+    if (tint) {
+      if (tint.flash > 0) {
+        applyEmissive(obj, 0xff3030, Math.min(1, tint.flash * 6));
+        tint.flash -= 1 / 60;
+        tint._wasLit = true;
+      } else {
+        const st = world.get(id, C.StatusEffects);
+        const aura = st ? statusAura(st) : null;
+        if (aura) {
+          const pulse = 0.5 + 0.3 * Math.sin(t * 9 + id);
+          applyEmissive(obj, aura, pulse);
+          tint._wasLit = true;
+        } else if (tint._wasLit) {
+          applyEmissive(obj, 0x000000, 0);
+          tint._wasLit = false;
+        }
+      }
     }
-    if (tint && tint.flash > 0) tint._wasLit = true;
 
     // Jogador caído deita e fica translúcido.
     const pc = world.get(id, C.PlayerControlled);
@@ -52,6 +64,15 @@ export function renderSyncSystem(game, alpha) {
       obj.rotation.z = pc.downed ? Math.PI / 2.2 : 0;
     }
   }
+}
+
+/** Cor de emissão por status dominante (mesma paleta da VFX). */
+function statusAura(st) {
+  if (st.burn > 0) return 0xff5a1a;
+  if (st.freeze > 0) return 0x4aa6ff;
+  if (st.poison > 0) return 0x6fd04a;
+  if (st.root > 0) return 0x4a7a30;
+  return null;
 }
 
 function applyEmissive(obj, color, intensity) {

@@ -87,7 +87,7 @@ function killEntity(game, id, attackerId) {
  * oposto dentro de `range` e do semiângulo `arc` em torno de `angle`.
  */
 export function meleeArc(game, attackerId, opts: any) {
-  const { angle, range, arc, damage, team, effect, knockback } = opts;
+  const { angle, range, arc, damage, team, effect, knockback, color } = opts;
   const { world } = game;
   const tr = world.get(attackerId, C.Transform);
   const dirX = Math.sin(angle);
@@ -108,7 +108,7 @@ export function meleeArc(game, attackerId, opts: any) {
     });
     hits++;
   }
-  game.emit('meleeSwing', { id: attackerId, x: tr.x, z: tr.z, angle, range, arc, team });
+  game.emit('meleeSwing', { id: attackerId, x: tr.x, z: tr.z, angle, range, arc, team, color });
   return hits;
 }
 

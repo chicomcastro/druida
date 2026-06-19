@@ -45,6 +45,9 @@ function spawnSummon(game, ownerId, { x, z, kind, hp, damage, ttl }) {
 
 const dir = (a) => ({ x: Math.sin(a), z: Math.cos(a) });
 
+/** Cor do elemento (compartilhada com a VFX). */
+export const ELEMENT_COLOR = { nature: 0x8fe06a, fire: 0xff7a3a, ice: 0x8ad0ff, storm: 0xc9a8ff };
+
 export const ABILITIES = {
   // --- Ataques básicos de forma -------------------------------------------
   staff_strike: {
@@ -58,8 +61,8 @@ export const ABILITIES = {
       const el = w?.element ?? 'nature';
       const dmg = (w?.damage ?? 9) * game.dmgMul(id);
       const effect = { fire: { burn: 2.5 }, ice: { freeze: 1.2 }, nature: { root: 0.6 }, storm: { stun: 0.4 } }[el];
+      const color = ELEMENT_COLOR[el] ?? ELEMENT_COLOR.nature;
       if (w?.style === 'ranged') {
-        const color = { nature: 0x8fe06a, fire: 0xff7a3a, ice: 0x8ad0ff, storm: 0xc9a8ff }[el] ?? 0x8fe06a;
         const d = dir(angle);
         createProjectile(game.world, game.renderer, {
           x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 16,
@@ -68,7 +71,7 @@ export const ABILITIES = {
       } else {
         meleeArc(game, id, {
           angle, range: w?.range ?? 2.0, arc: w?.arc ?? 0.8,
-          damage: dmg, team: Factions.PLAYER, knockback: 3, effect,
+          damage: dmg, team: Factions.PLAYER, knockback: 3, effect, color,
         });
       }
     },
@@ -76,14 +79,14 @@ export const ABILITIES = {
   wolf_bite: {
     name: 'Mordida', sap: 0, cooldown: 0,
     execute(game, id, angle) {
-      meleeArc(game, id, { angle, range: 1.8, arc: 0.9, damage: 11 * game.dmgMul(id), team: Factions.PLAYER, knockback: 3 });
+      meleeArc(game, id, { angle, range: 1.8, arc: 0.9, damage: 11 * game.dmgMul(id), team: Factions.PLAYER, knockback: 3, color: 0xcfd6e0 });
       game.gainSap(id, 6);
     },
   },
   bear_swipe: {
     name: 'Patada', sap: 0, cooldown: 0,
     execute(game, id, angle) {
-      meleeArc(game, id, { angle, range: 2.3, arc: 1.4, damage: 20 * game.dmgMul(id), team: Factions.PLAYER, knockback: 7, effect: { stun: 0.5 } });
+      meleeArc(game, id, { angle, range: 2.3, arc: 1.4, damage: 20 * game.dmgMul(id), team: Factions.PLAYER, knockback: 7, effect: { stun: 0.5 }, color: 0xffb86a });
       game.gainSap(id, 5);
     },
   },
@@ -98,7 +101,7 @@ export const ABILITIES = {
   frog_tongue: {
     name: 'Língua', sap: 0, cooldown: 0,
     execute(game, id, angle) {
-      meleeArc(game, id, { angle, range: 3.2, arc: 0.35, damage: 9 * game.dmgMul(id), team: Factions.PLAYER, effect: { poison: 3 }, knockback: -4 });
+      meleeArc(game, id, { angle, range: 3.2, arc: 0.35, damage: 9 * game.dmgMul(id), team: Factions.PLAYER, effect: { poison: 3 }, knockback: -4, color: 0x9fe06a });
       game.gainSap(id, 5);
     },
   },
@@ -158,7 +161,7 @@ export const ABILITIES = {
   gust: {
     name: 'Rajada', sap: 12, cooldown: 4,
     execute(game, id, angle) {
-      meleeArc(game, id, { angle, range: 5, arc: 0.7, damage: 6 * game.dmgMul(id), team: Factions.PLAYER, knockback: 12 });
+      meleeArc(game, id, { angle, range: 5, arc: 0.7, damage: 6 * game.dmgMul(id), team: Factions.PLAYER, knockback: 12, color: 0xd8f0ff });
       game.emit('vfxCone', { x: game.x(id), z: game.z(id), angle, color: 0xd8f0ff });
     },
   },

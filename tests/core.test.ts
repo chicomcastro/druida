@@ -96,6 +96,16 @@ describe('Combate', () => {
     expect(g.world.get(back, C.Health).hp).toBe(30);
   });
 
+  it('meleeArc emite meleeSwing com a cor do golpe (feedback elemental)', () => {
+    const g = stubGame();
+    const attacker = g.world.createEntity();
+    g.world.add(attacker, C.Transform, Transform(0, 0, 0));
+    meleeArc(g, attacker, { angle: 0, range: 2, arc: 1, damage: 5, team: Factions.PLAYER, color: 0xff7a3a });
+    const ev = g.events.find((e) => e.e === 'meleeSwing');
+    expect(ev).toBeTruthy();
+    expect(ev.p.color).toBe(0xff7a3a);
+  });
+
   it('status são acumulados pelo maior valor', () => {
     const g = stubGame();
     const e = spawnEnemy(g.world, 0, 0);
