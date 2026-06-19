@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { getModel } from './modelLoader.js';
+import { buildVoxelModel } from './voxelModels.js';
 
 /**
- * Construtores de meshes voxel placeholder, montados a partir de caixas.
- * Quando há um modelo .glb carregado para o `kind` (ver modelLoader/registry),
- * `buildMesh` retorna o clone do modelo; senão cai no voxel procedural. O
- * RenderSyncSystem só liga Transform -> object3d, então nada mais muda.
+ * Meshes dos personagens/inimigos. Prioridade: (1) modelo .glb carregado, se
+ * registrado; (2) modelo voxel data-driven (estilo MC Dungeons, com partes
+ * nomeadas para animação — ver voxelModels.ts); (3) caixas legadas (fallback).
+ * O RenderSyncSystem só liga Transform -> object3d, então nada mais muda.
  */
 function box(w, h, d, color, x = 0, y = 0, z = 0) {
   const m = new THREE.Mesh(
@@ -112,7 +113,12 @@ export function buildMesh(kind) {
     model.userData.kind = kind;
     return model;
   }
-  const fn = builders[kind] ?? builders.rotboar;
+  const voxel = buildVoxelModel(kind); // modelo voxel data-driven
+  if (voxel) {
+    voxel.userData.kind = kind;
+    return voxel;
+  }
+  const fn = builders[kind] ?? builders.rotboar; // fallback legado
   const g = fn();
   g.userData.kind = kind;
   return g;

@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { buildMesh } from '../src/entities/meshes.js';
 import { MODELS, modelUrl } from '../src/entities/modelRegistry.js';
 import { _setModelForTest, _resetModels } from '../src/entities/modelLoader.js';
+import { buildVoxelModel, MODEL_SPECS, SHOWCASE_GROUPS } from '../src/entities/voxelModels.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
@@ -603,6 +604,29 @@ describe('Modelos (.glb pipeline)', () => {
     const g: any = buildMesh('wolf');
     expect(g.userData.kind).toBe('wolf');
     expect(g.children.length).toBeGreaterThan(0); // grupo de caixas
+  });
+
+  it('buildVoxelModel monta partes nomeadas e buildMesh as usa', () => {
+    _resetModels();
+    const g: any = buildVoxelModel('druid');
+    expect(g).toBeTruthy();
+    expect(g.userData.gait).toBe('biped');
+    // Partes nomeadas para animação (cabeça/torso/braços/pernas/arma).
+    for (const p of ['head', 'torso', 'armR', 'legL', 'weapon']) {
+      expect(g.userData.parts[p]).toBeTruthy();
+    }
+    // A arma é aninhada sob o braço direito (segue o movimento).
+    expect(g.userData.parts.weapon.parent).toBe(g.userData.parts.armR);
+    // buildMesh (sem .glb) entrega o modelo voxel com as partes.
+    const m: any = buildMesh('wolf');
+    expect(m.userData.kind).toBe('wolf');
+    expect(m.userData.parts.head).toBeTruthy();
+  });
+
+  it('todos os kinds da vitrine têm spec', () => {
+    for (const grp of SHOWCASE_GROUPS) {
+      for (const kind of grp.kinds) expect(MODEL_SPECS[kind]).toBeTruthy();
+    }
   });
 
   it('buildMesh usa o modelo carregado (clone) quando disponível', () => {
