@@ -310,12 +310,24 @@ describe('playerControlSystem', () => {
     expect(pc.facing).toBeCloseTo(Math.PI / 2, 5);
   });
 
-  it('ataque básico dispara habilidade da forma (gera projétil no humanoide)', () => {
+  it('ataque básico do humanoide é melee por padrão (atinge alvo à frente, sem projétil)', () => {
+    const g = makeGame();
+    const id = addPlayer(g, 0, 0, 0); // arma inicial é melee
+    const eid = g.spawnEnemyByKey('rotboar', 1.5, 0); // à frente quando encara +X
+    const hp0 = g.world.get(eid, C.Health).hp;
+    const intent = g.world.get(id, C.Intent);
+    intent.attack = true; intent.moveX = 1; intent.moveZ = 0; // encara +X
+    playerControlSystem(g, 0.016);
+    expect(g.world.get(eid, C.Health).hp).toBeLessThan(hp0); // tomou dano melee
+    expect([...g.world.query(C.Hitbox)].length).toBe(0); // sem projétil
+  });
+
+  it('ataque básico vira projétil com arma de conjuração (ranged)', () => {
     const g = makeGame();
     const id = addPlayer(g, 0, 0, 0);
+    g.equip(id, { type: 'weapon', name: 'Cajado', element: 'fire', damage: 10, style: 'ranged', rarity: 'common', enchants: [] });
     const intent = g.world.get(id, C.Intent);
-    intent.attack = true;
-    intent.aimIsWorldPoint = true; intent.aimX = 5; intent.aimZ = 0;
+    intent.attack = true; intent.moveX = 1; intent.moveZ = 0;
     playerControlSystem(g, 0.016);
     expect([...g.world.query(C.Hitbox)].length).toBeGreaterThan(0);
   });

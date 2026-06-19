@@ -154,8 +154,8 @@ export class Game {
     const loadout = this.world.get(id, C.Loadout);
     const form = this.world.get(id, C.Form);
     form.list = ['humanoid', 'wolf']; // começa com Lobo desbloqueado
-    // Equipamento inicial.
-    this.equip(id, generateItem(1, 'weapon', 100 + index));
+    // Equipamento inicial: arma corpo-a-corpo (foco do jogo).
+    this.equip(id, generateItem(1, 'weapon', 100 + index, null, 'melee'));
     this.equip(id, generateItem(1, 'artifact', 200 + index), 0);
     this.equip(id, { ...staticArtifact('root_spikes', 'Espinhos de Raiz') }, 1);
   }

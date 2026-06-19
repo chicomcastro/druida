@@ -4,20 +4,22 @@ export const BIOMES = {
     name: 'Clareira Viva', level: 1,
     ground: 0x3e6b3a, background: 0x1a2a1e, fogNear: 40, fogFar: 95,
     propColor: 0x2f5a2c, propDensity: 0.05,
+    // Clareira inicial: combate corpo-a-corpo (sem inimigos ranged). Ver ADR 0035.
     enemies: [
-      { key: 'rotboar', weight: 6 },
-      { key: 'shadecrow', weight: 3 },
-      { key: 'fungling', weight: 2 },
+      { key: 'rotboar', weight: 7 },
+      { key: 'fungling', weight: 3 },
     ],
   },
   pantano: {
     name: 'Pântano Apodrecido', level: 3,
     ground: 0x40492f, background: 0x161c14, fogNear: 28, fogFar: 70,
     propColor: 0x55502a, propDensity: 0.06,
+    // Introduz ranged aos poucos (corvo-sombra/xamã) em região mais avançada.
     enemies: [
       { key: 'rotboar', weight: 4 },
       { key: 'fungling', weight: 4 },
       { key: 'husk', weight: 3 },
+      { key: 'shadecrow', weight: 2 },
       { key: 'shaman', weight: 1 },
     ],
   },

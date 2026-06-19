@@ -12,6 +12,8 @@ export type ItemType = 'weapon' | 'armor' | 'artifact';
 export type ArmorBonus = 'sapRegen' | 'health' | 'formDuration';
 export type FormId = 'humanoid' | 'wolf' | 'bear' | 'raven' | 'frog';
 export type Team = 'player' | 'enemy' | 'neutral';
+/** Estilo de arma: corpo-a-corpo (padrão) ou conjuração à distância (mais rara). */
+export type WeaponStyle = 'melee' | 'ranged';
 
 // --- Itens / loot ----------------------------------------------------------
 export interface RarityDef {
@@ -50,6 +52,10 @@ export interface WeaponItem extends ItemBase {
   type: 'weapon';
   element: Element;
   damage: number;
+  style: WeaponStyle;
+  /** Alcance/semiângulo do golpe (apenas armas melee). */
+  range?: number;
+  arc?: number;
 }
 
 export interface ArmorItem extends ItemBase {

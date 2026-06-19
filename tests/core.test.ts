@@ -111,6 +111,25 @@ describe('Loot', () => {
       expect(it.enchants.length).toBeLessThanOrEqual(RARITIES[it.rarity].slots);
     }
   });
+
+  it('armas têm estilo; forceStyle define melee/ranged (melee inclui alcance/arco)', () => {
+    const melee: any = generateItem(3, 'weapon', 1, null, 'melee');
+    expect(melee.style).toBe('melee');
+    expect(melee.range).toBeGreaterThan(0);
+    expect(melee.arc).toBeGreaterThan(0);
+    const ranged: any = generateItem(3, 'weapon', 1, null, 'ranged');
+    expect(ranged.style).toBe('ranged');
+    expect(ranged.range).toBeUndefined();
+  });
+
+  it('melee é o padrão: a maioria das armas sorteadas é corpo-a-corpo', () => {
+    let meleeCount = 0;
+    for (let i = 0; i < 200; i++) {
+      const w: any = generateItem(3, 'weapon', i + 1);
+      if (w.style === 'melee') meleeCount++;
+    }
+    expect(meleeCount).toBeGreaterThan(120); // bem acima de 50% (chance ranged ~20%)
+  });
 });
 
 describe('Progressão', () => {
