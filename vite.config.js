@@ -10,5 +10,12 @@ export default defineConfig({
   build: {
     target: 'es2022',
     outDir: 'dist',
+    rollupOptions: {
+      // Multipage: o jogo (index) + a vitrine/backoffice (showcase).
+      input: {
+        main: 'index.html',
+        showcase: 'showcase.html',
+      },
+    },
   },
 });

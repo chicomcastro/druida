@@ -25,6 +25,7 @@ export default defineConfig({
         'src/core/audio/**', // Web Audio
         'src/core/input/**', // eventos de DOM/Gamepad
         'src/ui/**', // overlays DOM
+        'src/showcase/**', // vitrine (entry de view/WebGL)
         'src/systems/render.ts', // sincronização Three.js
         'src/systems/vfx.ts', // efeitos Three.js
         'src/gameplay/storage.ts', // adapter IndexedDB (branches só no browser)
