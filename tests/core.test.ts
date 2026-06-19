@@ -11,6 +11,10 @@ import { applyEquipment } from '../src/gameplay/equip.js';
 import { serialize, apply, setupAutosave } from '../src/gameplay/save.js';
 import { bindGameEvents } from '../src/core/gameEvents.js';
 import { partyEssence, spendEssence, giveItem, rerollShop } from '../src/gameplay/economy.js';
+import * as THREE from 'three';
+import { buildMesh } from '../src/entities/meshes.js';
+import { MODELS, modelUrl } from '../src/entities/modelRegistry.js';
+import { _setModelForTest, _resetModels } from '../src/entities/modelLoader.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
@@ -572,6 +576,36 @@ describe('Orbe (projétil/loot) — recursos compartilhados', () => {
     const c = buildOrb(0x00ff00, 0.35);
     expect(c.material).not.toBe(a.material); // cor diferente -> material próprio
     expect(c.geometry).toBe(a.geometry); // mesmo raio -> geometria compartilhada
+  });
+});
+
+describe('Modelos (.glb pipeline)', () => {
+  it('registry vazia por padrão (mantém voxels + bundle enxuto)', () => {
+    expect(Object.keys(MODELS).length).toBe(0);
+  });
+
+  it('modelUrl monta o caminho em assets/models', () => {
+    expect(modelUrl('wolf.glb')).toContain('assets/models/wolf.glb');
+  });
+
+  it('buildMesh cai no voxel procedural quando não há modelo', () => {
+    _resetModels();
+    const g: any = buildMesh('wolf');
+    expect(g.userData.kind).toBe('wolf');
+    expect(g.children.length).toBeGreaterThan(0); // grupo de caixas
+  });
+
+  it('buildMesh usa o modelo carregado (clone) quando disponível', () => {
+    _resetModels();
+    const fake = new THREE.Group();
+    fake.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial()));
+    _setModelForTest('wolf', fake);
+    const a: any = buildMesh('wolf');
+    const b: any = buildMesh('wolf');
+    expect(a.userData.kind).toBe('wolf');
+    expect(a).not.toBe(fake); // é um clone
+    expect(a).not.toBe(b);    // clones independentes
+    _resetModels();
   });
 });
 
