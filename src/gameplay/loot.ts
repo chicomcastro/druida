@@ -1,6 +1,6 @@
 import { makeRng, weightedPick } from '../utils/math.js';
 import { BALANCE } from '../data/balance.js';
-import type { Item, ItemType, Rarity, RarityDef, EnchantDef } from '../types.js';
+import type { Item, ItemType, Rarity, RarityDef, EnchantDef, WeaponStyle } from '../types.js';
 
 /**
  * Sistema de loot/itens inspirado no MC Dungeons: raridades, armas de
@@ -13,13 +13,25 @@ export const RARITIES: Record<Rarity, RarityDef> = {
   unique: { name: 'Único', color: 0xffc83a, mul: 1.8, slots: 3, weight: 4 },
 };
 
-const WEAPON_BASES = [
-  { name: 'Cajado de Carvalho', element: 'nature', damage: 9 },
-  { name: 'Foice da Vinha', element: 'nature', damage: 11 },
-  { name: 'Cajado em Brasa', element: 'fire', damage: 10 },
-  { name: 'Lâmina de Geada', element: 'ice', damage: 12 },
-  { name: 'Galho Tempestuoso', element: 'storm', damage: 10 },
+// Armas corpo-a-corpo (foco do jogo): maioria do loot. `range`/`arc` dão
+// variedade de alcance/abertura do golpe.
+const MELEE_WEAPON_BASES = [
+  { name: 'Foice da Vinha', element: 'nature', damage: 11, range: 2.4, arc: 1.0 },
+  { name: 'Garras Ancestrais', element: 'nature', damage: 10, range: 1.8, arc: 1.2 },
+  { name: 'Lâmina de Geada', element: 'ice', damage: 12, range: 2.2, arc: 0.7 },
+  { name: 'Maça Trovejante', element: 'storm', damage: 13, range: 2.0, arc: 0.8 },
+  { name: 'Presa em Brasa', element: 'fire', damage: 11, range: 1.9, arc: 0.9 },
 ];
+
+// Cajados de conjuração (ranged): mais raros — atacam à distância. Ver ADR 0035.
+const RANGED_WEAPON_BASES = [
+  { name: 'Cajado de Carvalho', element: 'nature', damage: 9 },
+  { name: 'Galho Tempestuoso', element: 'storm', damage: 10 },
+  { name: 'Cajado em Brasa', element: 'fire', damage: 10 },
+];
+
+// Chance de uma arma sorteada ser de conjuração (ranged). Melee é o padrão.
+const RANGED_WEAPON_CHANCE = 0.2;
 
 const ARMOR_BASES = [
   { name: 'Manto de Folhas', armor: 0.08, bonus: 'sapRegen' },
@@ -74,6 +86,7 @@ export function generateItem(
   type: ItemType | null = null,
   seed: number | null = null,
   forceRarity: Rarity | null = null,
+  forceStyle: WeaponStyle | null = null,
 ): Item {
   const rng = makeRng(seed ?? (Date.now() ^ (_uid++ * 2654435761)) >>> 0);
   type = type ?? rng.pick(['weapon', 'armor', 'artifact']);
@@ -84,10 +97,13 @@ export function generateItem(
   const item: any = { uid: _uid++, type, rarity: rarityKey, rarityColor: rarity.color, level, enchants: [] };
 
   if (type === 'weapon') {
-    const base = rng.pick(WEAPON_BASES);
+    const style = forceStyle ?? (rng.chance(RANGED_WEAPON_CHANCE) ? 'ranged' : 'melee');
+    const base = rng.pick(style === 'ranged' ? RANGED_WEAPON_BASES : MELEE_WEAPON_BASES);
     item.name = base.name;
     item.element = base.element;
+    item.style = style;
     item.damage = Math.round(base.damage * rarity.mul * lvlMul);
+    if (style === 'melee') { item.range = base.range; item.arc = base.arc; }
   } else if (type === 'armor') {
     const base = rng.pick(ARMOR_BASES);
     item.name = base.name;

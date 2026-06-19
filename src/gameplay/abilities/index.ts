@@ -48,20 +48,29 @@ const dir = (a) => ({ x: Math.sin(a), z: Math.cos(a) });
 export const ABILITIES = {
   // --- Ataques básicos de forma -------------------------------------------
   staff_strike: {
-    name: 'Conjurar', sap: 0, cooldown: 0,
+    name: 'Golpe', sap: 0, cooldown: 0,
     execute(game, id, angle) {
-      // Humanoide conjura a magia da arma equipada (elemento configurável).
+      // Ataque-base do humanoide: melee por padrão (foco do jogo); apenas armas
+      // de conjuração (style === 'ranged', mais raras) disparam projétil. O
+      // elemento da arma aplica o status correspondente no acerto. Ver ADR 0035.
       const eq = game.world.get(id, C.Equipment);
       const w = eq?.weapon;
       const el = w?.element ?? 'nature';
       const dmg = (w?.damage ?? 9) * game.dmgMul(id);
-      const color = { nature: 0x8fe06a, fire: 0xff7a3a, ice: 0x8ad0ff, storm: 0xc9a8ff }[el] ?? 0x8fe06a;
       const effect = { fire: { burn: 2.5 }, ice: { freeze: 1.2 }, nature: { root: 0.6 }, storm: { stun: 0.4 } }[el];
-      const d = dir(angle);
-      createProjectile(game.world, game.renderer, {
-        x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 16,
-        damage: dmg, team: Factions.PLAYER, color, range: 13, effect,
-      });
+      if (w?.style === 'ranged') {
+        const color = { nature: 0x8fe06a, fire: 0xff7a3a, ice: 0x8ad0ff, storm: 0xc9a8ff }[el] ?? 0x8fe06a;
+        const d = dir(angle);
+        createProjectile(game.world, game.renderer, {
+          x: game.x(id), z: game.z(id), dirX: d.x, dirZ: d.z, speed: 16,
+          damage: dmg, team: Factions.PLAYER, color, range: 13, effect,
+        });
+      } else {
+        meleeArc(game, id, {
+          angle, range: w?.range ?? 2.0, arc: w?.arc ?? 0.8,
+          damage: dmg, team: Factions.PLAYER, knockback: 3, effect,
+        });
+      }
     },
   },
   wolf_bite: {
