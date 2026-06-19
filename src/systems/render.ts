@@ -1,15 +1,20 @@
 import { C } from '../core/ecs/components.js';
 import { FORMS } from '../gameplay/forms.js';
 import { buildMesh } from '../entities/meshes.js';
+import { animateBody } from './animation.js';
 
 /**
  * Sincroniza Transform -> Object3D do Three.js. Roda no render (não na
  * simulação) para suavidade. Também troca o mesh do corpo ao mudar de forma,
- * aplica o flash de dano e a flutuação do loot.
+ * aplica o flash de dano, a aura de status, a flutuação do loot e a animação
+ * procedural das partes (idle/andar/atacar — ver systems/animation.ts).
  */
 export function renderSyncSystem(game, alpha) {
   const { world } = game;
-  const t = performance.now() / 1000;
+  const now = performance.now();
+  const t = now / 1000;
+  const adt = Math.min(0.05, (now - (game._animLast ?? now)) / 1000);
+  game._animLast = now;
 
   for (const [id, tr, r] of world.query(C.Transform, C.Renderable)) {
     const obj = r.object3d;
@@ -62,6 +67,20 @@ export function renderSyncSystem(game, alpha) {
     const pc = world.get(id, C.PlayerControlled);
     if (pc) {
       obj.rotation.z = pc.downed ? Math.PI / 2.2 : 0;
+    }
+
+    // Animação procedural das partes (corpo da forma p/ jogador; o próprio
+    // object3d para inimigos). Anima por velocidade + ataque do jogador.
+    const anim = r.body?.userData?.parts ? r.body : (obj.userData?.parts ? obj : null);
+    if (anim && !pc?.downed) {
+      const vel = world.get(id, C.Velocity);
+      const sp = vel ? Math.hypot(vel.vx, vel.vz) : 0;
+      let attack = 0;
+      if (pc && form) {
+        const cd = FORMS[form.current].attackCooldown || 1;
+        attack = Math.max(0, Math.min(1, (pc.attackTimer ?? 0) / cd));
+      }
+      animateBody(anim, adt, { moving: sp > 0.4, speed: sp, attack, gait: anim.userData.gait });
     }
   }
 }

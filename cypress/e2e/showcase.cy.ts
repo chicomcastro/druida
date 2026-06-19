@@ -14,5 +14,13 @@ describe('Vitrine de modelos', () => {
       cy.wait(700);
       cy.screenshot(`model-${k}`, { capture: 'viewport' });
     }
+    // Animações no Druida.
+    cy.get('.item[data-kind="druid"]').click();
+    cy.get('#a-walk').click();
+    cy.wait(900);
+    cy.screenshot('anim-druid-walk', { capture: 'viewport' });
+    cy.get('#a-attack').click();
+    cy.wait(500);
+    cy.screenshot('anim-druid-attack', { capture: 'viewport' });
   });
 });

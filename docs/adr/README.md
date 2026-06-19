@@ -43,3 +43,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0036](0036-glb-model-pipeline.md) | Pipeline de modelos .glb (fallback procedural) | Aceito |
 | [0037](0037-vfx-feedback.md) | VFX: feedback de melee, status visíveis e juice | Aceito |
 | [0038](0038-voxel-models-showcase.md) | Modelos voxel data-driven + vitrine (backoffice) | Aceito |
+| [0039](0039-procedural-animation.md) | Animação procedural por partes | Aceito |

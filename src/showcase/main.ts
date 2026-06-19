@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { buildMesh } from '../entities/meshes.js';
 import { SHOWCASE_GROUPS, MODEL_SPECS } from '../entities/voxelModels.js';
+import { animateBody } from '../systems/animation.js';
 
 /**
  * Vitrine/backoffice (rota `showcase.html`): inspeciona os modelos voxel do
@@ -114,6 +115,20 @@ document.getElementById('t-rotate')!.onclick = (e) => {
 };
 document.getElementById('t-reset')!.onclick = () => { yaw = Math.PI * 0.15; pitch = 0.5; if (current) frameModel(current); };
 
+// Modo de animação (idle/andar/atacar).
+let animMode: 'idle' | 'walk' | 'attack' = 'idle';
+const animBtns: Record<string, HTMLElement> = {
+  idle: document.getElementById('a-idle')!,
+  walk: document.getElementById('a-walk')!,
+  attack: document.getElementById('a-attack')!,
+};
+for (const [mode, el] of Object.entries(animBtns)) {
+  el.onclick = () => {
+    animMode = mode as typeof animMode;
+    for (const [m, b] of Object.entries(animBtns)) b.classList.toggle('on', m === animMode);
+  };
+}
+
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   renderer.setSize(w, h, false);
@@ -128,10 +143,14 @@ function loop() {
   t += 0.016;
   if (current) {
     if (autoRotate) current.rotation.y += 0.012;
-    // Idle: leve respiração/bob.
-    const parts: any = current.userData.parts;
-    current.position.y = Math.sin(t * 1.6) * 0.04;
-    if (parts?.head) parts.head.rotation.z = Math.sin(t * 1.3) * 0.03;
+    const gait = (current.userData.gait as any) ?? 'static';
+    const st = {
+      gait,
+      moving: animMode === 'walk',
+      speed: animMode === 'walk' ? 4 : 0,
+      attack: animMode === 'attack' ? Math.abs(Math.sin(t * 3)) : 0,
+    };
+    animateBody(current, 0.016, st);
   }
   applyCamera();
   renderer.render(scene, camera);
