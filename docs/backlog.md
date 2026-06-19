@@ -138,6 +138,8 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🎮 Foco em combate melee: ataque-base corpo-a-corpo, armas melee/ranged, ranged inimigo mais tardio — ADR 0035
 - [x] 🎨 Pipeline de modelos .glb com fallback procedural — ADR 0036
 - [x] 🎮 VFX: feedback de melee/elemental, status visíveis no inimigo, trilhas/morte — ADR 0037
+- [x] 🎨 Modelos voxel data-driven (MC Dungeons) + vitrine/backoffice — ADR 0038
+- [x] 🎮 Animação procedural por partes (idle/andar/atacar) — ADR 0039
 - [ ] 🎮 Balanceamento fino
 
 ## M10 — Release / Infra 🟡

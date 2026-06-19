@@ -16,6 +16,7 @@ import { buildMesh } from '../src/entities/meshes.js';
 import { MODELS, modelUrl } from '../src/entities/modelRegistry.js';
 import { _setModelForTest, _resetModels } from '../src/entities/modelLoader.js';
 import { buildVoxelModel, MODEL_SPECS, SHOWCASE_GROUPS } from '../src/entities/voxelModels.js';
+import { animateBody } from '../src/systems/animation.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { EventManager } from '../src/world/EventManager.js';
@@ -627,6 +628,36 @@ describe('Modelos (.glb pipeline)', () => {
     for (const grp of SHOWCASE_GROUPS) {
       for (const kind of grp.kinds) expect(MODEL_SPECS[kind]).toBeTruthy();
     }
+  });
+
+  it('animateBody: andar move pernas em oposição; ataque lança o braço direito', () => {
+    const mkPart = () => ({ rotation: { x: 0, y: 0, z: 0 } });
+    const body: any = {
+      position: { y: 0 },
+      userData: { gait: 'biped', parts: { legL: mkPart(), legR: mkPart(), armL: mkPart(), armR: mkPart(), head: mkPart(), weapon: mkPart() } },
+    };
+    const p = body.userData.parts;
+    // Andando: pernas defasadas (sinais opostos), braços também.
+    animateBody(body, 0.1, { moving: true, speed: 4, attack: 0, gait: 'biped' });
+    expect(Math.sign(p.legL.rotation.x)).toBe(-Math.sign(p.legR.rotation.x));
+    expect(p.legL.rotation.x).not.toBe(0);
+    // Atacando: braço direito vai à frente (rotação negativa em x).
+    animateBody(body, 0.016, { moving: false, speed: 0, attack: 1, gait: 'biped' });
+    expect(p.armR.rotation.x).toBeLessThan(0);
+  });
+
+  it('animateBody: quadrúpede cruza as patas; ave bate as asas', () => {
+    const mkPart = () => ({ rotation: { x: 0, y: 0, z: 0 } });
+    const quad: any = { position: { y: 0 }, userData: { gait: 'quadruped', parts: { legFL: mkPart(), legFR: mkPart(), legBL: mkPart(), legBR: mkPart(), tail: mkPart() } } };
+    animateBody(quad, 0.1, { moving: true, speed: 4, attack: 0, gait: 'quadruped' });
+    const q = quad.userData.parts;
+    expect(Math.sign(q.legFL.rotation.x)).toBe(Math.sign(q.legBR.rotation.x)); // diagonal em fase
+    expect(Math.sign(q.legFL.rotation.x)).toBe(-Math.sign(q.legFR.rotation.x)); // lados opostos
+
+    const bird: any = { position: { y: 0 }, userData: { gait: 'bird', parts: { wingL: mkPart(), wingR: mkPart() } } };
+    animateBody(bird, 0.1, { moving: true, speed: 3, attack: 0, gait: 'bird' });
+    const w = bird.userData.parts;
+    expect(w.wingL.rotation.z).toBe(-w.wingR.rotation.z); // asas espelhadas
   });
 
   it('buildMesh usa o modelo carregado (clone) quando disponível', () => {
