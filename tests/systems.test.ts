@@ -14,6 +14,7 @@ import { bossSystem } from '../src/systems/boss.js';
 import { interactionSystem } from '../src/systems/interaction.js';
 import { playerControlSystem } from '../src/systems/playerControl.js';
 import { createProjectile, createLootOrb } from '../src/entities/factories.js';
+import { applyDamage } from '../src/gameplay/combat.js';
 
 function enemy(game: any, x: number, z: number, hp = 30) {
   const id = game.spawnEnemyByKey('rotboar', x, z);
@@ -330,5 +331,39 @@ describe('playerControlSystem', () => {
     intent.attack = true; intent.moveX = 1; intent.moveZ = 0;
     playerControlSystem(g, 0.016);
     expect([...g.world.query(C.Hitbox)].length).toBeGreaterThan(0);
+  });
+});
+
+describe('Reações: dano e morte', () => {
+  it('tomar dano marca o recuo (tint.react)', () => {
+    const g = makeGame();
+    const e = enemy(g, 3, 0, 30);
+    applyDamage(g, e, 5);
+    expect(g.world.get(e, C.Tint).react).toBeGreaterThan(0);
+  });
+
+  it('morte tomba o corpo e adia a destruição', () => {
+    const g = makeGame();
+    const e = enemy(g, 3, 0, 10);
+    applyDamage(g, e, 999); // letal
+    expect(g.world.get(e, C.Health).dead).toBe(true);
+    expect(g.world.get(e, C.Renderable).dying).toBe(0); // marcado p/ tombar
+    expect(g.world.get(e, C.Collider).solid).toBe(false); // corpo não bloqueia
+    expect(g.world.has(e, C.Transform)).toBe(true); // ainda não destruído
+    g.tickScheduled(0.5);
+    g.world.flushDestroyed();
+    expect(g.world.has(e, C.Transform)).toBe(false); // destruído após a janela
+  });
+
+  it('IA não age em inimigo morto', () => {
+    const g = makeGame();
+    addPlayer(g, 0, 0, 0);
+    const e = enemy(g, 3, 0, 10);
+    applyDamage(g, e, 999);
+    const vel = g.world.get(e, C.Velocity);
+    vel.vx = 5; vel.vz = 5;
+    aiSystem(g, 0.1);
+    expect(vel.vx).toBe(0);
+    expect(vel.vz).toBe(0);
   });
 });

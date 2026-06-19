@@ -13,6 +13,10 @@ export function aiSystem(game, dt) {
   for (const [id, ai, tr, vel] of world.query(C.AI, C.Transform, C.Velocity)) {
     const st = world.get(id, C.StatusEffects);
     ai.timer = Math.max(0, ai.timer - dt);
+    ai.swing = Math.max(0, (ai.swing ?? 0) - dt); // janela da animação de ataque
+
+    // Mortos (em animação de morte) não agem.
+    if (world.get(id, C.Health)?.dead) { vel.vx = vel.vz = 0; continue; }
 
     const isAlly = ai.behavior.startsWith('ally');
     const target = isAlly ? nearestEnemy(world, tr) : nearestPlayer(game, tr);
@@ -36,6 +40,7 @@ export function aiSystem(game, dt) {
       vel.vz = rooted ? 0 : n.z * vel.speed * slow * move;
       if (d <= ai.aggroRange && ai.timer <= 0) {
         ai.timer = ai.attackCooldown;
+        ai.swing = 0.25;
         createProjectile(game.world, game.renderer, {
           x: tr.x, z: tr.z, dirX: n.x, dirZ: n.z, speed: 10,
           damage: ai.damage, team: Factions.ENEMY, color: ai.projectileColor, range: ai.aggroRange + 2,
@@ -49,6 +54,7 @@ export function aiSystem(game, dt) {
       vel.vz = rooted ? 0 : -n.z * vel.speed * slow * 0.5;
       if (ai.timer <= 0 && countEnemies(world) < 24) {
         ai.timer = ai.attackCooldown;
+        ai.swing = 0.3;
         game.spawnEnemyByKey?.(ai.summon ?? 'rotboar', tr.x + (Math.random() - 0.5) * 3, tr.z + (Math.random() - 0.5) * 3);
       }
       continue;
@@ -70,6 +76,7 @@ export function aiSystem(game, dt) {
       }
       if (ai.timer <= 0) {
         ai.timer = ai.attackCooldown;
+        ai.swing = 0.25;
         applyDamage(game, target.id, ai.damage, { attackerId: id, fromX: tr.x, fromZ: tr.z, knockback: 2 });
         game.emit('enemyAttack', { id, x: tr.x, z: tr.z });
       }
