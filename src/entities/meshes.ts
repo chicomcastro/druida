@@ -1,9 +1,11 @@
 import * as THREE from 'three';
+import { getModel } from './modelLoader.js';
 
 /**
  * Construtores de meshes voxel placeholder, montados a partir de caixas.
- * Substituíveis por modelos .glb (MagicaVoxel) no futuro sem mudar os sistemas
- * — o RenderSyncSystem só liga Transform -> object3d.
+ * Quando há um modelo .glb carregado para o `kind` (ver modelLoader/registry),
+ * `buildMesh` retorna o clone do modelo; senão cai no voxel procedural. O
+ * RenderSyncSystem só liga Transform -> object3d, então nada mais muda.
  */
 function box(w, h, d, color, x = 0, y = 0, z = 0) {
   const m = new THREE.Mesh(
@@ -105,6 +107,11 @@ const builders = {
 };
 
 export function buildMesh(kind) {
+  const model = getModel(kind); // .glb carregado, se houver
+  if (model) {
+    model.userData.kind = kind;
+    return model;
+  }
   const fn = builders[kind] ?? builders.rotboar;
   const g = fn();
   g.userData.kind = kind;

@@ -23,36 +23,32 @@ O render é desacoplado da simulação: o `RenderSyncSystem` apenas liga
 5. **Carregar** via um `AssetLoader` com `GLTFLoader` (cache por url) e fazer
    `buildMesh(kind)` retornar o clone do modelo carregado em vez das caixas.
 
-## Esboço de integração
+## Integração (implementada — ADR 0036)
 
-```ts
-// src/core/assets/AssetLoader.ts (a criar)
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-const loader = new GLTFLoader();
-const cache = new Map<string, THREE.Object3D>();
+O pipeline já existe no código:
 
-export async function preload(urls: Record<string, string>) {
-  await Promise.all(Object.entries(urls).map(([kind, url]) =>
-    loader.loadAsync(url).then((g) => cache.set(kind, g.scene))));
-}
-export function model(kind: string) {
-  return cache.get(kind)?.clone();
-}
-```
+- **`src/entities/modelRegistry.ts`** — mapeia `kind → { file, scale?, yOffset? }`.
+  Começa **vazio**: sem entradas, o jogo usa voxels e o `GLTFLoader` nem entra
+  no bundle.
+- **`src/entities/modelLoader.ts`** — `preloadModels()` (importa o `GLTFLoader`
+  dinamicamente **só** se há modelos registrados) e `getModel(kind)` (clone do
+  modelo carregado, ou `null`).
+- **`buildMesh(kind)`** (`meshes.ts`) — retorna o clone do `.glb` quando há um
+  carregado; senão, o voxel procedural. Falha de carregamento cai no voxel
+  (com `console.warn`), sem quebrar o jogo.
+- O bootstrap (`main.ts`) chama `await preloadModels()` antes de spawnar.
 
-```ts
-// meshes.ts — buildMesh passa a preferir o modelo carregado
-import { model } from '../core/assets/AssetLoader.js';
-export function buildMesh(kind) {
-  const m = model(kind);
-  if (m) { m.userData.kind = kind; return m; }
-  /* ...fallback voxel atual... */
-}
-```
+### Para ativar um modelo
 
-- Pré-carregar no menu principal (antes de `game.start()`), com tela de loading.
+1. Coloque o arquivo em `public/assets/models/<file>.glb`.
+2. Adicione a entrada no `MODELS` do `modelRegistry.ts`
+   (ex.: `wolf: { file: 'wolf.glb', scale: 1, yOffset: 0 }`).
+3. Rode `npm run size` — ao registrar o 1º modelo, o `GLTFLoader` passa a ser
+   empacotado (~chunk extra). Ajuste o orçamento em `.size-limit.json` se
+   necessário.
+
 - Animações (se houver): usar `AnimationMixer` e trocar clip por estado
-  (idle/andar/atacar) num pequeno componente de animação.
+  (idle/andar/atacar) num pequeno componente de animação (próximo passo).
 
 ## Convenções
 
@@ -66,5 +62,6 @@ export function buildMesh(kind) {
 
 ## Status
 
-Placeholders são suficientes para o protótipo. Este pipeline é o caminho para
-arte final quando o jogo entrar em produção de conteúdo (backlog M10).
+Pipeline de carregamento **implementado** (ADR 0036), com fallback procedural.
+Faltam os assets `.glb` em si — basta produzi-los (MagicaVoxel → glTF) e
+registrá-los. Até lá, os voxels placeholder seguem em uso.

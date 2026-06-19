@@ -6,11 +6,13 @@
  */
 import { Game } from './core/Game.js';
 import { apply, loadFromStorage, setupAutosave } from './gameplay/save.js';
+import { preloadModels } from './entities/modelLoader.js';
 
 const canvas = document.getElementById('game');
 const game = new Game(canvas);
 
 async function begin(loadSave) {
+  await preloadModels(); // usa .glb se registrados; senão segue com voxels
   game.spawnInitialPlayers();
   if (loadSave) {
     const data = await loadFromStorage();
