@@ -136,6 +136,8 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🧱 Endurecer tipos TS (índice `any` removido de todas as classes) — ADR 0021
 - [x] 🧱 Modelos de domínio centralizados em `src/types.ts` (Item/Save/Form/componentes) — ADR 0032
 - [x] 🎮 Foco em combate melee: ataque-base corpo-a-corpo, armas melee/ranged, ranged inimigo mais tardio — ADR 0035
+- [x] 🎨 Pipeline de modelos .glb com fallback procedural — ADR 0036
+- [x] 🎮 VFX: feedback de melee/elemental, status visíveis no inimigo, trilhas/morte — ADR 0037
 - [ ] 🎮 Balanceamento fino
 
 ## M10 — Release / Infra 🟡

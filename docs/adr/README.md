@@ -41,3 +41,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0034](0034-movement-facing.md) | Orientação pela direção do movimento | Aceito |
 | [0035](0035-melee-focus.md) | Foco em melee; ranged como exceção | Aceito |
 | [0036](0036-glb-model-pipeline.md) | Pipeline de modelos .glb (fallback procedural) | Aceito |
+| [0037](0037-vfx-feedback.md) | VFX: feedback de melee, status visíveis e juice | Aceito |

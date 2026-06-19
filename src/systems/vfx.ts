@@ -1,10 +1,24 @@
 import * as THREE from 'three';
+import { C } from '../core/ecs/components.js';
 
 /**
  * Efeitos visuais transitórios (anéis de AoE, arcos de golpe, marcadores de
- * meteoro, flashes). Escuta eventos do jogo e cria objetos Three.js de vida
- * curta, atualizados/limpos por frame. Pooling fica para o polimento (M9).
+ * meteoro, faíscas, trilhas de projétil e auras de status). Escuta eventos do
+ * jogo e cria objetos Three.js de vida curta, atualizados/limpos por frame.
+ * As partículas são recicladas via pool (ADR 0025).
  */
+
+/** Cor associada a um conjunto de status (faíscas/trilhas elementais). */
+export function elementColor(effect: any): number | null {
+  if (!effect) return null;
+  if (effect.burn) return 0xff7a3a;
+  if (effect.freeze) return 0x8ad0ff;
+  if (effect.poison) return 0x9fe06a;
+  if (effect.root) return 0x6fae4f;
+  if (effect.stun) return 0xc9a8ff;
+  return null;
+}
+
 export class VfxManager {
   game: any;
   scene: any;
@@ -12,6 +26,8 @@ export class VfxManager {
   particles: any[];
   _pPool: any[];
   _pGeo: any;
+  _statusT: number;
+  _trailT: number;
 
   constructor(game) {
     this.game = game;
@@ -24,14 +40,23 @@ export class VfxManager {
     game.on('vfxCone', (e) => this.ring(e.x, e.z, 2.5, e.color, 0.25));
     game.on('formSwap', (e) => this.ring(e.x, e.z, 1.5, 0x9fe06a, 0.4));
     game.on('dodge', (e) => this.ring(e.x, e.z, 1.0, 0xffffff, 0.25));
-    game.on('kill', (e) => this.burst(e.x, e.z, 0xff6a4a, 10));
-    game.on('damage', (e) => { if (e.dot || e.x === undefined) return; this.burst(e.x, e.z, 0xfff0a0, 4); });
+    game.on('kill', (e) => {
+      const c = e.bossName ? 0xb06bd0 : 0xff6a4a;
+      this.burst(e.x, e.z, c, e.bossName ? 26 : 14);
+      this.ring(e.x, e.z, e.bossName ? 4 : 2.2, c, 0.5);
+    });
+    game.on('damage', (e) => {
+      if (e.dot || e.x === undefined) return;
+      const c = elementColor(e.effect) ?? e.color ?? 0xfff0a0;
+      this.burst(e.x, e.z, c, 5);
+    });
 
     this.particles = [];
-    // Pool de partículas: geometria compartilhada + meshes reciclados (evita
-    // alocar/descartar a cada explosão). Ver ADR 0025.
+    // Pool de partículas: geometria compartilhada + meshes reciclados.
     this._pPool = [];
     this._pGeo = new THREE.BoxGeometry(0.14, 0.14, 0.14);
+    this._statusT = 0; // acumuladores p/ throttle de auras/trilhas
+    this._trailT = 0;
   }
 
   _acquireParticle() {
@@ -44,26 +69,30 @@ export class VfxManager {
     return m;
   }
 
-  /** Pequeno jato de partículas (caixas voxel) com gravidade e fade. */
+  /** Cria uma partícula com posição/velocidade/escala explícitas. */
+  _spawn(x, y, z, color, life, vx, vy, vz, scale = 1) {
+    const m = this._acquireParticle();
+    m.material.color.setHex(color);
+    m.material.opacity = 1;
+    m.scale.setScalar(scale);
+    m.position.set(x, y, z);
+    this.particles.push({ mesh: m, life, max: life, vx, vy, vz });
+    if (this.particles.length > 260) this._killParticle(0);
+  }
+
+  /** Jato de partículas (caixas voxel) com gravidade e fade. */
   burst(x, z, color, count = 6) {
     for (let i = 0; i < count; i++) {
-      const m = this._acquireParticle();
-      m.material.color.setHex(color);
-      m.material.opacity = 1;
-      m.position.set(x, 0.7, z);
       const a = Math.random() * Math.PI * 2;
       const sp = 2 + Math.random() * 3;
-      this.particles.push({
-        mesh: m, life: 0.5, max: 0.5,
-        vx: Math.sin(a) * sp, vy: 2 + Math.random() * 2, vz: Math.cos(a) * sp,
-      });
-      if (this.particles.length > 220) this._killParticle(0);
+      this._spawn(x, 0.7, z, color, 0.5, Math.sin(a) * sp, 2 + Math.random() * 2, Math.cos(a) * sp);
     }
   }
 
   _killParticle(i) {
     const p = this.particles[i];
-    p.mesh.visible = false;        // recicla (não descarta)
+    p.mesh.visible = false; // recicla (não descarta)
+    p.mesh.scale.setScalar(1);
     this._pPool.push(p.mesh);
     this.particles.splice(i, 1);
   }
@@ -88,13 +117,20 @@ export class VfxManager {
   }
 
   swing({ x, z, angle, range = 2, arc = 1, color = 0xffffff }) {
-    const geo = new THREE.RingGeometry(0.3, range, 16, 1, -arc, arc * 2);
-    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, side: THREE.DoubleSide });
+    const geo = new THREE.RingGeometry(0.3, range, 18, 1, -arc, arc * 2);
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
     const m = new THREE.Mesh(geo, mat);
     m.rotation.x = -Math.PI / 2;
     m.rotation.z = -angle;
     m.position.set(x, 0.12, z);
-    this._add(m, 0.18, (fx, t) => { mat.opacity = 0.45 * t; });
+    this._add(m, 0.2, (fx, t) => { mat.opacity = 0.6 * t; });
+    // Faíscas de impacto na ponta do golpe, na cor do elemento.
+    const tipX = x + Math.sin(angle) * range * 0.8;
+    const tipZ = z + Math.cos(angle) * range * 0.8;
+    for (let i = 0; i < 3; i++) {
+      const a = angle + (Math.random() - 0.5) * arc;
+      this._spawn(tipX, 0.7, tipZ, color, 0.32, Math.sin(a) * 4, 1.5 + Math.random() * 2, Math.cos(a) * 4, 0.8);
+    }
   }
 
   marker(x, z, radius, delay) {
@@ -106,7 +142,40 @@ export class VfxManager {
     this._add(m, delay, (fx, t) => { mat.opacity = 0.3 + 0.5 * (1 - t); });
   }
 
+  /** Auras de status (queimando/congelado/envenenado) e trilhas de projétil. */
+  _ambient(dt) {
+    const world = this.game.world;
+    if (!world) return;
+
+    // Auras de status: drip leve a ~12 Hz nos afligidos.
+    this._statusT += dt;
+    if (this._statusT >= 0.08) {
+      this._statusT = 0;
+      for (const [, st, tr, hp] of world.query(C.StatusEffects, C.Transform, C.Health)) {
+        if (hp.dead) continue;
+        const c = elementColor(st);
+        if (!c) continue;
+        if (Math.random() < 0.6) {
+          this._spawn(tr.x + (Math.random() - 0.5) * 0.6, 0.8 + Math.random() * 0.6, tr.z + (Math.random() - 0.5) * 0.6,
+            c, 0.45, 0, st.freeze > 0 ? -0.3 : 0.8, 0, 0.7);
+        }
+      }
+    }
+
+    // Trilhas de projétil: rastro curto na cor do efeito.
+    this._trailT += dt;
+    if (this._trailT >= 0.04) {
+      this._trailT = 0;
+      for (const [, hb, tr] of world.query(C.Hitbox, C.Transform)) {
+        const c = elementColor(hb.effect) ?? 0xdfe8ff;
+        this._spawn(tr.x, 0.8, tr.z, c, 0.22, 0, 0, 0, 0.6);
+      }
+    }
+  }
+
   update(dt) {
+    this._ambient(dt);
+
     // Partículas: integra com gravidade e desaparece.
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
