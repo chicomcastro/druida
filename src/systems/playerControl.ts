@@ -23,7 +23,10 @@ export function playerControlSystem(game, dt) {
     const form = world.get(id, C.Form);
     const formDef = FORMS[form.current];
 
-    // Mira -------------------------------------------------------------
+    // Orientação -------------------------------------------------------
+    // Por padrão o personagem olha para onde se move; parado, mantém a última
+    // direção. As mira explícita (mundo/stick) ainda é suportada caso algum
+    // input volte a fornecê-la, mas o controle atual não usa cursor.
     let aimAngle = pc.facing;
     if (intent.aimIsWorldPoint) {
       aimAngle = angleTo(tr.x, tr.z, intent.aimX, intent.aimZ);
