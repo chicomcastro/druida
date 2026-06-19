@@ -22,5 +22,12 @@ describe('Vitrine de modelos', () => {
     cy.get('#a-attack').click();
     cy.wait(500);
     cy.screenshot('anim-druid-attack', { capture: 'viewport' });
+    cy.get('.item[data-kind="rotboar"]').click();
+    cy.get('#a-hit').click();
+    cy.wait(500);
+    cy.screenshot('anim-rotboar-hit', { capture: 'viewport' });
+    cy.get('#a-death').click();
+    cy.wait(500);
+    cy.screenshot('anim-rotboar-death', { capture: 'viewport' });
   });
 });

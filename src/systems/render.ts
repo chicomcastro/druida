@@ -63,14 +63,33 @@ export function renderSyncSystem(game, alpha) {
       }
     }
 
+    // Recuo ao tomar dano (flinch): decai o timer do Tint.
+    let react = 0;
+    if (tint && tint.react > 0) {
+      react = Math.min(1, tint.react / 0.18);
+      tint.react = Math.max(0, tint.react - adt);
+    }
+
     // Jogador caído deita e fica translúcido.
     const pc = world.get(id, C.PlayerControlled);
     if (pc) {
       obj.rotation.z = pc.downed ? Math.PI / 2.2 : 0;
     }
 
+    // Animação de morte: o corpo tomba e afunda antes de ser destruído (ver
+    // combat.killEntity). Sobrepõe a animação normal.
+    if (r.dying !== undefined) {
+      r.dying += adt;
+      const k = Math.min(1, r.dying / 0.45);
+      obj.rotation.z = k * (Math.PI / 2);
+      obj.position.y = y - k * 0.25;
+      const s = 1 - k * 0.25;
+      obj.scale.setScalar(s);
+      continue;
+    }
+
     // Animação procedural das partes (corpo da forma p/ jogador; o próprio
-    // object3d para inimigos). Anima por velocidade + ataque do jogador.
+    // object3d para inimigos). Anima por velocidade, ataque e recuo.
     const anim = r.body?.userData?.parts ? r.body : (obj.userData?.parts ? obj : null);
     if (anim && !pc?.downed) {
       const vel = world.get(id, C.Velocity);
@@ -79,8 +98,11 @@ export function renderSyncSystem(game, alpha) {
       if (pc && form) {
         const cd = FORMS[form.current].attackCooldown || 1;
         attack = Math.max(0, Math.min(1, (pc.attackTimer ?? 0) / cd));
+      } else {
+        const ai = world.get(id, C.AI);
+        if (ai?.swing) attack = Math.min(1, ai.swing / 0.25); // investida do inimigo
       }
-      animateBody(anim, adt, { moving: sp > 0.4, speed: sp, attack, gait: anim.userData.gait });
+      animateBody(anim, adt, { moving: sp > 0.4, speed: sp, attack, react, gait: anim.userData.gait });
     }
   }
 }

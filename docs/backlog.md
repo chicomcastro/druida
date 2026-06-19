@@ -140,6 +140,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🎮 VFX: feedback de melee/elemental, status visíveis no inimigo, trilhas/morte — ADR 0037
 - [x] 🎨 Modelos voxel data-driven (MC Dungeons) + vitrine/backoffice — ADR 0038
 - [x] 🎮 Animação procedural por partes (idle/andar/atacar) — ADR 0039
+- [x] 🎮 Reações de hit/morte + investida dos inimigos — ADR 0040
 - [ ] 🎮 Balanceamento fino
 
 ## M10 — Release / Infra 🟡

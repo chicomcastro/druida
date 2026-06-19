@@ -24,7 +24,7 @@ export function applyDamage(game, targetId, amount, opts: any = {}) {
   game.emit('damage', { id: targetId, amount, x: dtr?.x, z: dtr?.z, ...opts });
 
   const tint = world.get(targetId, C.Tint);
-  if (tint) tint.flash = 0.12;
+  if (tint) { tint.flash = 0.12; tint.react = 0.18; } // flash + recuo (flinch)
 
   // Status on-hit
   if (opts.effect) applyStatus(world, targetId, opts.effect);
@@ -78,8 +78,17 @@ function killEntity(game, id, attackerId) {
   const tr = world.get(id, C.Transform);
   const loot = world.get(id, C.LootTable);
   const boss = world.get(id, C.Boss);
+  // Loot/XP/história disparam já; o corpo tomba antes de sumir (ver render).
   game.emit('kill', { id, attackerId, x: tr?.x ?? 0, z: tr?.z ?? 0, loot, bossName: boss?.name });
-  world.destroyEntity(id);
+  const col = world.get(id, C.Collider);
+  if (col) col.solid = false; // corpo não bloqueia movimento
+  const r = world.get(id, C.Renderable);
+  if (r && game.schedule) {
+    r.dying = 0; // marca animação de morte; destrói ao terminar
+    game.schedule(0.45, () => world.destroyEntity(id));
+  } else {
+    world.destroyEntity(id);
+  }
 }
 
 /**

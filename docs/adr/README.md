@@ -44,3 +44,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0037](0037-vfx-feedback.md) | VFX: feedback de melee, status visíveis e juice | Aceito |
 | [0038](0038-voxel-models-showcase.md) | Modelos voxel data-driven + vitrine (backoffice) | Aceito |
 | [0039](0039-procedural-animation.md) | Animação procedural por partes | Aceito |
+| [0040](0040-hit-death-reactions.md) | Reações de hit/morte e investida dos inimigos | Aceito |
