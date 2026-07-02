@@ -43,9 +43,16 @@ export class DungeonManager {
     const rings = [{ rmin: 70, rmax: 100 }, { rmin: 130, rmax: 200 }];
     let n = 0;
     for (const r of rings) {
-      const ang = rng.range(0.5, Math.PI * 2 - 0.5);
-      const rad = rng.range(r.rmin, r.rmax);
-      out.push({ id: `dgn${n++}`, x: Math.sin(ang) * rad, z: Math.cos(ang) * rad });
+      // Reamostra se cair dentro de um assentamento (zona segura).
+      let x = 0, z = 0;
+      for (let tries = 0; tries < 8; tries++) {
+        const ang = rng.range(0.5, Math.PI * 2 - 0.5);
+        const rad = rng.range(r.rmin, r.rmax);
+        x = Math.sin(ang) * rad;
+        z = Math.cos(ang) * rad;
+        if (!this.game.settlements?.isSafe(x, z, 12)) break;
+      }
+      out.push({ id: `dgn${n++}`, x, z });
     }
     return out;
   }

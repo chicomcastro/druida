@@ -34,7 +34,9 @@ const STEPS = [
 
 export const NPC_LINES = [
   'Guardiã: Você acordou, último dos Druidas… ainda bem.',
-  'Guardiã: A podridão se espalha dos anéis externos. O Apodrecedor já foi um de nós.',
+  'Guardiã: A podridão se espalha do Coração para fora. O Apodrecedor já foi um de nós.',
+  'Guardiã: Nossa vila, o Círculo do Carvalho, é o último chão limpo. Outros povos resistem lá fora.',
+  'Guardiã: Procure-os: o Vau das Palafitas no Pântano, Cinzafolha no Bosque, o Abrigo do Degelo nos Picos.',
   'Guardiã: Recupere as Formas Ancestrais nos santuários e purifique cada região.',
   'Guardiã: Comece limpando esta Clareira. A natureza lembra de você.',
 ];

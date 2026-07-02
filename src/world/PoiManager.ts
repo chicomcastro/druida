@@ -37,11 +37,15 @@ export class PoiManager {
     let n = 0;
     for (const ring of rings) {
       for (let i = 0; i < ring.count; i++) {
-        // Evita o eixo -Z (onde ficam os santuários).
-        const ang = rng.range(0.4, Math.PI * 2 - 0.4);
-        const rad = rng.range(ring.rmin, ring.rmax);
-        const x = Math.sin(ang) * rad;
-        const z = Math.cos(ang) * rad;
+        // Evita o eixo -Z (onde ficam os santuários) e os assentamentos.
+        let x = 0, z = 0;
+        for (let tries = 0; tries < 8; tries++) {
+          const ang = rng.range(0.4, Math.PI * 2 - 0.4);
+          const rad = rng.range(ring.rmin, ring.rmax);
+          x = Math.sin(ang) * rad;
+          z = Math.cos(ang) * rad;
+          if (!this.game.settlements?.isSafe(x, z, 12)) break;
+        }
         camps.push({ id: `camp${n++}`, x, z, biome: biomeAt(x, z), active: false, cleared: false, remaining: 0, mesh: null });
       }
     }

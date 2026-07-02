@@ -20,6 +20,7 @@ import { renderSyncSystem } from '../systems/render.js';
 import { VfxManager } from '../systems/vfx.js';
 
 import { WorldManager } from '../world/WorldManager.js';
+import { SettlementManager } from '../world/SettlementManager.js';
 import { PoiManager } from '../world/PoiManager.js';
 import { EventManager } from '../world/EventManager.js';
 import { DungeonManager } from '../world/DungeonManager.js';
@@ -50,7 +51,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any;
-  worldManager: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  worldManager: any; settlements: any; poi: any; events: any; dungeon: any; story: any; loop: any;
   inDungeon: boolean;
   // Estado.
   seed: number;
@@ -95,6 +96,8 @@ export class Game {
 
     this.inDungeon = false;
     this.worldManager = new WorldManager(this);
+    // Assentamentos antes dos POIs/masmorras: eles geram posições evitando as vilas.
+    this.settlements = new SettlementManager(this);
     this.poi = new PoiManager(this);
     this.events = new EventManager(this);
     this.dungeon = new DungeonManager(this);
@@ -121,6 +124,7 @@ export class Game {
       pickupSystem,
       spawnerSystem,
       (g, dt) => g.worldManager.update(dt),
+      (g) => g.settlements.update(),
       (g) => g.story.update(),
       (g) => g.poi.update(),
       (g, dt) => g.events.update(dt),
@@ -220,7 +224,7 @@ export class Game {
 
   /** Fast-travel ao hub (atalho do recall). */
   recallToHub() {
-    return this.fastTravelTo(0, -6, 'Carvalho-Mãe');
+    return this.fastTravelTo(0, -6, 'Círculo do Carvalho');
   }
 
   /** Fast-travel a um ponto, bloqueado se há inimigos por perto do grupo. */
@@ -323,14 +327,16 @@ export class Game {
 
   render(alpha) {
     renderSyncSystem(this, alpha);
+    const t = performance.now() / 1000;
     if (this._sanctCrystals) {
-      const t = performance.now() / 1000;
       for (const c of this._sanctCrystals) {
         c.rotation.y = t;
         c.position.y = 3.1 + Math.sin(t * 2) * 0.12;
       }
     }
+    this.settlements.animate(t); // lanternas/chamas das vilas pulsam
     this.camera.follow(this.groupCenter, this.groupSpread, this.dt);
+    this.renderer.updateSun(this.groupCenter); // sombras acompanham o grupo
     this.renderer.render(this.camera.cam);
     this.hud.update();
     this.minimap.update();

@@ -45,3 +45,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0038](0038-voxel-models-showcase.md) | Modelos voxel data-driven + vitrine (backoffice) | Aceito |
 | [0039](0039-procedural-animation.md) | Animação procedural por partes | Aceito |
 | [0040](0040-hit-death-reactions.md) | Reações de hit/morte e investida dos inimigos | Aceito |
+| [0041](0041-assentamentos-tematicos.md) | Assentamentos temáticos: uma cidade-vila por região | Aceito |
+| [0042](0042-atmosfera-visual.md) | Atmosfera visual: luz por bioma, sol móvel e partículas | Aceito |
