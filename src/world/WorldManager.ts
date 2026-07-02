@@ -38,7 +38,7 @@ export class WorldManager {
   trunkInst: any; leafInst: any; rockInst: any; detailInst: any;
   _freeTree: number[]; _freeRock: number[]; _freeDetail: number[];
   details: any[]; maxDetails: number;
-  ambPoints: any; _ambPhase: Float32Array; _ambT: number;
+  ambPoints: any; _ambPhase: Float32Array; _ambT: number; _ambApplied: any;
   _loreActive: Set<string>;
   constructor(game) {
     this.game = game;
@@ -176,8 +176,18 @@ export class WorldManager {
   }
 
   _updateAmbience(dt, c) {
-    const def = this._effectiveDef(this.currentBiome)?.ambient;
+    // Clima ativo sobrepõe as partículas do bioma (chuva/nevasca/cinzas —
+    // ADR 0049); à noite os vagalumes/fagulhas (partículas que sobem) brilham.
+    const weather = this.game.dayNight?.weatherAmbient?.() ?? null;
+    const def = weather ?? this._effectiveDef(this.currentBiome)?.ambient;
     if (!def || !this.ambPoints) return;
+    if (this._ambApplied !== def) {
+      this._ambApplied = def;
+      this.ambPoints.material.color.setHex(def.color);
+      this.ambPoints.material.size = def.size;
+    }
+    const night = this.game.dayNight?.nightAmount?.() ?? 0;
+    this.ambPoints.material.opacity = def.opacity * (def.rise > 0 ? 1 + night * 0.5 : 1);
     const attr = this.ambPoints.geometry.getAttribute('position');
     const pos = attr.array;
     const t = (this._ambT = (this._ambT ?? 0) + dt);

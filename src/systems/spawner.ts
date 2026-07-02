@@ -25,7 +25,9 @@ export function spawnerSystem(game, dt) {
 
   const playerCount = [...world.query(C.PlayerControlled)].length;
   const s = BALANCE.spawn;
-  const cap = Math.round((s.capBase + game.progress.level * s.capPerLevel) * (s.capPlayerBase + playerCount * s.capPerPlayer));
+  // À noite a floresta fica mais perigosa (ADR 0049).
+  const nightMul = 1 + (game.dayNight?.nightAmount?.() ?? 0) * BALANCE.dayNight.nightSpawnBonus;
+  const cap = Math.round((s.capBase + game.progress.level * s.capPerLevel) * (s.capPlayerBase + playerCount * s.capPerPlayer) * nightMul);
 
   let enemyCount = 0;
   for (const [, fac] of world.query(C.Faction)) if (fac.team === Factions.ENEMY) enemyCount++;

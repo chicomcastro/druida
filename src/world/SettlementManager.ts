@@ -68,13 +68,17 @@ export class SettlementManager {
     }
   }
 
-  /** Vida ambiente: lanternas/chamas pulsam e as luzes tremulam. */
+  /**
+   * Vida ambiente: lanternas/chamas pulsam e as luzes tremulam — mais fortes
+   * à noite (ADR 0049), quando são elas que desenham a vila.
+   */
   animate(t) {
+    const boost = this.game.dayNight?.lightBoost?.() ?? 1;
     for (const f of this._flames) {
-      f.mesh.material.emissiveIntensity = f.base + Math.sin(t * f.speed + f.seed) * f.amp;
+      f.mesh.material.emissiveIntensity = (f.base + Math.sin(t * f.speed + f.seed) * f.amp) * boost;
     }
     for (const l of this._lights) {
-      l.light.intensity = l.base * (0.85 + 0.15 * Math.sin(t * 7 + l.seed) * Math.sin(t * 3.1 + l.seed * 2));
+      l.light.intensity = l.base * boost * (0.85 + 0.15 * Math.sin(t * 7 + l.seed) * Math.sin(t * 3.1 + l.seed * 2));
     }
   }
 
