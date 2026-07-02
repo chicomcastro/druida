@@ -131,12 +131,13 @@ export function spawnBossFight(game, x, z) {
   return id;
 }
 
-export function spawnMiniBoss(game, x, z) {
+export function spawnMiniBoss(game, x, z, overrides: any = {}) {
   const def = {
     name: 'Árvore-Carniça', mesh: 'husk', behavior: 'melee', boss: true,
     hp: 420, speed: 1.6, damage: 16, radius: 1.3, scale: 1.8,
     aggroRange: 30, attackRange: 2.6, attackCooldown: 1.8, xp: 120,
     loot: { dropChance: 1 },
+    ...overrides, // mini-chefes temáticos das masmorras (ADR 0048)
   };
   const scaled = scaleEnemy(game, def);
   const id = createEnemy(game.world, game.renderer, scaled, { x, z });

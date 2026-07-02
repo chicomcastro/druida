@@ -225,7 +225,7 @@ export class Game {
   // (mantém a API usada por sistemas/managers/testes). Ver ADR 0033.
   spawnEnemyByKey(key, x, z) { return _spawnEnemyByKey(this, key, x, z); }
   spawnBossFight(x, z) { return _spawnBossFight(this, x, z); }
-  spawnMiniBoss(x, z) { return _spawnMiniBoss(this, x, z); }
+  spawnMiniBoss(x, z, overrides?) { return _spawnMiniBoss(this, x, z, overrides); }
   _scaleEnemy(def) { return scaleEnemy(this, def); }
 
   /** Fast-travel ao hub (atalho do recall). */

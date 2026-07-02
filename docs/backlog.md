@@ -168,7 +168,7 @@ Pacote de acionáveis para deixar o jogo mais encantador/engajante/divertido
 - [x] 🤖 Encontros: packs compostos + elites com afixos — ADR 0045
 - [x] 🔊 Música procedural por bioma + intensidade de combate — ADR 0046
 - [x] 📖 Missões locais por vila + mercador regional — ADR 0047
-- [ ] 🗺️ Masmorras temáticas por bioma (mecânica + mini-chefe) — ADR 0048
+- [x] 🗺️ Masmorras temáticas por bioma (mecânica + mini-chefe) — ADR 0048
 - [ ] 🗺️ Ciclo dia/noite + clima por bioma — ADR 0049
 - [ ] 🌿 Dons dos santuários (escolha de build) — ADR 0050
 - [ ] 🚀 Telemetria leve opcional + notas de balance — ADR 0051

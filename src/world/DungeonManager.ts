@@ -1,21 +1,26 @@
 import * as THREE from 'three';
 import { C, Transform, Collider } from '../core/ecs/components.js';
-import { dist, makeRng } from '../utils/math.js';
+import { dist, makeRng, weightedPick } from '../utils/math.js';
 import { createEnemy, createLootOrb } from '../entities/factories.js';
 import { generateItem } from '../gameplay/loot.js';
 import { biomeAt } from './WorldManager.js';
 import { BIOMES } from '../data/biomes.js';
+import { DUNGEON_THEMES } from '../data/dungeons.js';
+import { applyDamage, applyStatus } from '../gameplay/combat.js';
 
 /**
  * Masmorras: POIs instanciados. Entrar teletransporta o grupo para uma arena
  * isolada (longe do mundo aberto), enfrenta ondas e dá recompensa garantida
  * (Único na primeira limpeza). Enquanto dentro, o mundo aberto/spawner/eventos
  * ficam suspensos (`game.inDungeon`). Ver ADR 0022.
+ *
+ * Cada masmorra é TEMÁTICA pelo bioma da entrada (ADR 0048): paleta/clima da
+ * arena, pool de inimigos do bioma, perigo ambiental periódico telegrafado e
+ * um mini-chefe próprio na onda final.
  */
 const ARENA = { x: 0, z: 1000 };
 const ARENA_R = 18;
 const WAVES = 3;
-const POOL = ['rotboar', 'husk', 'shaman', 'fungling', 'shadecrow'];
 
 export class DungeonManager {
   game: any;
@@ -23,6 +28,8 @@ export class DungeonManager {
   cleared: Set<string>;
   active: any;
   _arenaBuilt: boolean;
+  _floorMat: any;
+  _wallMat: any;
   rng: any;
 
   constructor(game) {
@@ -78,7 +85,10 @@ export class DungeonManager {
   _buildArena() {
     if (this._arenaBuilt) return;
     this._arenaBuilt = true;
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(ARENA_R, 32), new THREE.MeshStandardMaterial({ color: 0x241825 }));
+    // Materiais próprios: recoloridos por tema a cada entrada (ADR 0048).
+    this._floorMat = new THREE.MeshStandardMaterial({ color: 0x241825 });
+    this._wallMat = new THREE.MeshStandardMaterial({ color: 0x2a1d2e });
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(ARENA_R, 32), this._floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(ARENA.x, 0.02, ARENA.z);
     floor.receiveShadow = true;
@@ -89,7 +99,7 @@ export class DungeonManager {
       const a = (i / segments) * Math.PI * 2;
       const x = ARENA.x + Math.sin(a) * ARENA_R;
       const z = ARENA.z + Math.cos(a) * ARENA_R;
-      const w = new THREE.Mesh(new THREE.BoxGeometry(2.4, 4, 2.4), new THREE.MeshStandardMaterial({ color: 0x2a1d2e }));
+      const w = new THREE.Mesh(new THREE.BoxGeometry(2.4, 4, 2.4), this._wallMat);
       w.position.set(x, 2, z); w.castShadow = true;
       this.game.renderer.add(w);
       const id = this.game.world.createEntity();
@@ -114,26 +124,50 @@ export class DungeonManager {
     const ent = this.entrances.find((e) => e.id === entranceId);
     if (!ent) return;
     this._buildArena();
+    // Tema pelo bioma da entrada: paleta, clima, pool e mini-chefe.
+    const biome = biomeAt(ent.x, ent.z);
+    const theme = DUNGEON_THEMES[biome] ?? DUNGEON_THEMES.clareira;
+    this._floorMat.color.setHex(theme.floor);
+    this._wallMat.color.setHex(theme.wall);
     this.game.inDungeon = true;
-    this.active = { entranceId, returnPos: { ...(this.game.groupCenter ?? { x: 0, z: 0 }) }, wave: -1, enemies: [], phase: 'fighting', timer: 0.5, rewardId: 0 };
+    this.active = {
+      entranceId, biome, theme,
+      returnPos: { ...(this.game.groupCenter ?? { x: 0, z: 0 }) },
+      wave: -1, enemies: [], phase: 'fighting', timer: 0.5, rewardId: 0,
+      hazardT: theme.hazard?.interval ?? 0,
+    };
     this._teleport(ARENA.x, ARENA.z);
-    this.game.renderer.setBiomeMood({ background: 0x140d16, fogNear: 20, fogFar: 55 });
-    this.game.emit('objective', { text: '🏛️ Masmorra: sobreviva às ondas!' });
+    this.game.renderer.setBiomeMood(theme.mood);
+    this.game.emit('objective', { text: `🏛️ ${theme.name}: sobreviva às ondas!` });
   }
 
   _spawnWave() {
     const a = this.active;
     a.wave++;
-    const count = 4 + a.wave * 2 + this.game.progress.level;
+    const pool = BIOMES[a.biome]?.enemies ?? BIOMES.clareira.enemies;
     a.enemies = [];
+    const last = a.wave === WAVES - 1;
+    // Onda final: o mini-chefe do tema + uma escolta reduzida.
+    const count = last
+      ? 2 + Math.floor(this.game.progress.level / 2)
+      : 4 + a.wave * 2 + this.game.progress.level;
     for (let i = 0; i < count; i++) {
       const ang = (i / count) * Math.PI * 2;
       const r = ARENA_R - 3;
-      const key = POOL[Math.floor(this.rng() * POOL.length)];
+      const key = weightedPick(pool, this.rng).key;
       const id = this.game.spawnEnemyByKey(key, ARENA.x + Math.sin(ang) * r, ARENA.z + Math.cos(ang) * r);
       if (id) a.enemies.push(id);
     }
-    this.game.emit('objective', { text: `Onda ${a.wave + 1}/${WAVES}` });
+    if (last) {
+      const mb = a.theme.miniboss;
+      const id = this.game.spawnMiniBoss(ARENA.x, ARENA.z - 6, {
+        name: mb.name, mesh: mb.mesh, hp: Math.round(420 * mb.hpMul),
+      });
+      if (id) a.enemies.push(id);
+      this.game.emit('objective', { text: `${mb.name} desperta!` });
+    } else {
+      this.game.emit('objective', { text: `Onda ${a.wave + 1}/${WAVES}` });
+    }
   }
 
   _aliveCount() {
@@ -190,10 +224,40 @@ export class DungeonManager {
     return id;
   }
 
+  /**
+   * Perigo ambiental do tema: telegrafado com anel na cor do tema; quem
+   * ficar na área leva dano leve + o status do tema (raiz/queimar/congelar).
+   */
+  _hazardTick(dt) {
+    const a = this.active;
+    const hz = a.theme?.hazard;
+    if (!hz || a.phase !== 'fighting') return;
+    a.hazardT -= dt;
+    if (a.hazardT > 0) return;
+    a.hazardT = hz.interval;
+    const ang = this.rng() * Math.PI * 2;
+    const r = this.rng() * (ARENA_R - 5);
+    const hx = ARENA.x + Math.sin(ang) * r;
+    const hz2 = ARENA.z + Math.cos(ang) * r;
+    this.game.emit('vfxRing', { x: hx, z: hz2, radius: hz.radius, color: hz.color });
+    this.game.emit('objective', { text: hz.label });
+    this.game.schedule?.(1.1, () => {
+      for (const [pid, tr, pc, php] of this.game.world.query(C.Transform, C.PlayerControlled, C.Health)) {
+        if (pc.downed || php.dead) continue;
+        if (Math.hypot(tr.x - hx, tr.z - hz2) <= hz.radius) {
+          applyDamage(this.game, pid, hz.damage, { fromX: hx, fromZ: hz2 });
+          applyStatus(this.game.world, pid, hz.effect);
+        }
+      }
+      this.game.emit('vfxRing', { x: hx, z: hz2, radius: hz.radius * 0.7, color: hz.color });
+    });
+  }
+
   update(dt) {
     const a = this.active;
     if (!a) return;
     a.timer -= dt;
+    this._hazardTick(dt);
     if (a.phase === 'fighting') {
       if (a.wave < 0 || (this._aliveCount() === 0 && a.timer <= 0)) {
         if (a.wave + 1 < WAVES) { a.timer = 1.2; this._spawnWave(); }
