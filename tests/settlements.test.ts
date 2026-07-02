@@ -5,6 +5,7 @@ import { SETTLEMENTS } from '../src/data/settlements.js';
 import { SettlementManager } from '../src/world/SettlementManager.js';
 import { biomeAt } from '../src/world/WorldManager.js';
 import { interactionSystem } from '../src/systems/interaction.js';
+import { makeVillagerSpec, buildVoxelModel } from '../src/entities/voxelModels.js';
 
 describe('SETTLEMENTS (dados)', () => {
   it('há pelo menos 3 cidades e cada uma está no anel do seu bioma', () => {
@@ -80,6 +81,19 @@ describe('SettlementManager', () => {
     expect(dlg.p.lines).toEqual(vint.lines);
   });
 
+  it('moradores são modelos voxel com partes animáveis, virados ao centro', () => {
+    const g = makeGame();
+    new SettlementManager(g);
+    const villagers = [...g.world.query(C.Transform, C.Renderable, C.Interactable)]
+      .filter(([, , , i]: any) => i.kind === 'villager');
+    expect(villagers.length).toBeGreaterThan(0);
+    for (const [, tr, r] of villagers as any) {
+      expect(r.object3d.userData.gait).toBe('biped');
+      expect(Object.keys(r.object3d.userData.parts)).toContain('head');
+      expect(Number.isFinite(tr.rot)).toBe(true);
+    }
+  });
+
   it('animate pulsa lanternas/chamas e tremula as luzes sem erro', () => {
     const g = makeGame();
     const sm = new SettlementManager(g);
@@ -89,5 +103,25 @@ describe('SettlementManager', () => {
     sm.animate(0.9);
     sm.animate(1.7);
     expect(sm._flames[0].mesh.material.emissiveIntensity).not.toBe(before);
+  });
+});
+
+describe('NPCs voxel (specs)', () => {
+  it('makeVillagerSpec: ancião ganha capa, cajado e escala maior', () => {
+    const common = makeVillagerSpec({ robe: 0x5a8f5f, trim: 0x6b4a2f });
+    const elder = makeVillagerSpec({ robe: 0x3f7a58, trim: 0xe0a93a, glow: 0x9fe06a, elder: true });
+    expect(common.parts.some((p) => p.name === 'weapon')).toBe(false);
+    expect(elder.parts.some((p) => p.name === 'weapon')).toBe(true);
+    expect(elder.scale).toBeGreaterThan(common.scale!);
+    const names = common.parts.map((p) => p.name);
+    for (const n of ['torso', 'head', 'armL', 'armR', 'legL', 'legR']) expect(names).toContain(n);
+  });
+
+  it('Guardiã e mercador têm specs voxel próprias', () => {
+    for (const kind of ['guardian', 'merchant', 'villager', 'elder']) {
+      const model = buildVoxelModel(kind);
+      expect(model).toBeTruthy();
+      expect(model!.userData.gait).toBe('biped');
+    }
   });
 });

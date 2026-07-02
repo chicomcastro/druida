@@ -1,10 +1,13 @@
 import * as THREE from 'three';
 import { C, Transform, Collider } from '../core/ecs/components.js';
 import { LANDMARKS } from '../gameplay/story.js';
+import { buildVoxelModel } from '../entities/voxelModels.js';
 
 /**
  * Cria os marcos interativos da campanha: a Guardiã (NPC do hub) e os três
  * santuários de Forma Ancestral, distribuídos pelos biomas no eixo -Z.
+ * A Guardiã e o mercador usam os modelos voxel de NPC (ADR 0043), no mesmo
+ * estilo dos personagens/inimigos e com animação procedural de idle.
  */
 const FORM_GLOW = { bear: 0xff9a5a, raven: 0x9a7aff, frog: 0x6affb0 };
 
@@ -18,16 +21,14 @@ export function buildLandmarks(game) {
 }
 
 function buildMerchant(game, pos) {
-  const g = new THREE.Group();
-  const robe = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.6, 8), new THREE.MeshStandardMaterial({ color: 0xb8863f }));
-  robe.position.y = 0.8; robe.castShadow = true;
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshStandardMaterial({ color: 0xe8d0a8 }));
-  head.position.y = 1.7;
-  const stall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 1.0), new THREE.MeshStandardMaterial({ color: 0x7a4a2a }));
-  stall.position.set(0, 1.0, 0.9);
-  g.add(robe); g.add(head); g.add(stall);
+  const g = buildVoxelModel('merchant');
   g.position.set(pos.x, 0, pos.z);
   game.renderer.add(g);
+  // Banca de vendas à frente do mascate (mesh próprio: não balança com o idle).
+  const stall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 1.0), new THREE.MeshStandardMaterial({ color: 0x7a4a2a }));
+  stall.position.set(pos.x, 1.0, pos.z + 0.9);
+  stall.castShadow = true;
+  game.renderer.add(stall);
   const id = game.world.createEntity();
   game.world.add(id, C.Transform, Transform(pos.x, pos.z));
   game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
@@ -52,12 +53,7 @@ function buildChest(game, pos) {
 }
 
 function buildNpc(game, pos) {
-  const g = new THREE.Group();
-  const robe = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.6, 8), new THREE.MeshStandardMaterial({ color: 0x6fae8f }));
-  robe.position.y = 0.8; robe.castShadow = true;
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshStandardMaterial({ color: 0xe8d0a8 }));
-  head.position.y = 1.7;
-  g.add(robe); g.add(head);
+  const g = buildVoxelModel('guardian');
   g.position.set(pos.x, 0, pos.z);
   game.renderer.add(g);
 

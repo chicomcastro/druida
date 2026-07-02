@@ -47,3 +47,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0040](0040-hit-death-reactions.md) | Reações de hit/morte e investida dos inimigos | Aceito |
 | [0041](0041-assentamentos-tematicos.md) | Assentamentos temáticos: uma cidade-vila por região | Aceito |
 | [0042](0042-atmosfera-visual.md) | Atmosfera visual: luz por bioma, sol móvel e partículas | Aceito |
+| [0043](0043-npcs-voxel.md) | NPCs em modelos voxel (aldeões, Guardiã, mercador) | Aceito |
