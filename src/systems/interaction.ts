@@ -17,11 +17,12 @@ export function interactionSystem(game, dt) {
       if (d > (inter.range ?? 3)) continue;
       if (d < promptD) { promptD = d; prompt = inter.prompt; }
       if (intent.interact) {
-        if (inter.kind === 'merchant') game.menus.openShop();
+        if (inter.kind === 'merchant') { game.setActiveShop?.(inter.shopId ?? 'hub'); game.menus.openShop(); }
         else if (inter.kind === 'chest') game.menus.openStash();
         else if (inter.kind === 'dungeon') game.dungeon.enter(inter.entranceId);
         else if (inter.kind === 'dungeon_reward') game.dungeon.claimReward();
         else if (inter.kind === 'villager') game.emit('dialogue', { lines: inter.lines });
+        else if (inter.kind === 'quest_giver') game.quests?.onTalk(inter);
         else game.story.onInteract(inter, pc.index);
         game.emit('interacted', { iid, by: pc.index });
       }

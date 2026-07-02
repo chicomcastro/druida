@@ -35,7 +35,11 @@ export function giveItem(game, item) {
   return false;
 }
 
-/** (Re)gera o estoque do mercador: itens no nível da região + preço. */
+/**
+ * (Re)gera o estoque do mercador ativo: itens no nível da região + preço.
+ * Cada mercador (hub e vilas — ADR 0047) tem estoque próprio: `setActiveShop`
+ * troca `game.shopStock` pela entrada do mapa `_shopStocks`.
+ */
 export function rerollShop(game) {
   const lvl = game.regionLevel();
   const price = { common: 12, rare: 30, unique: 70 };
@@ -44,5 +48,16 @@ export function rerollShop(game) {
     const it = generateItem(lvl);
     game.shopStock.push({ item: it, price: Math.round((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
   }
+  if (game._shopStocks) game._shopStocks[game.activeShopKey ?? 'hub'] = game.shopStock;
   return game.shopStock;
+}
+
+/** Ativa o estoque do mercador `key` (gera sob demanda ao abrir a loja). */
+export function setActiveShop(game, key) {
+  game._shopStocks = game._shopStocks ?? {};
+  if (game.activeShopKey !== key) {
+    if (game.activeShopKey !== undefined && game.shopStock) game._shopStocks[game.activeShopKey] = game.shopStock;
+    game.activeShopKey = key;
+    game.shopStock = game._shopStocks[key] ?? null;
+  }
 }

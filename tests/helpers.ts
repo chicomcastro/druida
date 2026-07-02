@@ -55,7 +55,7 @@ export function makeGame() {
     'x', 'z', 'dmgMul', 'gainSap', 'spendSap', 'aoeDamageAt', 'schedule',
     'abilityCooldown', 'spawnEnemyByKey', 'spawnBossFight', 'spawnMiniBoss',
     '_scaleEnemy', 'regionLevel', 'currentBiomeName', 'partyEssence',
-    'spendEssence', 'giveItem', 'rerollShop', 'equip', 'setupNewPlayer',
+    'spendEssence', 'giveItem', 'rerollShop', 'setActiveShop', 'equip', 'setupNewPlayer',
     'fastTravelTo', 'recallToHub', '_cleanupDestroyed',
   ]) {
     game[m] = (Game.prototype as any)[m];
