@@ -15,6 +15,9 @@ export class Renderer {
   hemi: THREE.HemisphereLight;
   _sunOffset: THREE.Vector3;
   _groundTex: THREE.Texture | null;
+  _base: any;
+  _tmpBg?: THREE.Color;
+  _nightBg?: THREE.Color;
 
   constructor(canvas) {
     this.canvas = canvas;
@@ -78,6 +81,32 @@ export class Renderer {
       if (light.hemiGround !== undefined) this.hemi.groundColor.setHex(light.hemiGround);
       if (light.hemiIntensity !== undefined) this.hemi.intensity = light.hemiIntensity;
     }
+    // Base do dia/noite (ADR 0049): applyDayNight modula a partir daqui.
+    this._base = {
+      bg: (this.scene.background as THREE.Color).clone(),
+      fogNear: this.scene.fog.near,
+      fogFar: this.scene.fog.far,
+      sunI: this.sun.intensity,
+      hemiI: this.hemi.intensity,
+    };
+  }
+
+  /**
+   * Modula a cena pela hora do mundo: 0 = dia pleno (base do bioma),
+   * 1 = noite (escurece fundo/névoa e reduz sol/hemisfério). Chamado por
+   * frame; `fogMul` aproxima a névoa durante clima fechado.
+   */
+  applyDayNight(night: number, fogMul = 1) {
+    if (!this._base) return;
+    this._tmpBg = this._tmpBg ?? new THREE.Color();
+    this._nightBg = this._nightBg ?? new THREE.Color(0x060a14);
+    this._tmpBg.copy(this._base.bg).lerp(this._nightBg, night * 0.78);
+    (this.scene.background as THREE.Color).copy(this._tmpBg);
+    this.scene.fog.color.copy(this._tmpBg);
+    this.scene.fog.near = this._base.fogNear * fogMul;
+    this.scene.fog.far = this._base.fogFar * (1 - night * 0.22) * fogMul;
+    this.sun.intensity = this._base.sunI * (1 - night * 0.72);
+    this.hemi.intensity = this._base.hemiI * (1 - night * 0.45);
   }
 
   /** Move o sol junto do grupo: sombras corretas em qualquer canto do mundo. */

@@ -22,6 +22,7 @@ import { VfxManager } from '../systems/vfx.js';
 import { WorldManager } from '../world/WorldManager.js';
 import { SettlementManager } from '../world/SettlementManager.js';
 import { PurityManager } from '../world/PurityManager.js';
+import { DayNightManager } from '../world/DayNightManager.js';
 import { PoiManager } from '../world/PoiManager.js';
 import { EventManager } from '../world/EventManager.js';
 import { DungeonManager } from '../world/DungeonManager.js';
@@ -53,7 +54,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any;
-  worldManager: any; settlements: any; purity: any; quests: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  worldManager: any; settlements: any; purity: any; quests: any; dayNight: any; poi: any; events: any; dungeon: any; story: any; loop: any;
   inDungeon: boolean;
   // Estado.
   seed: number;
@@ -107,6 +108,7 @@ export class Game {
     this.story = new StoryManager(this);
     this.purity = new PurityManager(this); // mundo cura conforme a campanha (ADR 0044)
     this.quests = new QuestManager(this); // missões locais das vilas (ADR 0047)
+    this.dayNight = new DayNightManager(this); // ciclo dia/noite + clima (ADR 0049)
     this.hud = new Hud(this);
     this.menus = new Menus(this);
     this.minimap = new Minimap(this);
@@ -129,6 +131,7 @@ export class Game {
       pickupSystem,
       spawnerSystem,
       (g, dt) => g.worldManager.update(dt),
+      (g, dt) => g.dayNight.update(dt),
       (g) => g.settlements.update(),
       (g) => g.story.update(),
       (g) => g.purity.update(),
@@ -344,6 +347,8 @@ export class Game {
     this.settlements.animate(t); // lanternas/chamas das vilas pulsam
     this.camera.follow(this.groupCenter, this.groupSpread, this.dt);
     this.renderer.updateSun(this.groupCenter); // sombras acompanham o grupo
+    // Hora do mundo escurece a cena (suspensa na masmorra — céu não existe lá).
+    if (!this.inDungeon) this.renderer.applyDayNight(this.dayNight.nightAmount(), this.dayNight.weather ? 0.8 : 1);
     this.renderer.render(this.camera.cam);
     this.hud.update();
     this.minimap.update();

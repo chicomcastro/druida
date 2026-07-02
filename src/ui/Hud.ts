@@ -163,7 +163,7 @@ export class Hud {
       if (!seen.has(id)) { p.el.remove(); this.panels.delete(id); }
     }
 
-    this.biomeEl.textContent = game.currentBiomeName();
+    this.biomeEl.textContent = `${game.currentBiomeName()} ${game.dayNight?.icon?.() ?? ''}`;
     this.lvlEl.textContent = `Nível ${game.progress.level} · ${game.partyEssence()} essência`;
     this.xpEl.style.width = (game.progress.xp / xpForLevel(game.progress.level)) * 100 + '%';
 

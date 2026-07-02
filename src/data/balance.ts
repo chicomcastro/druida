@@ -44,6 +44,18 @@ export const BALANCE = {
     essenceMax: 4,
   },
 
+  dayNight: {
+    // Ciclo dia/noite + clima (ADR 0049).
+    cycleSeconds: 420, // ciclo completo (~7 min)
+    nightFraction: 0.35,
+    nightSpawnBonus: 0.25, // +25% de cap de inimigos à noite
+    weatherChance: 0.55,
+    weatherCalmMin: 45,
+    weatherCalmMax: 100,
+    weatherDurMin: 22,
+    weatherDurMax: 45,
+  },
+
   encounters: {
     // Packs compostos e elites com afixo (ADR 0045).
     packChance: 0.22,
