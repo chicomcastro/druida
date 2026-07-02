@@ -12,4 +12,8 @@ export const LORE = [
   { id: 'l6', title: 'Santuários', text: 'Os santuários guardam as Formas para que nenhum Druida caído as leve todas. A Guardiã escolheu bem.' },
   { id: 'l7', title: 'O Coração', text: 'No centro da podridão pulsa um coração que já foi semente. Silenciá-lo é deixar a floresta morrer — e renascer.' },
   { id: 'l8', title: 'Vagalumes', text: 'Quando a noite cai limpa, os vagalumes voltam. É como o Bosque agradece a quem o purifica.' },
+  { id: 'l9', title: 'O Círculo do Carvalho', text: 'A vila dos druidas cresceu em anel ao redor da Carvalho-Mãe, como cresce a própria árvore. Nenhuma casa tem fundação: as raízes as seguram.' },
+  { id: 'l10', title: 'O Vau das Palafitas', text: 'Os coletores do vau dizem que casa boa não toca o chão do pântano. A água escura leva embora o que apodrece — desde que você não pare de se mover.' },
+  { id: 'l11', title: 'Cinzafolha', text: 'Os lenhadores queimam a madeira doente antes que ela caminhe. A cinza que cobre a vila é o preço de continuar viva.' },
+  { id: 'l12', title: 'O Abrigo do Degelo', text: 'Cada cairn dos montanheses marca um passo da trilha antiga até o Coração. Empilhar pedras é a forma deles de rezar.' },
 ];

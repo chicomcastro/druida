@@ -1,5 +1,6 @@
 import { C, Factions } from '../core/ecs/components.js';
 import { LANDMARKS } from '../gameplay/story.js';
+import { SETTLEMENTS } from '../data/settlements.js';
 
 /**
  * Minimapa/radar top-down no canto superior direito. Mostra hub, jogadores,
@@ -41,8 +42,8 @@ export class Minimap {
     const c = game.groupCenter ?? { x: 0, z: 0 };
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Hub
-    this.dot(0, -10, c.x, c.z, '#6cba5a', 4);
+    // Assentamentos (cidades)
+    for (const s of SETTLEMENTS) this.dot(s.x, s.z, c.x, c.z, s.mapColor, 4);
     // Santuários e chefe
     this.dot(LANDMARKS.sanctuary_bear.x, LANDMARKS.sanctuary_bear.z, c.x, c.z, '#ff9a5a', 3);
     this.dot(LANDMARKS.sanctuary_raven.x, LANDMARKS.sanctuary_raven.z, c.x, c.z, '#9a7aff', 3);

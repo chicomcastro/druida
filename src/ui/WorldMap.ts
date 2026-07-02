@@ -1,6 +1,6 @@
 import { C } from '../core/ecs/components.js';
 import { LANDMARKS } from '../gameplay/story.js';
-import { BIOMES } from '../data/biomes.js';
+import { SETTLEMENTS } from '../data/settlements.js';
 
 /**
  * Mapa-mundi em tela cheia (tecla M) com fog of war: só áreas exploradas são
@@ -11,7 +11,11 @@ const MAP_RADIUS = 290; // unidades de mundo do centro até a borda do mapa
 const PX = 600;
 
 const POINTS = [
-  { key: 'hub', x: 0, z: -10, label: 'Carvalho-Mãe', color: '#6cba5a', always: true },
+  // Assentamentos (cidades temáticas): o hub é sempre visível; as demais vilas
+  // aparecem/permitem viagem quando exploradas. Ver ADR 0041.
+  ...SETTLEMENTS.map((s) => ({
+    key: s.id, x: s.x, z: s.z, label: s.name, color: s.mapColor, always: s.id === 'circulo_carvalho',
+  })),
   { key: 'sanctuary_bear', x: LANDMARKS.sanctuary_bear.x, z: LANDMARKS.sanctuary_bear.z, label: 'Santuário do Urso', color: '#ff9a5a' },
   { key: 'sanctuary_raven', x: LANDMARKS.sanctuary_raven.x, z: LANDMARKS.sanctuary_raven.z, label: 'Santuário do Corvo', color: '#9a7aff' },
   { key: 'sanctuary_frog', x: LANDMARKS.sanctuary_frog.x, z: LANDMARKS.sanctuary_frog.z, label: 'Santuário do Sapo', color: '#6affb0' },

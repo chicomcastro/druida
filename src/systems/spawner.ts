@@ -6,8 +6,9 @@ import { BALANCE } from '../data/balance.js';
 
 /**
  * Mantém uma população de inimigos perto dos jogadores, sorteada da tabela do
- * bioma local, escalando com o número de jogadores. Não spawna no hub (zona
- * segura) nem dentro do campo de visão imediato.
+ * bioma local, escalando com o número de jogadores. Não spawna no hub nem
+ * dentro dos assentamentos (zonas seguras — ADR 0041), nem no campo de visão
+ * imediato.
  */
 const HUB_SAFE_RADIUS = 16;
 
@@ -36,6 +37,7 @@ export function spawnerSystem(game, dt) {
   const x = anchor.x + Math.sin(a) * rad;
   const z = anchor.z + Math.cos(a) * rad;
   if (Math.hypot(x, z) < HUB_SAFE_RADIUS) return;
+  if (game.settlements?.isSafe(x, z, 6)) return;
 
   const biome = BIOMES[biomeAt(x, z)];
   if (!biome?.enemies?.length) return;
