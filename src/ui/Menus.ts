@@ -3,6 +3,7 @@ import { FORMS } from '../gameplay/forms.js';
 import { ENCHANTMENTS, salvageValue } from '../gameplay/loot.js';
 import { applyEquipment } from '../gameplay/equip.js';
 import { saveToStorage, hasSave } from '../gameplay/save.js';
+import { BOONS, chooseBoon } from '../gameplay/boons.js';
 import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
 
 /**
@@ -43,6 +44,8 @@ export class Menus {
   _rebinding: string | null;
   constructor(game) {
     this.game = game;
+    // Despertar de santuário oferece a escolha de um dom (ADR 0050).
+    game.on('formUnlocked', (e) => this.openBoonChooser(e.form));
     const style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);
@@ -393,4 +396,32 @@ export class Menus {
     this.stash.classList.remove('show');
     this.game.paused = false;
   }
+
+  // --- Dom do Santuário (ADR 0050) ------------------------------------------
+  openBoonChooser(form) {
+    const opts = BOONS[form];
+    if (!opts || this.game.boons?.[form]) return;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:32;display:flex;align-items:center;justify-content:center;background:rgba(4,8,5,.88);font-family:system-ui,sans-serif;color:#eaf3e6';
+    wrap.innerHTML = `<div style="background:rgba(10,20,12,.96);border:1px solid rgba(159,224,106,.4);border-radius:12px;padding:22px 26px;max-width:560px;text-align:center">
+      <h2 style="margin:0 0 6px;color:#9fe06a">✨ Dom do Santuário</h2>
+      <p style="opacity:.8;margin:0 0 16px">A Forma desperta e oferece um dom permanente. Escolha com sabedoria.</p>
+      <div style="display:flex;gap:12px;justify-content:center">${opts.map((b) => `
+        <button data-boon="${b.id}" style="flex:1;cursor:pointer;background:rgba(159,224,106,.08);border:1px solid rgba(159,224,106,.35);border-radius:10px;padding:14px;color:#eaf3e6">
+          <div style="font-size:26px">${b.icon}</div>
+          <div style="font-weight:700;margin:6px 0 4px">${b.name}</div>
+          <div style="font-size:12px;opacity:.75">${b.desc}</div>
+        </button>`).join('')}
+      </div></div>`;
+    document.body.appendChild(wrap);
+    this.game.paused = true;
+    wrap.querySelectorAll('button[data-boon]').forEach((el) => {
+      (el as HTMLElement).onclick = () => {
+        chooseBoon(this.game, form, (el as HTMLElement).dataset.boon);
+        wrap.remove();
+        this.game.paused = false;
+      };
+    });
+  }
+
 }

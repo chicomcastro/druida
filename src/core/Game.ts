@@ -45,6 +45,7 @@ import { bindGameEvents } from './gameEvents.js';
 import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, scaleEnemy, registerEliteEffects } from '../gameplay/spawn.js';
 import { partyEssence as _partyEssence, spendEssence as _spendEssence, giveItem as _giveItem, rerollShop as _rerollShop, setActiveShop as _setActiveShop } from '../gameplay/economy.js';
 import { QuestManager } from '../gameplay/quests.js';
+import { registerBoonHooks } from '../gameplay/boons.js';
 
 /**
  * Orquestra mundo, render, input, sistemas e estado de jogo. Expõe helpers
@@ -65,6 +66,7 @@ export class Game {
   sharedChest: any[];
   shopStock: any[] | null;
   lore: { found: Set<string> };
+  boons: Record<string, string>;
   systems: Array<(g: any, dt: number) => void>;
   dt: number;
   paused: boolean;
@@ -89,6 +91,7 @@ export class Game {
     this.sharedChest = []; // baú compartilhado (itens)
     this.shopStock = null; // estoque do mercador (lazy)
     this.lore = { found: new Set() }; // codex de lore descoberta
+    this.boons = {}; // dons dos santuários escolhidos (ADR 0050)
     this._scheduled = [];
     this._assignedPads = new Set();
     this.dt = 1 / 60;
@@ -97,6 +100,7 @@ export class Game {
 
     bindGameEvents(this);
     registerEliteEffects(this); // afixos Volátil/Sanguessuga (ADR 0045)
+    registerBoonHooks(this); // dons dos santuários (ADR 0050)
 
     this.inDungeon = false;
     this.worldManager = new WorldManager(this);

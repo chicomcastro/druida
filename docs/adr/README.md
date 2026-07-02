@@ -54,3 +54,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0047](0047-missoes-de-vila.md) | Missões locais por vila + mercador regional | Aceito |
 | [0048](0048-masmorras-tematicas.md) | Masmorras temáticas por bioma | Aceito |
 | [0049](0049-dia-noite-clima.md) | Ciclo dia/noite + clima por bioma | Aceito |
+| [0050](0050-dons-santuarios.md) | Dons dos Santuários (escolhas de build) | Aceito |
