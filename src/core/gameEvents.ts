@@ -17,7 +17,8 @@ export function bindGameEvents(game) {
     const def = e.loot ?? {};
     grantXp(game, def.xp ?? ENEMIES[e.killKind]?.xp ?? 6);
     const { essenceMin, essenceMax } = BALANCE.loot;
-    const essence = Math.max(1, Math.round(essenceMin + Math.random() * (essenceMax - essenceMin)));
+    // Elites carregam bônus de essência (ADR 0045).
+    const essence = Math.max(1, Math.round(essenceMin + Math.random() * (essenceMax - essenceMin))) + (def.essenceBonus ?? 0);
     createLootOrb(game.world, game.renderer, { x: e.x + 0.4, z: e.z, item: { essence, rarityColor: 0x9fe06a } });
     for (const item of rollDrops(def, game.regionLevel(), Math.random)) {
       createLootOrb(game.world, game.renderer, { x: e.x - 0.5 + Math.random(), z: e.z + Math.random() - 0.5, item });

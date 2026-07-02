@@ -23,6 +23,11 @@ export const BIOMES = {
       { key: 'rotboar', weight: 7 },
       { key: 'fungling', weight: 3 },
     ],
+    // Encontros compostos (packs): composição autoral por bioma (ADR 0045).
+    packs: [
+      { weight: 3, comp: ['rotboar', 'rotboar', 'rotboar'] }, // vara de javalis
+      { weight: 1, comp: ['fungling', 'fungling', 'rotboar'] },
+    ],
   },
   pantano: {
     name: 'Pântano Apodrecido', level: 3,
@@ -44,6 +49,11 @@ export const BIOMES = {
       { key: 'shadecrow', weight: 2 },
       { key: 'shaman', weight: 1 },
     ],
+    packs: [
+      { weight: 3, comp: ['shaman', 'husk', 'husk'] }, // xamã escoltado
+      { weight: 2, comp: ['fungling', 'fungling', 'fungling'] }, // ninho explosivo
+      { weight: 2, comp: ['rotboar', 'rotboar', 'shadecrow'] },
+    ],
   },
   bosque_cinza: {
     name: 'Bosque Cinza', level: 5,
@@ -63,6 +73,11 @@ export const BIOMES = {
       { key: 'shaman', weight: 2 },
       { key: 'fungling', weight: 2 },
     ],
+    packs: [
+      { weight: 3, comp: ['shadecrow', 'shadecrow', 'husk'] }, // revoada com âncora
+      { weight: 2, comp: ['shaman', 'shadecrow', 'shadecrow'] },
+      { weight: 2, comp: ['husk', 'husk', 'fungling'] },
+    ],
   },
   picos: {
     name: 'Picos Gélidos', level: 7,
@@ -79,6 +94,10 @@ export const BIOMES = {
       { key: 'husk', weight: 4 },
       { key: 'shaman', weight: 3 },
       { key: 'shadecrow', weight: 3 },
+    ],
+    packs: [
+      { weight: 3, comp: ['husk', 'husk', 'shaman'] }, // patrulha da nevasca
+      { weight: 2, comp: ['shadecrow', 'shadecrow', 'shadecrow', 'shaman'] },
     ],
   },
   coracao: {
@@ -98,6 +117,10 @@ export const BIOMES = {
       { key: 'husk', weight: 4 },
       { key: 'shaman', weight: 3 },
       { key: 'fungling', weight: 3 },
+    ],
+    packs: [
+      { weight: 3, comp: ['shaman', 'shaman', 'husk', 'husk'] }, // conclave podre
+      { weight: 2, comp: ['fungling', 'fungling', 'fungling', 'husk'] },
     ],
   },
 };

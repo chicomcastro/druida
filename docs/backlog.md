@@ -165,7 +165,7 @@ Pacote de acionáveis para deixar o jogo mais encantador/engajante/divertido
 (um ADR por item):
 
 - [x] 🌿 Purificação visível do mundo (regiões curam, acampamentos florescem) — ADR 0044
-- [ ] 🤖 Encontros: packs compostos + elites com afixos — ADR 0045
+- [x] 🤖 Encontros: packs compostos + elites com afixos — ADR 0045
 - [ ] 🔊 Música procedural por bioma + intensidade de combate — ADR 0046
 - [ ] 📖 Missões locais por vila + mercador regional — ADR 0047
 - [ ] 🗺️ Masmorras temáticas por bioma (mecânica + mini-chefe) — ADR 0048

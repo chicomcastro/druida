@@ -41,7 +41,7 @@ import { generateItem } from '../gameplay/loot.js';
 import { applyEquipment } from '../gameplay/equip.js';
 import { applyDamage } from '../gameplay/combat.js';
 import { bindGameEvents } from './gameEvents.js';
-import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, scaleEnemy } from '../gameplay/spawn.js';
+import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, scaleEnemy, registerEliteEffects } from '../gameplay/spawn.js';
 import { partyEssence as _partyEssence, spendEssence as _spendEssence, giveItem as _giveItem, rerollShop as _rerollShop } from '../gameplay/economy.js';
 
 /**
@@ -94,6 +94,7 @@ export class Game {
     this.hitStop = 0;
 
     bindGameEvents(this);
+    registerEliteEffects(this); // afixos Volátil/Sanguessuga (ADR 0045)
 
     this.inDungeon = false;
     this.worldManager = new WorldManager(this);

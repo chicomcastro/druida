@@ -27,6 +27,17 @@ export const ENEMIES = {
   },
 };
 
+/**
+ * Afixos de elite: inimigos comuns promovidos com um modificador que muda o
+ * combate (não só números) e recompensa maior. Ver ADR 0045.
+ */
+export const ELITE_AFFIXES = {
+  veloz: { name: 'Veloz', color: 0x6ad0ff, mods: { speed: 1.5, hp: 1.2 } },
+  petreo: { name: 'Pétreo', color: 0xb8b8c8, mods: { speed: 0.85, hp: 2.2 } },
+  volatil: { name: 'Volátil', color: 0xff8a3a, mods: { hp: 1.3 }, explode: { damage: 18, radius: 3.2 } },
+  sanguessuga: { name: 'Sanguessuga', color: 0xff5a8a, mods: { hp: 1.5 }, leech: 0.5 },
+};
+
 /** Chefe da campanha — fases em escala. */
 export const BOSSES = {
   rotlord: {

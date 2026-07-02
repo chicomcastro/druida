@@ -1,8 +1,10 @@
 import { C, Factions } from '../core/ecs/components.js';
 import { weightedPick } from '../utils/math.js';
 import { biomeAt } from '../world/WorldManager.js';
-import { BIOMES } from '../data/biomes.js';
+import { BIOMES, BIOME_ORDER } from '../data/biomes.js';
 import { BALANCE } from '../data/balance.js';
+import { spawnPack, pickPack, promoteToElite } from '../gameplay/spawn.js';
+import { ELITE_AFFIXES } from '../data/enemies.js';
 
 /**
  * Mantém uma população de inimigos perto dos jogadores, sorteada da tabela do
@@ -39,8 +41,36 @@ export function spawnerSystem(game, dt) {
   if (Math.hypot(x, z) < HUB_SAFE_RADIUS) return;
   if (game.settlements?.isSafe(x, z, 6)) return;
 
-  const biome = BIOMES[biomeAt(x, z)];
+  const biomeKey = biomeAt(x, z);
+  const biome = BIOMES[biomeKey];
   if (!biome?.enemies?.length) return;
+
+  // Encontros compostos: chance de spawnar um pack autoral do bioma em vez de
+  // um inimigo avulso (com folga de +2 sobre o cap). Ver ADR 0045.
+  const s2 = BALANCE.encounters;
+  const pack = pickPack(biome, Math.random);
+  if (pack && Math.random() < s2.packChance && enemyCount + pack.comp.length <= cap + 2) {
+    const ids = spawnPack(game, pack.comp, x, z);
+    // O "líder" do pack pode ser elite (mais provável em anéis avançados).
+    if (ids.length && Math.random() < eliteChance(biomeKey) * 2) {
+      promoteToElite(game, ids[0], randomAffix());
+    }
+    return;
+  }
+
   const pick = weightedPick(biome.enemies, Math.random);
-  game.spawnEnemyByKey(pick.key, x, z);
+  const id = game.spawnEnemyByKey(pick.key, x, z);
+  if (id && Math.random() < eliteChance(biomeKey)) promoteToElite(game, id, randomAffix());
+}
+
+/** Chance de elite cresce com o anel (quase nula na Clareira inicial). */
+function eliteChance(biomeKey) {
+  const ring = Math.max(0, BIOME_ORDER.indexOf(biomeKey));
+  const e = BALANCE.encounters;
+  return ring === 0 ? e.eliteChanceBase : e.eliteChanceBase + ring * e.eliteChancePerRing;
+}
+
+function randomAffix() {
+  const keys = Object.keys(ELITE_AFFIXES);
+  return keys[Math.floor(Math.random() * keys.length)];
 }

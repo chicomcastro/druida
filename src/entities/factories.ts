@@ -78,7 +78,9 @@ export function createEnemy(world, renderer, def, { x = 0, z = 0 } = {}) {
     projectileColor: def.projectileColor ?? 0xb06bd0,
     summon: def.summon ?? null,
   });
-  world.add(id, C.LootTable, def.loot ?? { essence: [1, 3], xp: def.xp ?? 5, drops: [] });
+  // Clona o loot: o catálogo ENEMIES é compartilhado e o LootTable da
+  // entidade é mutado depois (xp escalado, promoção a elite — ADR 0045).
+  world.add(id, C.LootTable, { ...(def.loot ?? { essence: [1, 3], xp: def.xp ?? 5, drops: [] }) });
   if (def.boss) world.add(id, C.Boss, { name: def.name, phase: 1, def });
   world.add(id, C.Tint, { defaultColor: null, flash: 0 });
   return id;
