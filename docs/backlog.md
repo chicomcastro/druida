@@ -159,6 +159,22 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 
 ---
 
+## M11 — Encanto & Engajamento 🟡
+
+Pacote de acionáveis para deixar o jogo mais encantador/engajante/divertido
+(um ADR por item):
+
+- [x] 🌿 Purificação visível do mundo (regiões curam, acampamentos florescem) — ADR 0044
+- [ ] 🤖 Encontros: packs compostos + elites com afixos — ADR 0045
+- [ ] 🔊 Música procedural por bioma + intensidade de combate — ADR 0046
+- [ ] 📖 Missões locais por vila + mercador regional — ADR 0047
+- [ ] 🗺️ Masmorras temáticas por bioma (mecânica + mini-chefe) — ADR 0048
+- [ ] 🗺️ Ciclo dia/noite + clima por bioma — ADR 0049
+- [ ] 🌿 Dons dos santuários (escolha de build) — ADR 0050
+- [ ] 🚀 Telemetria leve opcional + notas de balance — ADR 0051
+
+---
+
 ## Caminho crítico (resumo)
 
 ```
