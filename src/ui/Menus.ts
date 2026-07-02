@@ -127,6 +127,7 @@ export class Menus {
       <button class="btn" id="p-resume" style="text-align:center">▶ Continuar</button>
       <button class="btn" id="p-save" style="text-align:center">💾 Salvar</button>
       <button class="btn" id="p-mute" style="text-align:center">🔊 Som: ${this.game.audio.muted ? 'desligado' : 'ligado'}</button>
+      <button class="btn" id="p-music" style="text-align:center">🎵 Música: ${this.game.audio.musicMuted ? 'desligada' : 'ligada'}</button>
       <button class="btn" id="p-controls" style="text-align:center">🎮 Controles</button>
     </div>`;
     this.pause.querySelector('#p-resume').onclick = () => this.togglePause();
@@ -138,6 +139,10 @@ export class Menus {
     this.pause.querySelector('#p-mute').onclick = (ev) => {
       this.game.audio.setMuted(!this.game.audio.muted);
       ev.target.textContent = `🔊 Som: ${this.game.audio.muted ? 'desligado' : 'ligado'}`;
+    };
+    this.pause.querySelector('#p-music').onclick = (ev) => {
+      this.game.audio.setMusicMuted(!this.game.audio.musicMuted);
+      ev.target.textContent = `🎵 Música: ${this.game.audio.musicMuted ? 'desligada' : 'ligada'}`;
     };
     this.pause.querySelector('#p-controls').onclick = () => { this.pause.classList.remove('show'); this.openControls(); };
   }

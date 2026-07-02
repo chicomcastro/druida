@@ -1,8 +1,11 @@
+import { MusicDirector } from './MusicDirector.js';
+
 /**
  * Áudio procedural via Web Audio API — sem arquivos de asset. Sintetiza SFX
  * curtos (ataque, acerto, conjurar, pickup, level up, troca de forma, chefe) e
- * um drone ambiente que muda de tom por bioma. Pipeline de assets reais
- * (samples) fica como evolução. Ver docs/adr/0011.
+ * a trilha musical procedural por bioma (MusicDirector — ADR 0046; substituiu
+ * o antigo drone de senoide). Pipeline de assets reais (samples) fica como
+ * evolução. Ver docs/adr/0011.
  *
  * O AudioContext só inicia após o primeiro gesto do usuário (política dos
  * navegadores), então `resume()` é chamado no clique/tecla inicial.
@@ -12,8 +15,9 @@ export class AudioManager {
   ctx: AudioContext | null;
   master: GainNode | null;
   muted: boolean;
+  musicMuted: boolean;
   volume: number;
-  _ambient: { osc: OscillatorNode; g: GainNode } | null;
+  music: MusicDirector | null;
   _tmp?: any;
 
   constructor(game) {
@@ -21,8 +25,9 @@ export class AudioManager {
     this.ctx = null;
     this.master = null;
     this.muted = false;
+    this.musicMuted = false;
     this.volume = 0.6;
-    this._ambient = null;
+    this.music = null;
 
     const resume = () => this._ensure();
     addEventListener('pointerdown', resume, { once: false });
@@ -40,7 +45,7 @@ export class AudioManager {
     game.on('dodge', () => this.blip(300, 0.08, 'sine', 0.1));
     game.on('victory', () => this.arp([523, 659, 784, 1046, 1318], 0.18));
     game.on('playerDowned', () => this.blip(90, 0.4, 'sawtooth', 0.25));
-    game.on('biomeChanged', (e) => this._setAmbient(e.biome));
+    game.on('biomeChanged', (e) => this.music?.setBiome(e.biome));
   }
 
   _ensure() {
@@ -51,11 +56,20 @@ export class AudioManager {
     this.master = this.ctx.createGain();
     this.master.gain.value = this.muted ? 0 : this.volume;
     this.master.connect(this.ctx.destination);
+    // Trilha procedural (nasce junto do contexto; segue o bioma atual).
+    this.music = new MusicDirector(this.game, this.ctx, this.master);
+    this.music.setMuted(this.musicMuted);
+    this.music.setBiome(this.game.worldManager?.currentBiome ?? 'clareira');
   }
 
   setMuted(m) {
     this.muted = m;
     if (this.master) this.master.gain.value = m ? 0 : this.volume;
+  }
+
+  setMusicMuted(m) {
+    this.musicMuted = m;
+    this.music?.setMuted(m);
   }
 
   blip(freq, dur, type: OscillatorType = 'sine', gain = 0.2) {
@@ -92,18 +106,4 @@ export class AudioManager {
     src.start(t);
   }
 
-  _setAmbient(biomeKey) {
-    if (!this.ctx || this.muted) return;
-    if (this._ambient) { try { this._ambient.osc.stop(); } catch { /* noop */ } this._ambient = null; }
-    const base = { clareira: 110, pantano: 82, bosque_cinza: 98, picos: 146, coracao: 65 };
-    const freq = base[biomeKey] ?? 96;
-    const osc = this.ctx.createOscillator();
-    const g = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    g.gain.value = 0.04;
-    osc.connect(g).connect(this.master);
-    osc.start();
-    this._ambient = { osc, g };
-  }
 }
