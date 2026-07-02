@@ -1,4 +1,5 @@
 import { C } from '../core/ecs/components.js';
+import { speedBoonMul, iframeBoonMul } from '../gameplay/boons.js';
 import { normalize, angleTo } from '../utils/math.js';
 import { FORMS } from '../gameplay/forms.js';
 import { castAbility } from '../gameplay/abilities/index.js';
@@ -55,7 +56,7 @@ export function playerControlSystem(game, dt) {
     const rooted = st.root > 0 || st.stun > 0;
     const slow = st.freeze > 0 ? 0.5 : 1;
     const n = normalize(intent.moveX, intent.moveZ);
-    const speed = vel.speed * (formDef.speedMul ?? 1) * slow;
+    const speed = vel.speed * (formDef.speedMul ?? 1) * slow * speedBoonMul(game); // Asas do Vento (ADR 0050)
 
     if (pc.dodgeTimer > 0) {
       // Durante o dodge mantém a velocidade do impulso (definida abaixo).
@@ -74,7 +75,7 @@ export function playerControlSystem(game, dt) {
       vel.vz = dz * speed * 2.6;
       pc.dodgeTimer = 0.32;
       const hp = world.get(id, C.Health);
-      hp.invuln = Math.max(hp.invuln, 0.3);
+      hp.invuln = Math.max(hp.invuln, 0.3 * iframeBoonMul(game)); // Presságio (ADR 0050)
       game.emit('dodge', { id, x: tr.x, z: tr.z });
     }
 

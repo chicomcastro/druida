@@ -19,6 +19,8 @@ export function applyEquipment(game, id) {
   if (eq.armor?.bonus === 'health') maxHp += eq.armor.bonusValue ?? 0;
   const vigor = eq.armor?.enchants?.find((e) => e.id === 'vigor' && e.level > 0);
   if (vigor) maxHp += 30 * vigor.level;
+  // Dom Casca de Carvalho (ADR 0050): +20% de vida máxima.
+  if (Object.values(game.boons ?? {}).includes('casca')) maxHp = Math.round(maxHp * 1.2);
 
   const ratio = hp.max > 0 ? hp.hp / hp.max : 1;
   hp.max = maxHp;
@@ -26,6 +28,8 @@ export function applyEquipment(game, id) {
 
   let regen = BASE_SAP_REGEN;
   if (eq.armor?.bonus === 'sapRegen') regen += (eq.armor.bonusValue ?? 0) * 0.4;
+  // Dom Orvalho Eterno (ADR 0050): +30% de regeneração de Seiva.
+  if (Object.values(game.boons ?? {}).includes('orvalho')) regen *= 1.3;
   sap.regen = regen;
 
   eq.mitigation = eq.armor?.armor ?? 0; // 0..~0.3

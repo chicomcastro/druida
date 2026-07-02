@@ -189,5 +189,7 @@ export interface SaveV1 {
   lore: string[];
   /** Missões de vila (ADR 0047): status/progresso por quest. Opcional (v1 antigos). */
   quests?: Record<string, { status: 'available' | 'active' | 'done'; progress: number }>;
+  /** Dons dos santuários (ADR 0050): form -> boonId. Opcional. */
+  boons?: Record<string, string>;
   players: PlayerSnapshot[];
 }
