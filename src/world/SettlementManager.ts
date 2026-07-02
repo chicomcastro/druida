@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { C, Transform, Collider } from '../core/ecs/components.js';
 import { SETTLEMENTS } from '../data/settlements.js';
-import { makeRng } from '../utils/math.js';
+import { makeRng, angleTo } from '../utils/math.js';
+import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
 
 /**
  * Constrói e administra os assentamentos temáticos (uma cidade-vila por
@@ -84,31 +85,27 @@ export class SettlementManager {
     this.game.world.add(id, C.Collider, Collider(r, true));
   }
 
+  /**
+   * Morador como modelo voxel (mesmo sistema dos personagens/inimigos — ADR
+   * 0043): túnica na paleta do tema, ancião com capa/cajado, e partes nomeadas
+   * para o animador procedural (idle). Vira Renderable, então o renderSync
+   * cuida de posição/rotação/animação.
+   */
   _buildVillager(s, v) {
     const { game } = this;
-    const g = new THREE.Group();
     const palette = VILLAGER_PALETTES[s.theme];
-    const robeColor = v.elder ? palette.elder : palette.robe;
-    const robe = mesh(new THREE.ConeGeometry(v.elder ? 0.66 : 0.55, v.elder ? 1.75 : 1.5, 8), robeColor);
-    robe.position.y = (v.elder ? 1.75 : 1.5) / 2;
-    const head = mesh(new THREE.BoxGeometry(0.38, 0.38, 0.38), 0xe8d0a8);
-    head.position.y = v.elder ? 1.9 : 1.65;
-    const hood = mesh(new THREE.ConeGeometry(0.34, 0.4, 8), robeColor);
-    hood.position.y = (v.elder ? 1.9 : 1.65) + 0.3;
-    g.add(robe, head, hood);
-    if (v.elder) {
-      const staff = mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.1, 5), 0x6b4a2f);
-      staff.position.set(0.55, 1.05, 0);
-      const gem = mesh(new THREE.OctahedronGeometry(0.14, 0), palette.glow, { emissive: palette.glow, emissiveIntensity: 0.8 });
-      gem.position.set(0.55, 2.2, 0);
-      g.add(staff, gem);
-      this._flames.push({ mesh: gem, base: 0.8, amp: 0.3, speed: 2.2, seed: v.x });
-    }
+    const g = buildVoxelGroup(makeVillagerSpec({
+      robe: v.elder ? palette.elder : palette.robe,
+      trim: palette.trim,
+      glow: palette.glow,
+      elder: !!v.elder,
+    }));
     const wx = s.x + v.x, wz = s.z + v.z;
     g.position.set(wx, 0, wz);
     game.renderer.add(g);
     const id = game.world.createEntity();
-    game.world.add(id, C.Transform, Transform(wx, wz));
+    // Olha para o centro da vila (rotação sincronizada pelo renderSync).
+    game.world.add(id, C.Transform, Transform(wx, wz, angleTo(wx, wz, s.x, s.z)));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
     game.world.add(id, C.Collider, Collider(0.55, true));
     game.world.add(id, C.Interactable, {
@@ -441,12 +438,12 @@ function mesh(geo, color, opts: any = {}) {
   return m;
 }
 
-/** Cores das vestes por tema (morador comum, ancião e brilho do cajado). */
+/** Cores das vestes por tema (morador comum, ancião, cinto e cajado). */
 const VILLAGER_PALETTES = {
-  druida: { robe: 0x5a8f5f, elder: 0x3f7a58, glow: 0x9fe06a },
-  palafitas: { robe: 0x6b7a3f, elder: 0x4f6b38, glow: 0x6affc8 },
-  lenhadores: { robe: 0x8a5a3a, elder: 0x6b4228, glow: 0xffb46a },
-  degelo: { robe: 0x7a8a9a, elder: 0x5a6e86, glow: 0x9fdcff },
+  druida: { robe: 0x5a8f5f, elder: 0x3f7a58, trim: 0x6b4a2f, glow: 0x9fe06a },
+  palafitas: { robe: 0x6b7a3f, elder: 0x4f6b38, trim: 0x8a6b3a, glow: 0x6affc8 },
+  lenhadores: { robe: 0x8a5a3a, elder: 0x6b4228, trim: 0x3a2d22, glow: 0xffb46a },
+  degelo: { robe: 0x7a8a9a, elder: 0x5a6e86, trim: 0xd8e4ea, glow: 0x9fdcff },
 };
 
 function hashId(id) {

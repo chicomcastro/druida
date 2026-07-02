@@ -266,6 +266,60 @@ const rotlord: VoxelModelSpec = {
   ],
 };
 
+// --- NPCs (aldeões, anciãos, Guardiã, mercador) ----------------------------
+// Fábrica paramétrica: os assentamentos colorem a túnica por tema e os
+// anciãos ganham capa, cajado e escala maior. Ver ADR 0043.
+export interface VillagerLook {
+  /** Cor da túnica/capuz. */
+  robe: number;
+  /** Cor do cinto/faixa (e da capa do ancião). */
+  trim: number;
+  /** Cor do cristal do cajado (só anciãos). */
+  glow?: number;
+  elder?: boolean;
+}
+
+export function makeVillagerSpec({ robe, trim, glow = C.gold, elder = false }: VillagerLook): VoxelModelSpec {
+  const parts: VoxelPart[] = [
+    { name: 'torso', joint: [0, 0.95, 0], boxes: [
+      b([0.8, 0.85, 0.5], [0, 0.1, 0], robe),          // túnica
+      b([0.88, 0.2, 0.56], [0, -0.28, 0], trim),       // cinto
+      ...(elder ? [b([0.92, 0.24, 0.6], [0, 0.42, 0], trim)] : []), // capa do ancião
+    ] },
+    { name: 'head', joint: [0, 1.5, 0], boxes: [
+      b([0.6, 0.58, 0.6], [0, 0.2, 0], C.skin),        // cabeça grande (cubo)
+      b([0.68, 0.32, 0.7], [0, 0.45, 0], robe),        // capuz topo
+      b([0.7, 0.28, 0.18], [0, 0.24, 0.3], robe),      // aba do capuz
+      b([0.11, 0.11, 0.06], [-0.15, 0.2, 0.31], 0x2a2a2a), // olhos
+      b([0.11, 0.11, 0.06], [0.15, 0.2, 0.31], 0x2a2a2a),
+    ] },
+    { name: 'armL', joint: [-0.5, 1.35, 0], boxes: [b([0.24, 0.58, 0.26], [0, -0.27, 0], robe)] },
+    { name: 'armR', joint: [0.5, 1.35, 0], boxes: [b([0.24, 0.58, 0.26], [0, -0.27, 0], robe)] },
+    { name: 'legL', joint: [-0.2, 0.55, 0], boxes: [b([0.28, 0.6, 0.32], [0, -0.3, 0], C.leather)] },
+    { name: 'legR', joint: [0.2, 0.55, 0], boxes: [b([0.28, 0.6, 0.32], [0, -0.3, 0], C.leather)] },
+  ];
+  if (elder) {
+    // Cajado na mão direita (segue o braço, como a arma do druida).
+    parts.push({ name: 'weapon', parent: 'armR', joint: [0, -0.5, 0.12], boxes: [
+      b([0.09, 1.5, 0.09], [0, 0.35, 0], C.belt),
+      b([0.2, 0.2, 0.2], [0, 1.16, 0], glow),
+    ] });
+  }
+  return { gait: 'biped', scale: elder ? 1.05 : 0.95, parts };
+}
+
+// A Guardiã e o mercador do hub (landmarks) são variações fixas do aldeão.
+const guardian: VoxelModelSpec = makeVillagerSpec({ robe: 0x6fae8f, trim: 0xe0a93a, glow: 0x9fe06a, elder: true });
+const merchant: VoxelModelSpec = (() => {
+  const s = makeVillagerSpec({ robe: 0xb8863f, trim: 0x5a4633 });
+  // Mochila de mascate nas costas.
+  s.parts.find((p) => p.name === 'torso')!.boxes.push(b([0.34, 0.5, 0.24], [0, 0.12, -0.36], C.leather));
+  return s;
+})();
+// Representantes genéricos para a vitrine (paleta da vila druida).
+const villager: VoxelModelSpec = makeVillagerSpec({ robe: 0x5a8f5f, trim: 0x6b4a2f });
+const elder: VoxelModelSpec = makeVillagerSpec({ robe: 0x3f7a58, trim: 0xe0a93a, glow: 0x9fe06a, elder: true });
+
 // --- Armas (modelos avulsos, p/ a vitrine) --------------------------------
 const sword: VoxelModelSpec = {
   gait: 'static',
@@ -296,13 +350,15 @@ const scythe: VoxelModelSpec = {
 export const MODEL_SPECS: Record<string, VoxelModelSpec> = {
   druid, wolf, bear, raven, frog,
   rotboar, shadecrow, fungling, husk, shaman, rotlord,
+  guardian, merchant, villager, elder,
   sword, staff, scythe,
 };
 
-/** Lista para a vitrine: personagens, formas, inimigos e armas. */
+/** Lista para a vitrine: personagens, formas, inimigos, NPCs e armas. */
 export const SHOWCASE_GROUPS: Array<{ label: string; kinds: string[] }> = [
   { label: 'Druida & Formas', kinds: ['druid', 'wolf', 'bear', 'raven', 'frog'] },
   { label: 'Inimigos', kinds: ['rotboar', 'shadecrow', 'fungling', 'husk', 'shaman', 'rotlord'] },
+  { label: 'NPCs', kinds: ['guardian', 'merchant', 'villager', 'elder'] },
   { label: 'Armas', kinds: ['sword', 'staff', 'scythe'] },
 ];
 
