@@ -50,3 +50,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0043](0043-npcs-voxel.md) | NPCs em modelos voxel (aldeões, Guardiã, mercador) | Aceito |
 | [0044](0044-purificacao-visivel.md) | Purificação visível do mundo | Aceito |
 | [0045](0045-encontros-packs-elites.md) | Encontros: packs compostos + elites com afixo | Aceito |
+| [0046](0046-musica-procedural.md) | Música procedural por bioma + intensidade de combate | Aceito |
