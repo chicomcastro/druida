@@ -526,6 +526,15 @@ describe('Masmorra', () => {
         world.add(id, C.Transform, Transform(x, z));
         return id;
       },
+      // Onda final invoca o mini-chefe temático (ADR 0048).
+      spawnMiniBoss: (x, z, overrides: any = {}) => {
+        const id = world.createEntity();
+        world.add(id, C.Health, Health(50));
+        world.add(id, C.Faction, Faction(Factions.ENEMY));
+        world.add(id, C.Transform, Transform(x, z));
+        world.add(id, C.Boss, { name: overrides.name ?? 'mini', phase: 1, miniBoss: true });
+        return id;
+      },
     };
     // Um jogador para o teleporte.
     const pid = world.createEntity();
