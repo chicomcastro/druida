@@ -153,7 +153,7 @@ Jogo já **rodável e com começo/meio/fim**: `npm install && npm run dev`.
 - [x] 🚀 CI: delta de cobertura vs main + comentário de perf do Lighthouse
 - [x] 🧪 Testes dos sistemas: cobertura escopada ~94% (threshold 80%) — ADR 0031
 - [x] 🐛 Corrige bug latente de projéteis (createProjectile recebia game)
-- [ ] 🚀 Telemetria leve opcional
+- [x] 🚀 Telemetria leve opcional (local, exportável) — ADR 0051
 - [ ] 🚀 Playtest coop + feedback
 - [x] 🚀 Pipeline de assets documentado (MagicaVoxel → glb) — `docs/asset-pipeline.md`
 
@@ -171,7 +171,7 @@ Pacote de acionáveis para deixar o jogo mais encantador/engajante/divertido
 - [x] 🗺️ Masmorras temáticas por bioma (mecânica + mini-chefe) — ADR 0048
 - [x] 🗺️ Ciclo dia/noite + clima por bioma — ADR 0049
 - [x] 🌿 Dons dos santuários (escolha de build) — ADR 0050
-- [ ] 🚀 Telemetria leve opcional + notas de balance — ADR 0051
+- [x] 🚀 Telemetria leve opcional + notas de balance — ADR 0051
 
 ---
 
