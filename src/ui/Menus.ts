@@ -131,6 +131,8 @@ export class Menus {
       <button class="btn" id="p-save" style="text-align:center">💾 Salvar</button>
       <button class="btn" id="p-mute" style="text-align:center">🔊 Som: ${this.game.audio.muted ? 'desligado' : 'ligado'}</button>
       <button class="btn" id="p-music" style="text-align:center">🎵 Música: ${this.game.audio.musicMuted ? 'desligada' : 'ligada'}</button>
+      <button class="btn" id="p-telemetry" style="text-align:center">📊 Telemetria local: ${this.game.telemetry?.enabled ? 'ligada' : 'desligada'}</button>
+      <button class="btn" id="p-export" style="text-align:center">📋 Copiar dados de jogo</button>
       <button class="btn" id="p-controls" style="text-align:center">🎮 Controles</button>
     </div>`;
     this.pause.querySelector('#p-resume').onclick = () => this.togglePause();
@@ -146,6 +148,18 @@ export class Menus {
     this.pause.querySelector('#p-music').onclick = (ev) => {
       this.game.audio.setMusicMuted(!this.game.audio.musicMuted);
       ev.target.textContent = `🎵 Música: ${this.game.audio.musicMuted ? 'desligada' : 'ligada'}`;
+    };
+    this.pause.querySelector('#p-telemetry').onclick = (ev) => {
+      this.game.telemetry.setEnabled(!this.game.telemetry.enabled);
+      ev.target.textContent = `📊 Telemetria local: ${this.game.telemetry.enabled ? 'ligada' : 'desligada'}`;
+    };
+    this.pause.querySelector('#p-export').onclick = async (ev) => {
+      try {
+        await navigator.clipboard.writeText(this.game.telemetry.export());
+        ev.target.textContent = '✓ Copiado!';
+      } catch {
+        ev.target.textContent = '✗ Não foi possível copiar';
+      }
     };
     this.pause.querySelector('#p-controls').onclick = () => { this.pause.classList.remove('show'); this.openControls(); };
   }

@@ -55,3 +55,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0048](0048-masmorras-tematicas.md) | Masmorras temáticas por bioma | Aceito |
 | [0049](0049-dia-noite-clima.md) | Ciclo dia/noite + clima por bioma | Aceito |
 | [0050](0050-dons-santuarios.md) | Dons dos Santuários (escolhas de build) | Aceito |
+| [0051](0051-telemetria-local.md) | Telemetria leve local + notas de balanceamento | Aceito |

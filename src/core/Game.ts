@@ -46,6 +46,7 @@ import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight,
 import { partyEssence as _partyEssence, spendEssence as _spendEssence, giveItem as _giveItem, rerollShop as _rerollShop, setActiveShop as _setActiveShop } from '../gameplay/economy.js';
 import { QuestManager } from '../gameplay/quests.js';
 import { registerBoonHooks } from '../gameplay/boons.js';
+import { Telemetry } from '../gameplay/telemetry.js';
 
 /**
  * Orquestra mundo, render, input, sistemas e estado de jogo. Expõe helpers
@@ -55,7 +56,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any;
-  worldManager: any; settlements: any; purity: any; quests: any; dayNight: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  worldManager: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
   inDungeon: boolean;
   // Estado.
   seed: number;
@@ -113,6 +114,7 @@ export class Game {
     this.purity = new PurityManager(this); // mundo cura conforme a campanha (ADR 0044)
     this.quests = new QuestManager(this); // missões locais das vilas (ADR 0047)
     this.dayNight = new DayNightManager(this); // ciclo dia/noite + clima (ADR 0049)
+    this.telemetry = new Telemetry(this); // contadores locais p/ balance (ADR 0051)
     this.hud = new Hud(this);
     this.menus = new Menus(this);
     this.minimap = new Minimap(this);
@@ -136,6 +138,7 @@ export class Game {
       spawnerSystem,
       (g, dt) => g.worldManager.update(dt),
       (g, dt) => g.dayNight.update(dt),
+      (g, dt) => g.telemetry.update(dt),
       (g) => g.settlements.update(),
       (g) => g.story.update(),
       (g) => g.purity.update(),
