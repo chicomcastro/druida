@@ -43,4 +43,11 @@ export const BALANCE = {
     essenceMin: 1,
     essenceMax: 4,
   },
+
+  encounters: {
+    // Packs compostos e elites com afixo (ADR 0045).
+    packChance: 0.22,
+    eliteChanceBase: 0.02, // Clareira: raro (jogador novo)
+    eliteChancePerRing: 0.035, // cresce por anel de bioma
+  },
 };

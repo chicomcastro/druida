@@ -167,10 +167,11 @@ export class DungeonManager {
     this._teleport(a.returnPos.x, a.returnPos.z);
     this.game.inDungeon = false;
     this.active = null;
-    // Restaura o clima do bioma de retorno (a masmorra havia escurecido a cena).
+    // Restaura o clima do bioma de retorno (a masmorra havia escurecido a
+    // cena), respeitando o overlay de purificação (ADR 0044).
     const biome = biomeAt(a.returnPos.x, a.returnPos.z);
     this.game.worldManager.currentBiome = biome;
-    this.game.renderer.setBiomeMood(BIOMES[biome]);
+    this.game.renderer.setBiomeMood(this.game.purity?.effectiveDef(biome) ?? BIOMES[biome]);
     this.game.emit('objective', { text: this.game.story.objective?.() ?? '' });
   }
 
