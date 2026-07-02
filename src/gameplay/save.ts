@@ -17,7 +17,7 @@ const KEY = 'druida.save.v1';
 const AUTOSAVE_DEBOUNCE = 1500; // ms — coalesce vários gatilhos próximos
 
 // Eventos que representam progresso digno de persistir.
-const AUTOSAVE_EVENTS = ['levelUp', 'storyStep', 'formUnlocked', 'campPurified', 'fastTravel', 'victory'];
+const AUTOSAVE_EVENTS = ['levelUp', 'storyStep', 'formUnlocked', 'campPurified', 'fastTravel', 'victory', 'questCompleted'];
 
 export function serialize(game): SaveV1 {
   const players: PlayerSnapshot[] = [];
@@ -47,6 +47,7 @@ export function serialize(game): SaveV1 {
     chest: game.sharedChest ?? [],
     camps: game.poi ? [...game.poi.cleared] : [],
     lore: game.lore ? [...game.lore.found] : [],
+    quests: game.quests?.serialize() ?? {},
     players,
   };
 }
@@ -64,6 +65,7 @@ export function apply(game, data: SaveV1 | null | undefined): boolean {
     for (const camp of game.poi.camps) if (game.poi.cleared.has(camp.id)) camp.cleared = true;
   }
   if (data.lore && game.lore) game.lore.found = new Set(data.lore);
+  if (data.quests && game.quests) game.quests.restore(data.quests);
   if (data.checkpoint) game.checkpoint = { ...data.checkpoint };
   // Reposiciona o grupo onde o save foi gravado (espalhado ao redor do centro).
   if (data.groupCenter) {

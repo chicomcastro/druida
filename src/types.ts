@@ -187,5 +187,7 @@ export interface SaveV1 {
   chest: Item[];
   camps: string[];
   lore: string[];
+  /** Missões de vila (ADR 0047): status/progresso por quest. Opcional (v1 antigos). */
+  quests?: Record<string, { status: 'available' | 'active' | 'done'; progress: number }>;
   players: PlayerSnapshot[];
 }

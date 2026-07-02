@@ -37,6 +37,7 @@ export class SettlementManager {
       builders[s.theme](wrap(g, s, this, rng), rng);
       game.renderer.add(g);
       for (const v of s.villagers) this._buildVillager(s, v);
+      if (s.merchant) this._buildMerchant(s);
     }
   }
 
@@ -108,8 +109,34 @@ export class SettlementManager {
     game.world.add(id, C.Transform, Transform(wx, wz, angleTo(wx, wz, s.x, s.z)));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
     game.world.add(id, C.Collider, Collider(0.55, true));
+    // Ancião com missão vira quest giver (ADR 0047); demais só conversam.
+    if (v.elder && s.quest) {
+      game.world.add(id, C.Interactable, {
+        kind: 'quest_giver', questId: s.quest.id, prompt: `E — Falar com ${v.name}`, range: 3, used: false, lines: v.lines,
+      });
+    } else {
+      game.world.add(id, C.Interactable, {
+        kind: 'villager', prompt: `E — Conversar com ${v.name}`, range: 3, used: false, lines: v.lines,
+      });
+    }
+  }
+
+  /** Mercador regional da vila: mesmo voxel do hub, estoque da região. */
+  _buildMerchant(s) {
+    const { game } = this;
+    const g = buildVoxelGroup(makeVillagerSpec({ robe: 0xb8863f, trim: 0x5a4633 }));
+    const wx = s.x + s.merchant.x, wz = s.z + s.merchant.z;
+    g.position.set(wx, 0, wz);
+    game.renderer.add(g);
+    const stall = mesh(new THREE.BoxGeometry(1.6, 0.2, 1.0), 0x7a4a2a);
+    stall.position.set(wx, 1.0, wz + 0.9);
+    game.renderer.add(stall);
+    const id = game.world.createEntity();
+    game.world.add(id, C.Transform, Transform(wx, wz));
+    game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
+    game.world.add(id, C.Collider, Collider(0.6, true));
     game.world.add(id, C.Interactable, {
-      kind: 'villager', prompt: `E — Conversar com ${v.name}`, range: 3, used: false, lines: v.lines,
+      kind: 'merchant', shopId: s.id, prompt: 'E — Mercador', range: 3, used: false,
     });
   }
 

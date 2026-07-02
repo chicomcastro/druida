@@ -27,10 +27,16 @@ describe('SettlementManager', () => {
   it('constrói as vilas com moradores interativos e colisores', () => {
     const g = makeGame();
     const sm = new SettlementManager(g);
-    const villagers = [...g.world.query(C.Interactable)].filter(([, i]: any) => i.kind === 'villager');
-    // Todos os moradores definidos nos dados viram interativos no mundo.
+    // Todos os moradores viram interativos: anciãos com missão são
+    // quest_giver (ADR 0047), os demais villager.
+    const inters = [...g.world.query(C.Interactable)].map(([, i]: any) => i.kind);
+    const villagers = inters.filter((k) => k === 'villager');
+    const givers = inters.filter((k) => k === 'quest_giver');
     const total = SETTLEMENTS.reduce((n, s) => n + s.villagers.length, 0);
-    expect(villagers.length).toBe(total);
+    expect(villagers.length + givers.length).toBe(total);
+    expect(givers.length).toBe(SETTLEMENTS.filter((s) => s.quest).length);
+    // Mercadores regionais (fora o hub, que usa o dos landmarks).
+    expect(inters.filter((k) => k === 'merchant').length).toBe(SETTLEMENTS.filter((s) => s.merchant).length);
     // Estruturas geram colisores sólidos (cabanas, fogueiras, paliçada…).
     const colliders = [...g.world.query(C.Collider)].filter(([, c]: any) => c.solid);
     expect(colliders.length).toBeGreaterThan(total + 10);

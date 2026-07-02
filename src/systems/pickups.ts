@@ -27,6 +27,11 @@ export function pickupSystem(game, dt) {
 
 function collect(game, playerId, item) {
   const inv = game.world.get(playerId, C.Inventory);
+  if (item.questItem) {
+    // Objetivo de missão de vila (ADR 0047): conta progresso, não vai à bolsa.
+    game.emit('questItem', { questId: item.questItem, by: playerId });
+    return;
+  }
   if (item.lore) {
     if (!game.lore.found.has(item.lore.id)) {
       game.lore.found.add(item.lore.id);

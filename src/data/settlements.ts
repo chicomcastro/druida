@@ -15,6 +15,20 @@ export interface VillagerDef {
   elder?: boolean;
 }
 
+/** Missão local da vila, dada pelo ancião (ADR 0047). */
+export interface SettlementQuest {
+  id: string;
+  title: string;
+  kind: 'collect' | 'hunt' | 'elite';
+  count: number;
+  /** Raio (a partir do centro da vila) onde os objetivos aparecem. */
+  radius: number;
+  offer: string[];
+  remind: string;
+  done: string[];
+  reward: { essence: number; artifactName: string; ability: string };
+}
+
 export interface SettlementDef {
   id: string;
   name: string;
@@ -28,6 +42,9 @@ export interface SettlementDef {
   /** Diálogo exibido na primeira chegada (worldbuilding). */
   arrival: string[];
   villagers: VillagerDef[];
+  /** Posição local do mercador regional (ADR 0047); o hub usa o dos landmarks. */
+  merchant?: { x: number; z: number };
+  quest?: SettlementQuest;
 }
 
 export const SETTLEMENTS: SettlementDef[] = [
@@ -122,6 +139,24 @@ export const SETTLEMENTS: SettlementDef[] = [
         ],
       },
     ],
+    merchant: { x: -3, z: -10 },
+    quest: {
+      id: 'q_vau',
+      title: 'Flores-de-lodo',
+      kind: 'collect',
+      count: 3,
+      radius: 22,
+      offer: [
+        'Juncia: Druida… as flores-de-lodo só abrem onde a água ainda resiste. Minhas pernas não alcançam mais o brejo.',
+        'Juncia: Traga 3 delas e eu prendo a luz do musgo numa lanterna pra você.',
+      ],
+      remind: 'Juncia: As flores brilham verde-água no brejo ao redor do vau. Faltam {n}.',
+      done: [
+        'Juncia: Ainda cheiram a água limpa… Obrigada, Druida.',
+        'Juncia: Tome — a Lanterna de Musgo. A luz dela cura o que a podridão morde.',
+      ],
+      reward: { essence: 40, artifactName: 'Lanterna de Musgo', ability: 'healing_totem' },
+    },
   },
   {
     id: 'cinzafolha',
@@ -169,6 +204,24 @@ export const SETTLEMENTS: SettlementDef[] = [
         ],
       },
     ],
+    merchant: { x: 3, z: -10 },
+    quest: {
+      id: 'q_cinza',
+      title: 'Foco de corrupção',
+      kind: 'hunt',
+      count: 6,
+      radius: 24,
+      offer: [
+        'Baru: Tem um foco de corrupção crescendo fora da paliçada. Meus lenhadores cortam árvore, não bicho.',
+        'Baru: Derrube 6 dessas criaturas antes que elas derrubem meus fornos.',
+      ],
+      remind: 'Baru: Ainda ouço a podridão rondando a paliçada. Faltam {n}.',
+      done: [
+        'Baru: A fumaça subiu reta hoje. É sinal de paz, Druida.',
+        'Baru: Leve esta Brasa de Cinzafolha — carvão dos meus fornos que nunca esfria.',
+      ],
+      reward: { essence: 50, artifactName: 'Brasa de Cinzafolha', ability: 'wildfire' },
+    },
   },
   {
     id: 'abrigo_degelo',
@@ -216,5 +269,23 @@ export const SETTLEMENTS: SettlementDef[] = [
         ],
       },
     ],
+    merchant: { x: 5, z: -10 },
+    quest: {
+      id: 'q_degelo',
+      title: 'O Gelo-Antigo',
+      kind: 'elite',
+      count: 1,
+      radius: 22,
+      offer: [
+        'Sira: Uma coisa velha acordou no gelo — uma Casca Oca que o frio endureceu como pedra. Derrubou dois cairns.',
+        'Sira: Nós a chamamos de Gelo-Antigo. Se os cairns caírem, a trilha ao Coração se perde. Cace-a.',
+      ],
+      remind: 'Sira: O Gelo-Antigo ronda a encosta, perto dos cairns caídos. Cuidado: a casca dele é pedra.',
+      done: [
+        'Sira: Os cairns estão de pé outra vez. A montanha lembra do que você fez.',
+        'Sira: Esta Lasca do Degelo caiu do corpo dele. O frio dela morde por você agora.',
+      ],
+      reward: { essence: 60, artifactName: 'Lasca do Degelo', ability: 'ice_lance' },
+    },
   },
 ];
