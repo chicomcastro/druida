@@ -21,6 +21,7 @@ import { VfxManager } from '../systems/vfx.js';
 
 import { WorldManager } from '../world/WorldManager.js';
 import { SettlementManager } from '../world/SettlementManager.js';
+import { PurityManager } from '../world/PurityManager.js';
 import { PoiManager } from '../world/PoiManager.js';
 import { EventManager } from '../world/EventManager.js';
 import { DungeonManager } from '../world/DungeonManager.js';
@@ -51,7 +52,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any;
-  worldManager: any; settlements: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  worldManager: any; settlements: any; purity: any; poi: any; events: any; dungeon: any; story: any; loop: any;
   inDungeon: boolean;
   // Estado.
   seed: number;
@@ -102,6 +103,7 @@ export class Game {
     this.events = new EventManager(this);
     this.dungeon = new DungeonManager(this);
     this.story = new StoryManager(this);
+    this.purity = new PurityManager(this); // mundo cura conforme a campanha (ADR 0044)
     this.hud = new Hud(this);
     this.menus = new Menus(this);
     this.minimap = new Minimap(this);
@@ -126,6 +128,7 @@ export class Game {
       (g, dt) => g.worldManager.update(dt),
       (g) => g.settlements.update(),
       (g) => g.story.update(),
+      (g) => g.purity.update(),
       (g) => g.poi.update(),
       (g, dt) => g.events.update(dt),
       (g, dt) => g.dungeon.update(dt),

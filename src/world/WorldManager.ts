@@ -176,7 +176,7 @@ export class WorldManager {
   }
 
   _updateAmbience(dt, c) {
-    const def = BIOMES[this.currentBiome].ambient;
+    const def = this._effectiveDef(this.currentBiome)?.ambient;
     if (!def || !this.ambPoints) return;
     const attr = this.ambPoints.geometry.getAttribute('position');
     const pos = attr.array;
@@ -218,7 +218,7 @@ export class WorldManager {
 
   _spawnProp(x, z, biome) {
     const { game } = this;
-    const def = BIOMES[biome];
+    const def = this._effectiveDef(biome);
     const rot = this.rng() * Math.PI * 2;
     let rec;
     if (this.rng.chance(0.7) && this._freeTree.length) {
@@ -247,7 +247,7 @@ export class WorldManager {
 
   _spawnDetail(x, z, biome) {
     if (!this._freeDetail.length) return;
-    const def = BIOMES[biome];
+    const def = this._effectiveDef(biome);
     const slot = this._freeDetail.pop();
     const s = 0.6 + this.rng() * 0.8;
     // Jitter sutil de tom para o tapete não parecer carimbado.
@@ -267,6 +267,21 @@ export class WorldManager {
       this._freeRock.push(rec.slot);
     }
     this.game.world.destroyEntity(rec.id);
+  }
+
+  /** Definição do bioma com o overlay de purificação, se houver (ADR 0044). */
+  _effectiveDef(biome) {
+    return this.game.purity?.effectiveDef(biome) ?? BIOMES[biome];
+  }
+
+  /** Aplica cor do chão e partículas de uma definição de bioma (base/curada). */
+  applyBiomeDef(def) {
+    this.groundMat.color.setHex(def.ground);
+    if (this.ambPoints) {
+      this.ambPoints.material.color.setHex(def.ambient.color);
+      this.ambPoints.material.size = def.ambient.size;
+      this.ambPoints.material.opacity = def.ambient.opacity;
+    }
   }
 
   isExplored(x, z) {
@@ -289,19 +304,14 @@ export class WorldManager {
     const c = game.groupCenter ?? { x: 0, z: 0 };
     this._revealAround(c.x, c.z);
 
-    // Bioma atual -> clima/cor/partículas.
+    // Bioma atual -> clima/cor/partículas (com overlay de purificação).
     const b = biomeAt(c.x, c.z);
     if (b !== this.currentBiome) {
       this.currentBiome = b;
-      this.groundMat.color.setHex(BIOMES[b].ground);
-      game.renderer.setBiomeMood(BIOMES[b]);
-      if (this.ambPoints) {
-        const amb = BIOMES[b].ambient;
-        this.ambPoints.material.color.setHex(amb.color);
-        this.ambPoints.material.size = amb.size;
-        this.ambPoints.material.opacity = amb.opacity;
-      }
-      game.emit('biomeChanged', { biome: b, def: BIOMES[b] });
+      const def = this._effectiveDef(b);
+      this.applyBiomeDef(def);
+      game.renderer.setBiomeMood(def);
+      game.emit('biomeChanged', { biome: b, def });
     }
 
     // Descartar props/detalhes distantes (libera o slot instanciado).
