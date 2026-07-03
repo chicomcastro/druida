@@ -35,8 +35,9 @@ export class WorldManager {
   explored: Set<string>;
   groundMat: any;
   _dummy: any; _tmpColor?: any;
-  trunkInst: any; leafInst: any; rockInst: any; detailInst: any;
-  _freeTree: number[]; _freeRock: number[]; _freeDetail: number[];
+  trunkInst: any; leafInst: any; rockInst: any; detailInst: any; pineInst: any;
+  _freeTree: number[]; _freeRock: number[]; _freeDetail: number[]; _freePine: number[];
+  _windMats: any[]; _windT: number;
   details: any[]; maxDetails: number;
   ambPoints: any; _ambPhase: Float32Array; _ambT: number; _ambApplied: any;
   _loreActive: Set<string>;
@@ -93,15 +94,25 @@ export class WorldManager {
     this.trunkInst = mk(new THREE.CylinderGeometry(0.25, 0.35, 2.2, 6));
     this.leafInst = mk(new THREE.IcosahedronGeometry(1.2, 0));
     this.rockInst = mk(new THREE.DodecahedronGeometry(0.8, 0));
+    // Pinheiros (Picos Gélidos): silhueta própria por bioma (ADR 0055).
+    this.pineInst = mk(new THREE.ConeGeometry(1.35, 3.4, 7));
     this._freeTree = [];
     this._freeRock = [];
+    this._freePine = [];
     for (let i = 0; i < cap; i++) {
       this._freeTree.push(i);
       this._freeRock.push(i);
+      this._freePine.push(i);
       this._hideInstance(this.trunkInst, i);
       this._hideInstance(this.leafInst, i);
       this._hideInstance(this.rockInst, i);
+      this._hideInstance(this.pineInst, i);
     }
+    // Vento: copas, pinheiros e grama balançam via shader (ADR 0055).
+    this._windMats = [];
+    this._windT = 0;
+    this._addWind(this.leafInst.material, 0.08);
+    this._addWind(this.pineInst.material, 0.05);
     // Vegetação rasteira (tufos de grama/brotos): pool próprio, mais denso,
     // sem colisor nem entidade — puro detalhe visual do bioma.
     const detailCap = this.maxDetails + 16;
@@ -112,6 +123,7 @@ export class WorldManager {
     );
     this.detailInst.receiveShadow = true;
     this.detailInst.frustumCulled = false;
+    this._addWind(this.detailInst.material, 0.3);
     this.game.renderer.add(this.detailInst);
     this._freeDetail = [];
     for (let i = 0; i < detailCap; i++) {
@@ -119,6 +131,28 @@ export class WorldManager {
       this._hideInstance(this.detailInst, i);
     }
     this._flushInstances();
+  }
+
+  /**
+   * Vento nos instanciados (ADR 0055): desloca o topo dos vértices por seno,
+   * com fase pela posição da instância (cada planta no seu ritmo). Uniform
+   * compartilhado avançado no update; onBeforeCompile só roda com WebGL real,
+   * então testes headless ficam intactos.
+   */
+  _addWind(mat, strength) {
+    const uWind = { value: 0 };
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uWind = uWind;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform float uWind;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+          float windH = max(0.0, position.y + 0.5);
+          float windPh = instanceMatrix[3].x * 0.35 + instanceMatrix[3].z * 0.27;
+          transformed.x += sin(uWind * 1.6 + windPh) * ${strength.toFixed(3)} * windH;
+          transformed.z += cos(uWind * 1.2 + windPh) * ${(strength * 0.6).toFixed(3)} * windH;`);
+    };
+    mat.customProgramCacheKey = () => 'wind' + strength;
+    this._windMats.push(uWind);
   }
 
   _setInstance(inst, slot, x, y, z, rot, s, colorHex) {
@@ -142,7 +176,7 @@ export class WorldManager {
   }
 
   _flushInstances() {
-    for (const inst of [this.trunkInst, this.leafInst, this.rockInst, this.detailInst]) {
+    for (const inst of [this.trunkInst, this.leafInst, this.rockInst, this.detailInst, this.pineInst]) {
       inst.instanceMatrix.needsUpdate = true;
       if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     }
@@ -231,7 +265,19 @@ export class WorldManager {
     const def = this._effectiveDef(biome);
     const rot = this.rng() * Math.PI * 2;
     let rec;
-    if (this.rng.chance(0.7) && this._freeTree.length) {
+    const wantTree = this.rng.chance(0.7); // decisão única árvore/rocha
+    if (wantTree && biome === 'picos' && this._freePine.length && this._freeTree.length) {
+      // Picos: pinheiros (cone) no lugar da copa redonda.
+      const slot = this._freePine.pop();
+      const trunkSlot = this._freeTree.pop();
+      const s = 0.8 + this.rng() * 0.6;
+      this._setInstance(this.trunkInst, trunkSlot, x, 0.6 * s, z, rot, s * 0.7, 0x4a3a30);
+      this._setInstance(this.pineInst, slot, x, 2.5 * s, z, rot, s, def.propColor);
+      const id = game.world.createEntity();
+      game.world.add(id, C.Transform, Transform(x, z));
+      game.world.add(id, C.Collider, Collider(0.5, true));
+      rec = { id, x, z, type: 'pine', slot, trunkSlot };
+    } else if (wantTree && this._freeTree.length) {
       const slot = this._freeTree.pop();
       const s = 0.8 + this.rng() * 0.5;
       this._setInstance(this.trunkInst, slot, x, 1.1 * s, z, rot, s, 0x4a3424);
@@ -268,7 +314,12 @@ export class WorldManager {
   }
 
   _despawnProp(rec) {
-    if (rec.type === 'tree') {
+    if (rec.type === 'pine') {
+      this._hideInstance(this.pineInst, rec.slot);
+      this._freePine.push(rec.slot);
+      this._hideInstance(this.trunkInst, rec.trunkSlot);
+      this._freeTree.push(rec.trunkSlot);
+    } else if (rec.type === 'tree') {
       this._hideInstance(this.trunkInst, rec.slot);
       this._hideInstance(this.leafInst, rec.slot);
       this._freeTree.push(rec.slot);
@@ -370,6 +421,8 @@ export class WorldManager {
     }
     if (spawned) this._flushInstances();
 
+    this._windT += dt;
+    for (const u of this._windMats) u.value = this._windT;
     this._updateAmbience(dt, c);
     this._updateShards(c);
   }

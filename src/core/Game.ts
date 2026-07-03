@@ -141,7 +141,7 @@ export class Game {
       (g, dt) => g.worldManager.update(dt),
       (g, dt) => g.dayNight.update(dt),
       (g, dt) => g.telemetry.update(dt),
-      (g) => g.settlements.update(),
+      (g, dt) => g.settlements.update(dt),
       (g) => g.story.update(),
       (g) => g.purity.update(),
       (g) => g.poi.update(),

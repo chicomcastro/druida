@@ -131,3 +131,36 @@ describe('NPCs voxel (specs)', () => {
     }
   });
 });
+
+describe('mundo vivo (ADR 0055)', () => {
+  it('moradores comuns passeiam (Velocity) e param perto de jogadores', () => {
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    expect(sm._villagers.length).toBeGreaterThan(0);
+    const v = sm._villagers[0];
+    v.wait = 0;
+    sm._wander(0.016); // escolhe alvo
+    v.wait = 0;
+    sm._wander(0.016); // anda em direção ao alvo
+    const vel = g.world.get(v.id, C.Velocity);
+    expect(Math.hypot(vel.vx, vel.vz)).toBeGreaterThan(0.5);
+    // Jogador chega perto -> para (disponível para conversa).
+    const tr = g.world.get(v.id, C.Transform);
+    addPlayer(g, 0, tr.x + 1, tr.z);
+    sm._wander(0.016);
+    expect(vel.vx).toBe(0);
+    expect(vel.vz).toBe(0);
+  });
+
+  it('vilas têm fumaça, bandeiras e água viva registradas para animar', () => {
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    expect(sm._smoke.length).toBeGreaterThan(0);
+    expect(sm._flags.length).toBeGreaterThanOrEqual(3);
+    expect(sm._water.length).toBe(1); // lagoa do Vau
+    const y = sm._smoke[0].mesh.position.y;
+    sm.animate(1.2);
+    sm.animate(2.4);
+    expect(sm._smoke[0].mesh.position.y).not.toBe(y);
+  });
+});

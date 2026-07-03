@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { makeGame } from './helpers.js';
 import { PurityManager } from '../src/world/PurityManager.js';
-import { WorldManager } from '../src/world/WorldManager.js';
+import { WorldManager, biomeAt } from '../src/world/WorldManager.js';
 import { PoiManager } from '../src/world/PoiManager.js';
 import { BIOMES } from '../src/data/biomes.js';
 
@@ -81,5 +81,35 @@ describe('PurityManager', () => {
     expect(wm.groundMat.color.getHex()).toBe(BIOMES.pantano.purified.ground);
     const changed: any = g.events.find((e) => e.e === 'biomeChanged' && e.p.biome === 'pantano');
     expect(changed.p.def.ground).toBe(BIOMES.pantano.purified.ground);
+  });
+});
+
+describe('mundo vivo — vento e pinheiros (ADR 0055)', () => {
+  it('uniform do vento avança com o update do mundo', () => {
+    const g = makeGame();
+    const wm = new WorldManager(g);
+    g.worldManager = wm;
+    expect(wm._windMats.length).toBe(3); // copas, pinheiros, grama
+    wm.update(0.5);
+    expect(wm._windMats[0].value).toBeGreaterThan(0);
+  });
+
+  it('nos Picos as árvores nascem como pinheiros', () => {
+    const g = makeGame();
+    const wm = new WorldManager(g);
+    g.worldManager = wm;
+    g.groupCenter = { x: 0, z: 190 }; // anel dos picos
+    for (let i = 0; i < 300; i++) wm.update(0.1);
+    const pines = wm.props.filter((p) => p.type === 'pine');
+    expect(pines.length).toBeGreaterThan(0);
+    // Dentro do anel dos picos, toda árvore é pinheiro (copas redondas só
+    // aparecem na borda com o bioma vizinho, o que é correto).
+    const roundInPicos = wm.props.filter((p) => p.type === 'tree' && biomeAt(p.x, p.z) === 'picos');
+    expect(roundInPicos.length).toBe(0);
+    // Despawn devolve os dois slots (pinheiro + tronco).
+    const before = wm._freePine.length;
+    g.groupCenter = { x: 0, z: 80 };
+    wm.update(0.1);
+    expect(wm._freePine.length).toBeGreaterThan(before);
   });
 });

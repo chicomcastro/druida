@@ -12,6 +12,9 @@ import { grantXp } from '../gameplay/progression.js';
  * reativos) num único lugar coeso.
  */
 export function bindGameEvents(game) {
+  // Teleportes (fast-travel) saltam a câmera: sem panorâmica pelo mapa.
+  game.on('fastTravel', (e) => game.camera?.snapTo?.({ x: e.x, z: e.z }));
+
   game.on('kill', (e) => {
     // XP + essência + drops.
     const def = e.loot ?? {};
