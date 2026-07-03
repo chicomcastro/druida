@@ -57,3 +57,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0050](0050-dons-santuarios.md) | Dons dos Santuários (escolhas de build) | Aceito |
 | [0051](0051-telemetria-local.md) | Telemetria leve local + notas de balanceamento | Aceito |
 | [0052](0052-nitidez-resize.md) | Nitidez: dimensionamento correto do canvas | Aceito |
+| [0053](0053-tablet-touch-gamepad.md) | Tablet: controles touch + gamepad dedicado no P1 | Aceito |

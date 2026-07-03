@@ -157,10 +157,16 @@ describe('coopSystem — revive e entrada por gamepad', () => {
     expect(g.world.get(p1, C.PlayerControlled).downed).toBe(false);
   });
 
-  it('novo jogador entra ao apertar botão no gamepad', () => {
+  it('novo jogador entra apertando START (botão 9) no gamepad', () => {
     const g = makeGame();
     addPlayer(g, 0, 0, 0);
-    g.input.connectedPads = () => [{ index: 0, buttons: [{ pressed: true }] }];
+    const buttons = Array.from({ length: 10 }, () => ({ pressed: false }));
+    // Qualquer outro botão NÃO entra (gamepad livre pertence ao P1 — ADR 0053).
+    buttons[0].pressed = true;
+    g.input.connectedPads = () => [{ index: 0, buttons }];
+    coopSystem(g, 0.016);
+    expect([...g.world.query(C.PlayerControlled)].length).toBe(1);
+    buttons[9] = { pressed: true };
     coopSystem(g, 0.016);
     expect([...g.world.query(C.PlayerControlled)].length).toBe(2);
   });

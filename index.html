@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>🌿 Druida</title>
     <style>
       :root {
@@ -20,6 +20,7 @@
         display: block;
         width: 100vw;
         height: 100vh;
+        touch-action: none; /* toque é gameplay, não scroll/zoom (ADR 0053) */
       }
       #hud {
         position: fixed;

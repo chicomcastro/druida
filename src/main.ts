@@ -2,7 +2,7 @@
  * Druida — bootstrap.
  * Cria o Game e mostra o menu principal. "Novo jogo" começa do zero;
  * "Continuar" carrega o save (IndexedDB). O loop só inicia após a escolha.
- * Jogadores 2–4 entram apertando um botão no gamepad (coop same-screen).
+ * Jogadores 2–4 entram apertando START no gamepad (coop same-screen).
  */
 import { Game } from './core/Game.js';
 import { apply, loadFromStorage, setupAutosave } from './gameplay/save.js';
