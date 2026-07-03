@@ -4,6 +4,7 @@
  * "Continuar" carrega o save (IndexedDB). O loop só inicia após a escolha.
  * Jogadores 2–4 entram apertando START no gamepad (coop same-screen).
  */
+import '@fontsource/cinzel/700.css'; // fonte de títulos (OFL, empacotada)
 import { Game } from './core/Game.js';
 import { apply, loadFromStorage, setupAutosave } from './gameplay/save.js';
 import { preloadModels } from './entities/modelLoader.js';
