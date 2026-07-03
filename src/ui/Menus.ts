@@ -131,6 +131,7 @@ export class Menus {
       <button class="btn" id="p-save" style="text-align:center">💾 Salvar</button>
       <button class="btn" id="p-mute" style="text-align:center">🔊 Som: ${this.game.audio.muted ? 'desligado' : 'ligado'}</button>
       <button class="btn" id="p-music" style="text-align:center">🎵 Música: ${this.game.audio.musicMuted ? 'desligada' : 'ligada'}</button>
+      <button class="btn" id="p-fx" style="text-align:center">✨ Efeitos visuais: ${this.game.renderer.post ? 'altos' : 'baixos'}</button>
       <button class="btn" id="p-telemetry" style="text-align:center">📊 Telemetria local: ${this.game.telemetry?.enabled ? 'ligada' : 'desligada'}</button>
       <button class="btn" id="p-export" style="text-align:center">📋 Copiar dados de jogo</button>
       <button class="btn" id="p-controls" style="text-align:center">🎮 Controles</button>
@@ -148,6 +149,10 @@ export class Menus {
     this.pause.querySelector('#p-music').onclick = (ev) => {
       this.game.audio.setMusicMuted(!this.game.audio.musicMuted);
       ev.target.textContent = `🎵 Música: ${this.game.audio.musicMuted ? 'desligada' : 'ligada'}`;
+    };
+    this.pause.querySelector('#p-fx').onclick = (ev) => {
+      this.game.renderer.setPostEnabled(!this.game.renderer.post);
+      ev.target.textContent = `✨ Efeitos visuais: ${this.game.renderer.post ? 'altos' : 'baixos'}`;
     };
     this.pause.querySelector('#p-telemetry').onclick = (ev) => {
       this.game.telemetry.setEnabled(!this.game.telemetry.enabled);
