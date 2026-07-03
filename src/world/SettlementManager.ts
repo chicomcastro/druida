@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { C, Transform, Collider } from '../core/ecs/components.js';
+import { C, Transform, Collider, Velocity } from '../core/ecs/components.js';
 import { SETTLEMENTS } from '../data/settlements.js';
 import { makeRng, angleTo } from '../utils/math.js';
 import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
@@ -17,12 +17,21 @@ export class SettlementManager {
   _current: any;
   _flames: any[]; // meshes emissivos que pulsam (lanternas/chamas/cristais)
   _lights: any[]; // point lights que tremulam
+  _smoke: any[]; // baforadas de chaminé (sobem e dissipam em loop)
+  _flags: any[]; // bandeiras/estandartes ao vento
+  _water: any[]; // superfícies de água com pulso
+  _villagers: any[]; // moradores que passeiam (ADR 0055)
+  _waterRef: any; // material da lagoa do Vau (pulsa no animate)
 
   constructor(game) {
     this.game = game;
     this._current = null;
     this._flames = [];
     this._lights = [];
+    this._smoke = [];
+    this._flags = [];
+    this._water = [];
+    this._villagers = [];
     this.list = SETTLEMENTS.map((def) => ({ ...def, visited: false }));
     const builders = {
       druida: (s, rng) => this._buildDruida(s, rng),
@@ -51,8 +60,9 @@ export class SettlementManager {
   }
 
   /** Anuncia a chegada (banner sempre; diálogo de worldbuilding só na 1ª). */
-  update() {
+  update(dt = 0.016) {
     if (this.game.inDungeon) return;
+    this._wander(dt);
     const c = this.game.groupCenter ?? { x: 0, z: 0 };
     const s = this.settlementAt(c.x, c.z);
     if (s && s !== this._current) {
@@ -69,6 +79,42 @@ export class SettlementManager {
   }
 
   /**
+   * Moradores passeiam (ADR 0055): alvos aleatórios perto de "casa", pausa
+   * entre trajetos e param quando um jogador se aproxima (para conversar).
+   * O movimento vai via Velocity (movementSystem integra e colide) e a
+   * animação de andar vem de graça pelo renderSync.
+   */
+  _wander(dt) {
+    const { game } = this;
+    for (const v of this._villagers) {
+      if (!game.world.entities.has(v.id)) continue;
+      const tr = game.world.get(v.id, C.Transform);
+      const vel = game.world.get(v.id, C.Velocity);
+      if (!tr || !vel) continue;
+      // Jogador por perto: para e fica disponível para conversa.
+      let playerNear = false;
+      for (const [, ptr] of game.world.query(C.Transform, C.PlayerControlled)) {
+        if (Math.hypot(ptr.x - tr.x, ptr.z - tr.z) < 3.5) { playerNear = true; break; }
+      }
+      if (playerNear) { vel.vx = 0; vel.vz = 0; continue; }
+      if (v.wait > 0) { v.wait -= dt; vel.vx = 0; vel.vz = 0; continue; }
+      if (!v.target || Math.hypot(v.target.x - tr.x, v.target.z - tr.z) < 0.4) {
+        v.target = {
+          x: v.home.x + (Math.random() - 0.5) * 7,
+          z: v.home.z + (Math.random() - 0.5) * 7,
+        };
+        v.wait = 1.5 + Math.random() * 3.5;
+        continue;
+      }
+      const dx = v.target.x - tr.x, dz = v.target.z - tr.z;
+      const d = Math.hypot(dx, dz) || 1;
+      vel.vx = (dx / d) * 1.1;
+      vel.vz = (dz / d) * 1.1;
+      tr.rot = Math.atan2(dx, dz);
+    }
+  }
+
+  /**
    * Vida ambiente: lanternas/chamas pulsam e as luzes tremulam — mais fortes
    * à noite (ADR 0049), quando são elas que desenham a vila.
    */
@@ -80,6 +126,47 @@ export class SettlementManager {
     for (const l of this._lights) {
       l.light.intensity = l.base * boost * (0.85 + 0.15 * Math.sin(t * 7 + l.seed) * Math.sin(t * 3.1 + l.seed * 2));
     }
+    // Fumaça de chaminé: sobe, dissipa e recomeça (loop por baforada).
+    for (const p of this._smoke) {
+      const cyc = ((t * p.speed + p.seed) % 3) / 3;
+      p.mesh.position.y = p.y0 + cyc * 2.2;
+      p.mesh.position.x = p.x0 + Math.sin(t * 0.9 + p.seed) * 0.25;
+      p.mesh.scale.setScalar(0.22 + cyc * 0.55);
+      p.mesh.material.opacity = 0.32 * (1 - cyc);
+    }
+    // Bandeiras tremulam; água pulsa; barcos balançam.
+    for (const f of this._flags) {
+      f.mesh.rotation.y = f.base + Math.sin(t * 2.4 + f.seed) * 0.3;
+      f.mesh.rotation.z = Math.sin(t * 3.1 + f.seed) * 0.08;
+    }
+    for (const w of this._water) {
+      w.mat.opacity = w.base + Math.sin(t * 0.8 + w.seed) * 0.05;
+      if (w.bob) w.bob.rotation.z = Math.sin(t * 0.9 + w.seed) * 0.06;
+    }
+  }
+
+  /** Baforadas de fumaça saindo de uma chaminé/fogueira (coords locais). */
+  _smokeAt(w, x, y0, z, color = 0xb8b8b8) {
+    for (let i = 0; i < 3; i++) {
+      const puff = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(0.3, 0),
+        new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.3, depthWrite: false }),
+      );
+      puff.position.set(x, y0, z);
+      w.add(puff);
+      this._smoke.push({ mesh: puff, x0: x, y0, speed: 0.5 + i * 0.07, seed: i * 1.1 + x });
+    }
+  }
+
+  /** Estandarte: mastro + pano que treme ao vento (coords locais). */
+  _flagAt(w, x, z, color) {
+    const pole = mesh(new THREE.CylinderGeometry(0.06, 0.08, 2.6, 5), 0x4a3626, { shadow: false });
+    pole.position.set(x, 1.3, z);
+    w.add(pole);
+    const cloth = mesh(new THREE.BoxGeometry(0.85, 0.5, 0.05), color, { shadow: false });
+    cloth.position.set(x + 0.45, 2.25, z);
+    w.add(cloth);
+    this._flags.push({ mesh: cloth, base: 0, seed: x + z });
   }
 
   // --- Peças compartilhadas -------------------------------------------------
@@ -111,8 +198,11 @@ export class SettlementManager {
     const id = game.world.createEntity();
     // Olha para o centro da vila (rotação sincronizada pelo renderSync).
     game.world.add(id, C.Transform, Transform(wx, wz, angleTo(wx, wz, s.x, s.z)));
+    game.world.add(id, C.Velocity, Velocity(0, 0, 1.2));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
     game.world.add(id, C.Collider, Collider(0.55, true));
+    // Anciãos ficam no posto; os demais passeiam pela vila (ADR 0055).
+    if (!v.elder) this._villagers.push({ id, home: { x: wx, z: wz }, target: null, wait: Math.random() * 2 });
     // Ancião com missão vira quest giver (ADR 0047); demais só conversam.
     if (v.elder && s.quest) {
       game.world.add(id, C.Interactable, {
@@ -162,8 +252,10 @@ export class SettlementManager {
       w.add(wall, roof, door);
       w.collider(x, z, 2.4);
     }
-    // Fogueira comunal.
+    // Fogueira comunal (com fumaça subindo).
     this._fire(w, 0, 4, 0xff9a4a, 1.1);
+    this._smokeAt(w, 0, 1.6, 4);
+    this._flagAt(w, -3.2, -17.2, 0x6cba5a); // estandarte no portão sul
     // Jardins de ervas (canteiros com brotos).
     for (const [gx, gz] of [[-5.5, 7], [5.5, 7]]) {
       const bed = mesh(new THREE.BoxGeometry(3.2, 0.3, 1.8), 0x4a3424);
@@ -213,6 +305,7 @@ export class SettlementManager {
     water.position.y = 0.04;
     water.receiveShadow = true;
     w.add(water);
+    this._waterRef = water.material;
     // Casas sobre estacas.
     const huts = [[-8, -4, 0.4], [6, -8, -0.5], [-2, 8, 0.2], [10, 4, 0.9]];
     for (const [x, z, ry] of huts) {
@@ -276,6 +369,7 @@ export class SettlementManager {
     boat.rotation.y = 0.7;
     w.add(boat);
     w.collider(-13, 6, 1.2);
+    this._water.push({ mat: this._waterRef, base: 0.85, seed: 1.3, bob: boat });
     // Lanternas de musgo (verde-água) — a marca da vila.
     for (const [x, z] of [[0, -1], [-6, -6], [8, -5], [-4, 6], [8, 7]]) this._lantern(w, x, z, 0x6affc8);
     this._fireLight(w, 0, -1, 0x6affc8, 0.9);
@@ -313,7 +407,10 @@ export class SettlementManager {
       cabin.rotation.y = ry;
       w.add(cabin);
       w.collider(x, z, 2.5);
+      // Chaminé acesa: a vila queima madeira dia e noite (worldbuilding).
+      this._smokeAt(w, x + Math.sin(ry + Math.PI / 2) * 1.2 + 1.2 * Math.cos(ry), 3.9, z, 0xa8a098);
     }
+    this._flagAt(w, 1.8, -16.2, 0xc8a06a); // estandarte no portão sul
     // Serraria: cavaletes com tronco e lâmina circular.
     const mill = new THREE.Group();
     for (const px of [-1.1, 1.1]) {
@@ -394,8 +491,10 @@ export class SettlementManager {
       }
       w.collider(x, z, 1.0);
     }
-    // A chama azul: fogueira fria no centro do abrigo.
+    // A chama azul: fogueira fria no centro do abrigo (fumaça gélida).
     this._fire(w, 0, 0, 0x7ac8ff, 1.2);
+    this._smokeAt(w, 0, 1.6, 0, 0xd8e8f0);
+    this._flagAt(w, -5.2, 8, 0x9fdcff); // estandarte junto ao totem
     // Totem dos montanheses.
     const totem = new THREE.Group();
     for (let i = 0; i < 3; i++) {

@@ -37,6 +37,12 @@ export class IsoCamera {
     this.shake = Math.min(1.2, this.shake + amount);
   }
 
+  /** Salta direto para um ponto (fast-travel/masmorra): sem panorâmica. */
+  snapTo(center) {
+    this.target.x = center.x;
+    this.target.z = center.z;
+  }
+
   updateProjection() {
     const aspect = window.innerWidth / window.innerHeight;
     const f = this.frustum;

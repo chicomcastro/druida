@@ -117,6 +117,7 @@ export class DungeonManager {
       i++;
     }
     this.game.groupCenter = { x, z };
+    this.game.camera?.snapTo?.({ x, z });
   }
 
   enter(entranceId) {
