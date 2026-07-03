@@ -58,3 +58,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0051](0051-telemetria-local.md) | Telemetria leve local + notas de balanceamento | Aceito |
 | [0052](0052-nitidez-resize.md) | Nitidez: dimensionamento correto do canvas | Aceito |
 | [0053](0053-tablet-touch-gamepad.md) | Tablet: controles touch + gamepad dedicado no P1 | Aceito |
+| [0054](0054-pos-processamento.md) | Render profissional: pós-processamento + céu | Aceito |

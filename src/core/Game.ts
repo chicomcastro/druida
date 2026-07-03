@@ -356,6 +356,7 @@ export class Game {
     this.settlements.animate(t); // lanternas/chamas das vilas pulsam
     this.camera.follow(this.groupCenter, this.groupSpread, this.dt);
     this.renderer.updateSun(this.groupCenter); // sombras acompanham o grupo
+    this.renderer.followSky?.(this.groupCenter);
     // Hora do mundo escurece a cena (suspensa na masmorra — céu não existe lá).
     if (!this.inDungeon) this.renderer.applyDayNight(this.dayNight.nightAmount(), this.dayNight.weather ? 0.8 : 1);
     this.renderer.render(this.camera.cam);
