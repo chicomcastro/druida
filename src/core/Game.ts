@@ -34,6 +34,7 @@ import { Minimap } from '../ui/Minimap.js';
 import { WorldMap } from '../ui/WorldMap.js';
 import { Tutorial } from '../ui/Tutorial.js';
 import { TouchControls, isTouchDevice } from '../ui/TouchControls.js';
+import { DamageNumbers } from '../ui/DamageNumbers.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { BALANCE } from '../data/balance.js';
 import { BIOMES } from '../data/biomes.js';
@@ -56,7 +57,7 @@ import { Telemetry } from '../gameplay/telemetry.js';
 export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
-  hud: any; menus: any; minimap: any; worldMap: any; tutorial: any;
+  hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
   worldManager: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
   inDungeon: boolean;
   // Estado.
@@ -121,6 +122,7 @@ export class Game {
     this.minimap = new Minimap(this);
     this.worldMap = new WorldMap(this);
     this.tutorial = new Tutorial(this);
+    this.dmgNumbers = new DamageNumbers(this); // números de dano flutuantes (ADR 0056)
     if (isTouchDevice()) this.input.touch = new TouchControls(this); // tablet/mobile (ADR 0053)
     this.menuMain = false;
     buildLandmarks(this);
@@ -362,6 +364,7 @@ export class Game {
     this.renderer.render(this.camera.cam);
     this.hud.update();
     this.minimap.update();
+    this.dmgNumbers.update(this.dt);
   }
 }
 

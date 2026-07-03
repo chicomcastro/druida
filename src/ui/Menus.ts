@@ -12,25 +12,28 @@ import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
  * estado `game.paused`. Ver docs/adr/0009 (mesmo padrão do HUD).
  */
 const css = `
-.menu{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(4,8,5,.82);font-family:system-ui,sans-serif;color:#eaf3e6}
+@keyframes menu-in{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.menu{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(14,26,16,.86),rgba(3,6,4,.94));font-family:system-ui,sans-serif;color:#eaf3e6;backdrop-filter:blur(3px)}
 .menu.show{display:flex}
-.panel{background:#0f1a12;border:1px solid rgba(159,224,106,.3);border-radius:14px;padding:24px 28px;min-width:320px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.5)}
-.panel h1{margin:0 0 4px;color:#9fe06a;font-size:34px}
-.panel h2{margin:0 0 14px;font-size:18px}
+.panel{background:linear-gradient(165deg,#111f14,#0a130c);border:1px solid rgba(159,224,106,.35);border-radius:16px;padding:26px 30px;min-width:330px;max-width:92vw;box-shadow:0 24px 70px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05);animation:menu-in .28s cubic-bezier(.2,.9,.3,1.2)}
+.panel h1{margin:0 0 4px;color:#9fe06a;font-size:38px;font-family:'Cinzel',Georgia,serif;letter-spacing:.05em;text-shadow:0 2px 16px rgba(159,224,106,.35)}
+.panel h2{margin:0 0 14px;font-size:19px;font-family:'Cinzel',Georgia,serif;letter-spacing:.04em}
 .panel .sub{opacity:.7;margin:0 0 18px;font-size:13px}
-.btn{display:block;width:100%;margin:8px 0;padding:11px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:#1c2a18;color:#eaf3e6;font-size:15px;cursor:pointer;text-align:left}
-.btn:hover{background:#27361f;border-color:#9fe06a}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn{display:block;width:100%;margin:8px 0;padding:12px 15px;border-radius:10px;border:1px solid rgba(159,224,106,.25);background:linear-gradient(160deg,#1d2c18,#141f10);color:#eaf3e6;font-size:15px;cursor:pointer;text-align:left;transition:transform .12s ease,border-color .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px);border-color:#9fe06a;box-shadow:0 6px 16px rgba(0,0,0,.35),0 0 12px rgba(159,224,106,.15)}
+.btn:active{transform:translateY(0) scale(.99)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .inv{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-width:640px}
-.slot{border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:13px}
-.slot .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.6}
+.slot{border:1px solid rgba(159,224,106,.18);border-radius:9px;padding:8px 10px;margin-bottom:8px;font-size:13px;background:rgba(10,18,10,.4)}
+.slot .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;opacity:.6;color:#9fe06a}
 .items{max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:6px}
-.it{display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:6px 9px;font-size:12px;cursor:pointer}
-.it:hover{background:#27361f}
-.it .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
+.it{display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 9px;font-size:12px;cursor:pointer;transition:background .12s,border-color .12s}
+.it:hover{background:#27361f;border-color:rgba(159,224,106,.4)}
+.it .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;box-shadow:0 0 6px currentColor}
 .ench{margin-top:6px}
 .ench .row{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin:3px 0}
-.mini{padding:3px 8px;border-radius:6px;border:1px solid #9fe06a;background:#1c2a18;color:#eaf3e6;cursor:pointer}
+.mini{padding:3px 9px;border-radius:7px;border:1px solid #9fe06a;background:#1c2a18;color:#eaf3e6;cursor:pointer;transition:background .12s}
+.mini:hover{background:#27361f}
 .mini:disabled{opacity:.4;cursor:not-allowed;border-color:#555}
 .close{float:right;opacity:.6;cursor:pointer}
 `;

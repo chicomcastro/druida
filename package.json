@@ -26,6 +26,7 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@fontsource/cinzel": "^5.2.8",
     "three": "^0.169.0"
   },
   "devDependencies": {
