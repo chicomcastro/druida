@@ -53,7 +53,13 @@ export class Renderer {
     this._sunOffset = new THREE.Vector3(18, 30, 12);
     this._groundTex = null;
 
+    // Nitidez (ADR 0052): dimensiona o buffer JÁ na criação — sem isso o
+    // canvas fica no tamanho default (300×150) esticado por CSS até o
+    // primeiro resize da janela (blur forte, pior em tablet, onde o evento
+    // nunca dispara). visualViewport cobre rotação/zoom em mobile.
+    this.resize();
     window.addEventListener('resize', () => this.resize());
+    window.visualViewport?.addEventListener('resize', () => this.resize());
   }
 
   add(obj) {
@@ -148,6 +154,8 @@ export class Renderer {
   }
 
   resize() {
+    // Reaplica o pixel ratio: muda ao arrastar entre telas ou dar zoom.
+    this.three.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.three.setSize(window.innerWidth, window.innerHeight, false);
   }
 

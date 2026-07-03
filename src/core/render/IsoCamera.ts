@@ -27,6 +27,10 @@ export class IsoCamera {
     this._look = new THREE.Vector3();
     this.shake = 0;
     this.updateProjection();
+    // Sem isto a projeção só atualizava quando o zoom do coop mudava o
+    // frustum — girar o tablet ou redimensionar a janela distorcia a cena.
+    window.addEventListener('resize', () => this.updateProjection());
+    window.visualViewport?.addEventListener('resize', () => this.updateProjection());
   }
 
   addShake(amount) {
