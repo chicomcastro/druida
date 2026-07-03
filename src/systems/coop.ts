@@ -70,7 +70,10 @@ function handleJoins(game) {
   const pads = input.connectedPads();
   for (const pad of pads) {
     if (game._assignedPads.has(pad.index)) continue;
-    const pressed = pad.buttons.some((b) => b.pressed);
+    // Entra apertando START (botão 9): um gamepad livre controla o P1 por
+    // padrão (tablet/controle dedicado — ADR 0053), então qualquer-botão
+    // criaria um P2 fantasma no primeiro ataque.
+    const pressed = pad.buttons[9]?.pressed;
     if (!pressed) continue;
     const index = [...world.query(C.PlayerControlled)].length;
     if (index >= 4) break;

@@ -42,7 +42,8 @@ export class InputManager {
       }
     });
     addEventListener('mousedown', (e) => {
-      if (e.button === 0) this.mouse.down = true;
+      // Só o canvas ataca: cliques/toques na UI não podem virar golpe.
+      if (e.button === 0 && (e.target as HTMLElement)?.tagName === 'CANVAS') this.mouse.down = true;
     });
     addEventListener('mouseup', (e) => {
       if (e.button === 0) this.mouse.down = false;
@@ -57,6 +58,7 @@ export class InputManager {
 
   /** Chamar no fim de cada frame de update para detectar "just pressed". */
   endFrame() {
+    this.touch?.endFrame();
     this._prevKeys = new Set(this.keys);
     const pads = navigator.getGamepads?.() ?? [];
     for (const pad of pads) {
@@ -77,16 +79,48 @@ export class InputManager {
   }
 
   /**
-   * Estado abstrato de um jogador. playerIndex 0 = teclado/mouse;
-   * 1..3 = gamepad (mapeado via this._gamepadPlayers).
+   * Estado abstrato de um jogador. playerIndex 0 = teclado/mouse + touch +
+   * gamepad LIVRE (controle dedicado em tablet — ADR 0053); 1..3 = gamepads
+   * que entraram com START (mapeados via this._gamepadPlayers).
    */
   getPlayerInput(playerIndex) {
-    if (playerIndex === 0) return this._keyboardInput();
+    if (playerIndex === 0) {
+      const kb = this._keyboardInput();
+      const touch = this.touch?.state;
+      const pad = this._freePad();
+      const merged = pad ? this._merge(kb, this._padInput(pad)) : kb;
+      return touch ? this._merge(merged, touch) : merged;
+    }
     const padIndex = this._gamepadPlayers[playerIndex - 1];
     if (padIndex === undefined) return this._empty();
     const pad = (navigator.getGamepads?.() ?? [])[padIndex];
     if (!pad) return this._empty();
     return this._padInput(pad);
+  }
+
+  /** Controles touch (definido pelo Game quando o dispositivo tem toque). */
+  touch: any = null;
+
+  /** Primeiro gamepad não reservado por P2+ — dirige o P1. */
+  _freePad() {
+    for (const pad of this.connectedPads()) {
+      if (!this._gamepadPlayers.includes(pad.index)) return pad;
+    }
+    return null;
+  }
+
+  /** Combina duas fontes de entrada do mesmo jogador (teclado+pad+touch). */
+  _merge(a, b) {
+    return {
+      moveX: Math.abs(b.moveX) > Math.abs(a.moveX) ? b.moveX : a.moveX,
+      moveZ: Math.abs(b.moveZ) > Math.abs(a.moveZ) ? b.moveZ : a.moveZ,
+      aimX: 0, aimZ: 0, hasAim: false, aimIsWorldPoint: false,
+      attack: a.attack || b.attack,
+      dodge: a.dodge || b.dodge,
+      artifact: [0, 1, 2].map((i) => a.artifact[i] || b.artifact[i]),
+      switchForm: b.switchForm || a.switchForm,
+      interact: a.interact || b.interact,
+    };
   }
 
   assignPad(playerIndex, padIndex) {

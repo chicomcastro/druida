@@ -180,7 +180,7 @@ Pacote de acionáveis para deixar o jogo mais encantador/engajante/divertido
 Pacote de polish visual/UX (feedback de playtest em tablet):
 
 - [x] 🐛 Nitidez: fix do blur de inicialização (resize/DPR) — ADR 0052
-- [ ] 🎮 Tablet: controles touch + gamepad no P1 — ADR 0053
+- [x] 🎮 Tablet: controles touch + gamepad no P1 — ADR 0053
 - [ ] 🎨 Render pro: pós-processamento (bloom/vignette) + céu — ADR 0054
 - [ ] 🎨 Mundo vivo: modelos por bioma, vento, fumaça, moradores passeando — ADR 0055
 - [ ] 🖥️ UI profissional: fonte própria, HUD/menus refinados, números de dano — ADR 0056

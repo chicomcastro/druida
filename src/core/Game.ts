@@ -33,6 +33,7 @@ import { Menus } from '../ui/Menus.js';
 import { Minimap } from '../ui/Minimap.js';
 import { WorldMap } from '../ui/WorldMap.js';
 import { Tutorial } from '../ui/Tutorial.js';
+import { TouchControls, isTouchDevice } from '../ui/TouchControls.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { BALANCE } from '../data/balance.js';
 import { BIOMES } from '../data/biomes.js';
@@ -120,6 +121,7 @@ export class Game {
     this.minimap = new Minimap(this);
     this.worldMap = new WorldMap(this);
     this.tutorial = new Tutorial(this);
+    if (isTouchDevice()) this.input.touch = new TouchControls(this); // tablet/mobile (ADR 0053)
     this.menuMain = false;
     buildLandmarks(this);
     this.dungeon.buildEntrances();
