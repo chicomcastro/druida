@@ -228,6 +228,14 @@ Feedback jogando no celular (prints) + refinamentos aprovados:
 
 ---
 
+## M17 — Feedback: degraus e escala das casas ✅
+
+- [x] 🎨 M17.1 Telhados de duas águas em degraus (casas do hub + cabanas dos lenhadores) — ADR 0078
+- [x] 🎨 M17.2 Casas do hub maiores (escala MCD), porta alta, colliders ajustados — ADR 0078
+- [x] 🎨 M17.3 Partículas e drops cúbicos: clarão de impacto e orbes de projétil/essência — ADR 0078
+
+---
+
 ## M16 — Playtest 4: escala MCD e voxelização total ✅
 
 Insight do playtest (print de referência): no MCD o cenário é GRANDE em

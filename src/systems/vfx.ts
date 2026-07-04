@@ -129,9 +129,9 @@ export class VfxManager {
     });
   }
 
-  /** Clarão de impacto: esfera aditiva que incha e some em ~0.12s. */
+  /** Clarão de impacto: cubo aditivo que incha e some em ~0.12s (ADR 0078). */
   flash(x, y, z, color, scale = 0.6) {
-    const geo = new THREE.IcosahedronGeometry(0.5, 1);
+    const geo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
     const mat = new THREE.MeshBasicMaterial({
       color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false,
     });
