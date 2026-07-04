@@ -3,6 +3,7 @@ import { C, Transform, Collider, Velocity } from '../core/ecs/components.js';
 import { SETTLEMENTS } from '../data/settlements.js';
 import { makeRng, angleTo } from '../utils/math.js';
 import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
+import { tiledPixelTexture } from '../core/render/pixelTextures.js';
 
 /**
  * Constrói e administra os assentamentos temáticos (uma cidade-vila por
@@ -183,9 +184,9 @@ export class SettlementManager {
     const wall = opts.wall ?? 0x8a6b4a, beam = opts.beam ?? 0x54402e;
     const roofC = opts.roof ?? 0x6d8a3d, trim = opts.trim ?? 0xb08d52;
     const g = new THREE.Group();
-    const found = mesh(new THREE.BoxGeometry(bw + 0.5, 0.35, d + 0.5), 0x7d7c80, { rough: 1 });
+    const found = mesh(new THREE.BoxGeometry(bw + 0.5, 0.35, d + 0.5), 0x7d7c80, { rough: 1, tex: 'stone', trx: 4, try: 1 });
     found.position.y = 0.18;
-    const walls = mesh(new THREE.BoxGeometry(bw, h, d), wall);
+    const walls = mesh(new THREE.BoxGeometry(bw, h, d), wall, { tex: 'planks', trx: 4, try: 2 });
     walls.position.y = 0.35 + h / 2;
     g.add(found, walls);
     for (const [cx, cz] of [[-bw / 2, -d / 2], [bw / 2, -d / 2], [-bw / 2, d / 2], [bw / 2, d / 2]]) {
@@ -196,13 +197,13 @@ export class SettlementManager {
     const top = 0.35 + h;
     const rise = opts.rise ?? 1.1, ov = 0.55; // cumeeira e beiral
     // Sótão: fecha o vão da empena sob as duas águas.
-    const attic = mesh(new THREE.BoxGeometry(bw * 0.62, rise * 0.8, d - 0.3), wall);
+    const attic = mesh(new THREE.BoxGeometry(bw * 0.62, rise * 0.8, d - 0.3), wall, { tex: 'planks', trx: 2, try: 1 });
     attic.position.y = top + rise * 0.4;
     g.add(attic);
     const slope = Math.hypot(bw / 2 + ov, rise);
     const pitch = Math.atan2(rise, bw / 2 + ov);
     for (const s of [-1, 1]) {
-      const slab = mesh(new THREE.BoxGeometry(slope + 0.15, 0.14, d + 0.8), roofC, { rough: 1 });
+      const slab = mesh(new THREE.BoxGeometry(slope + 0.15, 0.14, d + 0.8), roofC, { rough: 1, tex: 'thatch', trx: 3, try: 4 });
       slab.position.set((s * (bw / 2 + ov)) / 2, top + rise / 2 + 0.06, 0);
       slab.rotation.z = -s * pitch;
       g.add(slab);
@@ -388,9 +389,9 @@ export class SettlementManager {
         leg.position.set(lx, 0.65, lz);
         hut.add(leg);
       }
-      const deck = mesh(new THREE.BoxGeometry(4.2, 0.25, 4.2), 0x6b4a33);
+      const deck = mesh(new THREE.BoxGeometry(4.2, 0.25, 4.2), 0x6b4a33, { tex: 'planks', trx: 4, try: 4 });
       deck.position.y = 1.35;
-      const cabin = mesh(new THREE.BoxGeometry(2.9, 1.6, 2.6), 0x7a5a3d);
+      const cabin = mesh(new THREE.BoxGeometry(2.9, 1.6, 2.6), 0x7a5a3d, { tex: 'planks', trx: 3, try: 2 });
       cabin.position.y = 2.3;
       hut.add(deck, cabin);
       // Vigas de canto e janela acesa na cabine.
@@ -406,7 +407,7 @@ export class SettlementManager {
       hut.add(pane);
       this._flames.push({ mesh: pane, base: 0.5, amp: 0.12, speed: 1.1, seed: x * 2 + z });
       // Telhado piramidal com beiral largo (silhueta de palafita, não árvore).
-      const roof = mesh(new THREE.ConeGeometry(2.9, 1.5, 4), 0x54683a, { rough: 1 });
+      const roof = mesh(new THREE.ConeGeometry(2.9, 1.5, 4), 0x54683a, { rough: 1, tex: 'thatch', trx: 3, try: 2 });
       roof.position.y = 3.85;
       roof.rotation.y = Math.PI / 4;
       const finial = mesh(new THREE.BoxGeometry(0.16, 0.5, 0.16), 0x4a3626, { shadow: false });
@@ -504,12 +505,12 @@ export class SettlementManager {
       // salientes nos cantos — a leitura clássica de cabana de lenhador.
       for (let li = 0; li < 4; li++) {
         const y = 0.28 + li * 0.5;
-        const logA = mesh(new THREE.CylinderGeometry(0.26, 0.26, 4.2, 6), li % 2 ? 0x5a4232 : 0x64493a);
+        const logA = mesh(new THREE.CylinderGeometry(0.26, 0.26, 4.2, 6), li % 2 ? 0x5a4232 : 0x64493a, { tex: 'log' });
         logA.rotation.z = Math.PI / 2;
         logA.position.set(0, y, -1.5);
         const logB = logA.clone();
         logB.position.z = 1.5;
-        const logC = mesh(new THREE.CylinderGeometry(0.26, 0.26, 3.5, 6), li % 2 ? 0x64493a : 0x5a4232);
+        const logC = mesh(new THREE.CylinderGeometry(0.26, 0.26, 3.5, 6), li % 2 ? 0x64493a : 0x5a4232, { tex: 'log' });
         logC.rotation.x = Math.PI / 2;
         logC.position.set(-1.95, y + 0.25, 0);
         const logD = logC.clone();
@@ -523,7 +524,7 @@ export class SettlementManager {
       // Telhado de duas águas com beiral (tábuas escuras) + cumeeira.
       const rise = 1.05, half = 2.35;
       for (const s of [-1, 1]) {
-        const slab = mesh(new THREE.BoxGeometry(Math.hypot(half, rise) + 0.15, 0.14, 3.9), 0x3a2f28, { rough: 1 });
+        const slab = mesh(new THREE.BoxGeometry(Math.hypot(half, rise) + 0.15, 0.14, 3.9), 0x3a2f28, { rough: 1, tex: 'planks', trx: 3, try: 4 });
         slab.position.set((s * half) / 2, 2.15 + rise / 2, 0);
         slab.rotation.z = -s * Math.atan2(rise, half);
         cabin.add(slab);
@@ -720,6 +721,8 @@ function mesh(geo, color, opts: any = {}) {
       roughness: opts.rough ?? 0.9,
       emissive: opts.emissive ?? 0x000000,
       emissiveIntensity: opts.emissiveIntensity ?? 1,
+      // Pixel-art tintável (ADR 0062): `tex` é o tipo; trx/try o repeat.
+      map: opts.tex ? tiledPixelTexture(opts.tex, opts.trx ?? 1, opts.try ?? 1) : null,
     }),
   );
   m.castShadow = opts.shadow ?? true;
