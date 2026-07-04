@@ -67,3 +67,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0060](0060-casas-legiveis.md) | Construções legíveis: casas de duas águas por tema | Aceito |
 | [0061](0061-vfx-impacto.md) | VFX de impacto: clarão aditivo, varredura e onda de choque | Aceito |
 | [0062](0062-pixel-art-procedural.md) | Texturas pixel-art procedurais (spike M14.1 do estilo MCD) | Aceito |
+| [0063](0063-chao-de-blocos.md) | Chão de blocos: grade instanciada que segue o grupo (M14.2) | Aceito |
