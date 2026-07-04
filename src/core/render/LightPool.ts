@@ -55,7 +55,11 @@ export class LightPool {
         .slice(0, MAX_LIGHTS)
         .map((e) => e.i);
     }
-    const boost = this.game.dayNight?.lightBoost?.() ?? 1;
+    // De dia o sol lava as luzes pontuais (como no MCD, elas protagonizam à
+    // noite e em masmorra); em masmorra não há dia — sem atenuação.
+    const night = this.game.dayNight?.nightAmount?.() ?? 1;
+    const dayDim = this.game.inDungeon ? 1 : 0.35 + 0.65 * night;
+    const boost = (this.game.dayNight?.lightBoost?.() ?? 1) * dayDim;
     for (let s = 0; s < this.lights.length; s++) {
       const l = this.lights[s];
       const ri = this._active[s];

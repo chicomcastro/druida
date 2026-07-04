@@ -11,9 +11,11 @@ export function createPlayer(world, renderer, { index = 0, x = 0, z = 0 } = {}) 
   const container = new THREE.Group();
   const body = buildMesh('druid');
   container.add(body);
+  // Losango de identidade (ADR 0066): a marca de seleção do MCD — um anel
+  // de 4 lados é um losango.
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(0.55, 0.7, 24),
-    new THREE.MeshBasicMaterial({ color: PLAYER_COLORS[index % 4], transparent: true, opacity: 0.75, side: THREE.DoubleSide }),
+    new THREE.RingGeometry(0.62, 0.8, 4),
+    new THREE.MeshBasicMaterial({ color: PLAYER_COLORS[index % 4], transparent: true, opacity: 0.8, side: THREE.DoubleSide }),
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.05;
