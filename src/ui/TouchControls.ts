@@ -37,6 +37,17 @@ export class TouchControls {
       #tc-base{position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid rgba(159,224,106,.35);background:rgba(10,20,12,.3);display:none;pointer-events:none}
       #tc-knob{position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(159,224,106,.5);display:none;pointer-events:none}
       #tc-zone{position:absolute;left:0;top:0;bottom:0;width:45%;pointer-events:auto;touch-action:none}
+      /* Telas estreitas (celular em pé): aglomerado mais compacto, sem
+         invadir o painel do P1 à esquerda (ADR 0068). */
+      @media (max-width:540px){
+        #tc-attack{right:16px !important;bottom:84px !important;width:72px !important;height:72px !important;font-size:30px !important}
+        #tc-dodge{right:100px !important;bottom:38px !important}
+        #tc-interact{right:102px !important;bottom:138px !important}
+        #tc-form{right:26px !important;bottom:176px !important}
+        #tc-a0{right:160px !important;bottom:30px !important}
+        #tc-a1{right:202px !important;bottom:62px !important}
+        #tc-a2{right:234px !important;bottom:104px !important}
+      }
     `;
     document.head.appendChild(style);
 
