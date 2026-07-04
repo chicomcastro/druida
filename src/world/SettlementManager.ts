@@ -184,7 +184,8 @@ export class SettlementManager {
    * o cone/cilindro antigo confundia com as copas das árvores.
    */
   _house(w, x, z, ry, opts: any = {}) {
-    const bw = opts.w ?? 3.6, d = opts.d ?? 2.9, h = opts.h ?? 1.7;
+    // Escala MCD (ADR 0078): a casa é uma ESTRUTURA em relação ao herói.
+    const bw = opts.w ?? 4.4, d = opts.d ?? 3.6, h = opts.h ?? 2.1;
     const wall = opts.wall ?? 0x8a6b4a, beam = opts.beam ?? 0x54402e;
     const roofC = opts.roof ?? 0x6d8a3d, trim = opts.trim ?? 0xb08d52;
     const g = new THREE.Group();
@@ -199,29 +200,29 @@ export class SettlementManager {
       g.add(post);
     }
     const top = 0.35 + h;
-    const rise = opts.rise ?? 1.1, ov = 0.55; // cumeeira e beiral
-    // Sótão: fecha o vão da empena sob as duas águas.
-    const attic = mesh(new THREE.BoxGeometry(bw * 0.62, rise * 0.8, d - 0.3), wall, { tex: 'planks', trx: 2, try: 1 });
-    attic.position.y = top + rise * 0.4;
-    g.add(attic);
-    const slope = Math.hypot(bw / 2 + ov, rise);
-    const pitch = Math.atan2(rise, bw / 2 + ov);
-    for (const s of [-1, 1]) {
-      const slab = mesh(new THREE.BoxGeometry(slope + 0.15, 0.14, d + 0.8), roofC, { rough: 1, tex: 'thatch', trx: 3, try: 4 });
-      slab.position.set((s * (bw / 2 + ov)) / 2, top + rise / 2 + 0.06, 0);
-      slab.rotation.z = -s * pitch;
-      g.add(slab);
+    const rise = opts.rise ?? 1.3; // altura do telhado (referência p/ chaminé)
+    // Telhado de duas águas em DEGRAUS (ADR 0078): camadas que encolhem —
+    // a escada clássica de telhado MC, sem lajes inclinadas.
+    const steps = [
+      { sw: bw + 1.2, sh: 0.46, y: top + 0.23 },
+      { sw: bw * 0.62 + 0.5, sh: 0.44, y: top + 0.66 },
+      { sw: bw * 0.3, sh: 0.42, y: top + 1.08 },
+    ];
+    for (const st of steps) {
+      const layer = mesh(new THREE.BoxGeometry(st.sw, st.sh, d + 0.8), roofC, { rough: 1, tex: 'thatch', trx: 3, try: 1 });
+      layer.position.y = st.y;
+      g.add(layer);
     }
-    const ridge = mesh(new THREE.BoxGeometry(0.26, 0.2, d + 0.9), trim, { shadow: false });
-    ridge.position.y = top + rise + 0.1;
+    const ridge = mesh(new THREE.BoxGeometry(bw * 0.3 + 0.16, 0.14, d + 0.9), trim, { shadow: false });
+    ridge.position.y = top + 1.36;
     g.add(ridge);
-    // Porta com verga e degrau (na face +Z — o chamador gira a casa).
-    const door = mesh(new THREE.BoxGeometry(0.85, 1.25, 0.14), 0x39281a, { tex: 'planks' });
-    door.position.set(-0.5, 0.35 + 0.62, d / 2 + 0.06);
-    const lintel = mesh(new THREE.BoxGeometry(1.1, 0.16, 0.2), beam, { shadow: false });
-    lintel.position.set(-0.5, 0.35 + 1.32, d / 2 + 0.08);
-    const step = mesh(new THREE.BoxGeometry(0.9, 0.14, 0.5), 0x7d7c80, { shadow: false });
-    step.position.set(-0.5, 0.07, d / 2 + 0.4);
+    // Porta alta com verga e degrau (na face +Z — o chamador gira a casa).
+    const door = mesh(new THREE.BoxGeometry(1.0, 1.6, 0.14), 0x39281a, { tex: 'planks' });
+    door.position.set(-0.6, 0.35 + 0.8, d / 2 + 0.06);
+    const lintel = mesh(new THREE.BoxGeometry(1.3, 0.18, 0.2), beam, { shadow: false });
+    lintel.position.set(-0.6, 0.35 + 1.7, d / 2 + 0.08);
+    const step = mesh(new THREE.BoxGeometry(1.05, 0.14, 0.55), 0x7d7c80, { shadow: false });
+    step.position.set(-0.6, 0.07, d / 2 + 0.42);
     g.add(door, lintel, step);
     // Janela acesa (vida dentro da casa; entra no boost noturno).
     const pane = mesh(new THREE.BoxGeometry(0.6, 0.55, 0.08), 0xffd890, {
@@ -325,10 +326,10 @@ export class SettlementManager {
         wall: 0x8a6b4a, beam: 0x54402e, roof: 0x5f8a3a, trim: 0xb89b5a,
         chimney: i % 2 === 0,
       });
-      w.collider(x, z, 2.6);
+      w.collider(x, z, 3.1);
       if (i % 2 === 0) {
-        const c = this._spun(x, z, ry, 1.25, -0.72);
-        this._smokeAt(w, c.x, 3.6, c.z);
+        const c = this._spun(x, z, ry, 1.65, -0.9); // topo da chaminé (casa 4.4×3.6)
+        this._smokeAt(w, c.x, 4.6, c.z);
       }
     });
     // Fogueira comunal (com fumaça subindo).
@@ -541,19 +542,15 @@ export class SettlementManager {
       const fill = mesh(new THREE.BoxGeometry(3.8, 1.9, 2.9), 0x4a3628, { shadow: false });
       fill.position.y = 1.1;
       cabin.add(fill);
-      // Telhado de duas águas com beiral (tábuas escuras) + cumeeira.
-      const rise = 1.05, half = 2.35;
-      for (const s of [-1, 1]) {
-        const slab = mesh(new THREE.BoxGeometry(Math.hypot(half, rise) + 0.15, 0.14, 3.9), 0x3a2f28, { rough: 1, tex: 'planks', trx: 3, try: 4 });
-        slab.position.set((s * half) / 2, 2.15 + rise / 2, 0);
-        slab.rotation.z = -s * Math.atan2(rise, half);
-        cabin.add(slab);
+      // Telhado de duas águas em degraus (ADR 0078): tábuas escuras.
+      for (const [sw, sy] of [[5.2, 2.4], [3.6, 2.86], [2.0, 3.3]]) {
+        const layer = mesh(new THREE.BoxGeometry(sw, 0.5, 3.9), 0x3a2f28, { rough: 1, tex: 'planks', trx: 3, try: 1 });
+        layer.position.y = sy;
+        cabin.add(layer);
       }
-      const gable = mesh(new THREE.BoxGeometry(2.4, rise * 0.8, 2.7), 0x5a4232, { tex: 'planks', trx: 2, try: 1 });
-      gable.position.y = 2.15 + rise * 0.38;
-      const ridge = mesh(new THREE.BoxGeometry(0.24, 0.18, 4.0), 0x2e2620, { shadow: false });
-      ridge.position.y = 2.15 + rise + 0.08;
-      cabin.add(gable, ridge);
+      const ridge = mesh(new THREE.BoxGeometry(2.16, 0.14, 4.0), 0x2e2620, { shadow: false });
+      ridge.position.y = 3.62;
+      cabin.add(ridge);
       // Porta, janela acesa e chaminé de pedra.
       const door = mesh(new THREE.BoxGeometry(0.85, 1.3, 0.14), 0x2e2118, { tex: 'planks' });
       door.position.set(-0.7, 0.93, 1.62);

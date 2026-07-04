@@ -32,7 +32,7 @@ const _orbMat = new Map();
 function orbGeometry(radius) {
   const key = Math.round(radius * 100);
   let g = _orbGeo.get(key);
-  if (!g) { g = new THREE.IcosahedronGeometry(radius, 0); _orbGeo.set(key, g); }
+  if (!g) { g = new THREE.BoxGeometry(radius * 1.5, radius * 1.5, radius * 1.5); _orbGeo.set(key, g); } // cubo: drop/projétil MC (ADR 0078)
   return g;
 }
 function orbMaterial(color) {
