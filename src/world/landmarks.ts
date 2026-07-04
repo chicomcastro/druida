@@ -104,7 +104,7 @@ function buildNpc(game, pos) {
 function buildSanctuary(game, pos, form) {
   const color = FORM_GLOW[form] ?? 0x9fe06a;
   const g = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 0.5, 6), new THREE.MeshStandardMaterial({ color: 0x4a4a55, map: tiledPixelTexture('stone', 2, 1) }));
+  const base = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.5, 3.3), new THREE.MeshStandardMaterial({ color: 0x4a4a55, map: tiledPixelTexture('stone', 3, 1) }));
   base.position.y = 0.25; base.receiveShadow = true;
   const stone = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.4, 0.8), new THREE.MeshStandardMaterial({ color: 0x3a3a45, map: tiledPixelTexture('stone', 1, 3) }));
   stone.position.y = 1.5; stone.castShadow = true;

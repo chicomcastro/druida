@@ -101,7 +101,7 @@ export class PoiManager {
 
     // Totem corrompido (visual; some ao purificar).
     const totem = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.4, 0.6, 3, 6),
+      new THREE.BoxGeometry(0.85, 3, 0.85),
       new THREE.MeshStandardMaterial({ color: 0x3a2440, emissive: 0x6a2a7a, emissiveIntensity: 0.5 }),
     );
     totem.position.set(camp.x, 1.5, camp.z);

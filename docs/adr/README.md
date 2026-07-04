@@ -81,3 +81,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0074](0074-voxelizacao-arvores-rochas.md) | Árvores, pinheiros e rochas em blocos (M16.1) | Aceito |
 | [0075](0075-escala-mcd-cenario.md) | Escala MCD: postes jumbo e banca-estrutura (M16.2) | Aceito |
 | [0076](0076-alinhamento-voxel.md) | Alinhamento voxel: rotações só em 90° (M16.3) | Aceito |
+| [0077](0077-sweep-voxel-final.md) | Sweep voxel final: últimos sólidos viram blocos (M16.4) | Aceito |

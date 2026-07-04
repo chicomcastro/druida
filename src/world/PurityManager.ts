@@ -111,13 +111,13 @@ export class PurityManager {
       if (i % 3 === 0) {
         // Flor: caule + corola colorida.
         const stem = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.04, 0.05, 0.5, 4),
+          new THREE.BoxGeometry(0.08, 0.5, 0.08),
           new THREE.MeshStandardMaterial({ color: 0x4f8f3f, roughness: 1 }),
         );
         stem.position.set(px, 0.25, pz);
         const color = FLOWER_COLORS[i % FLOWER_COLORS.length];
         const head = new THREE.Mesh(
-          new THREE.IcosahedronGeometry(0.14, 0),
+          new THREE.BoxGeometry(0.24, 0.24, 0.24),
           new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.35, roughness: 0.6 }),
         );
         head.position.set(px, 0.55, pz);
@@ -125,7 +125,7 @@ export class PurityManager {
       } else {
         // Broto de grama viva.
         const sprout = new THREE.Mesh(
-          new THREE.ConeGeometry(0.12, 0.45, 5),
+          new THREE.BoxGeometry(0.18, 0.45, 0.18),
           new THREE.MeshStandardMaterial({ color: i % 2 ? 0x7ac86a : 0x9fe06a, roughness: 1 }),
         );
         sprout.position.set(px, 0.22, pz);

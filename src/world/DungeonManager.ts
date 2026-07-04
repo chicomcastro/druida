@@ -118,14 +118,14 @@ export class DungeonManager {
       const x = ARENA.x + Math.sin(a) * (ARENA_R - 2.2);
       const z = ARENA.z + Math.cos(a) * (ARENA_R - 2.2);
       const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.1, 0.13, 2.2, 5),
+        new THREE.BoxGeometry(0.22, 2.2, 0.22),
         new THREE.MeshStandardMaterial({ color: 0x3a2d22 }),
       );
       pole.position.set(x, 1.1, z);
       const flameMat = new THREE.MeshStandardMaterial({
         color: 0xffc06a, emissive: 0xff9a3a, emissiveIntensity: 1.2, roughness: 0.5,
       });
-      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 6), flameMat);
+      const flame = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.58, 0.42), flameMat);
       flame.position.set(x, 2.5, z);
       this.game.renderer.add(pole, flame);
       this._torchMats.push(flameMat);
