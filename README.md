@@ -1,7 +1,18 @@
 # 🌿 Druida
 
+<div align="center">
+
+## 🎮 [**▶️ JOGAR AGORA no navegador**](https://chicomcastro.github.io/druida/) 🎮
+
+[![Jogar agora](https://img.shields.io/badge/%E2%96%B6%EF%B8%8F%20JOGAR%20AGORA-chicomcastro.github.io%2Fdruida-2ea44f?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chicomcastro.github.io/druida/)
+
+*Funciona no desktop, tablet (touch) e com controle. Deploy automático a cada push na `main`.*
+
+</div>
+
 [![CI](https://github.com/chicomcastro/druida/actions/workflows/ci.yml/badge.svg)](https://github.com/chicomcastro/druida/actions/workflows/ci.yml)
 [![E2E](https://github.com/chicomcastro/druida/actions/workflows/e2e.yml/badge.svg)](https://github.com/chicomcastro/druida/actions/workflows/e2e.yml)
+[![Deploy](https://github.com/chicomcastro/druida/actions/workflows/deploy.yml/badge.svg)](https://github.com/chicomcastro/druida/actions/workflows/deploy.yml)
 
 > Um action-RPG / dungeon-crawler **de mundo aberto** inspirado amplamente em **Minecraft Dungeons**, com uma grande virada de conceito: **um jogo por classe**. Este primeiro jogo é sobre o **Druida** — natureza, magia elemental e transformação em animais.
 
