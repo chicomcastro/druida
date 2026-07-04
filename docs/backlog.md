@@ -228,6 +228,21 @@ Feedback jogando no celular (prints) + refinamentos aprovados:
 
 ---
 
+## M16 — Playtest 4: escala MCD e voxelização total 🟡
+
+Insight do playtest (print de referência): no MCD o cenário é GRANDE em
+relação ao herói — postes ~2.5× a altura do personagem, a banca do mercador
+é uma estrutura inteira com toldo — e **tudo** é cubo alinhado ao grid, sem
+rotações arbitrárias. A sensação de "câmera longe" era na verdade cenário
+pequeno.
+
+- [x] 🎨 M16.1 Árvores, pinheiros e rochas em blocos (copas em cluster de cubos, Carvalho-Mãe voxel) — ADR 0074
+- [ ] 🎨 M16.2 Escala MCD: postes jumbo, banca do mercador com toldo grande, props do cenário maiores
+- [ ] 🎨 M16.3 Alinhamento voxel: construções e props sempre em rotações de 90°, posições no grid
+- [ ] 🎨 M16.4 Sweep final de sólidos: cilindros/cones/esferas restantes viram blocos (fonte, moinho, barcos, braseiros, santuários, POIs)
+
+---
+
 ## Caminho crítico (resumo)
 
 ```
