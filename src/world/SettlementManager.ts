@@ -154,7 +154,7 @@ export class SettlementManager {
   _smokeAt(w, x, y0, z, color = 0xb8b8b8) {
     for (let i = 0; i < 3; i++) {
       const puff = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(0.3, 0),
+        new THREE.BoxGeometry(0.42, 0.42, 0.42), // fumaça em cubos, como no MC
         new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.3, depthWrite: false }),
       );
       puff.position.set(x, y0, z);
@@ -341,14 +341,14 @@ export class SettlementManager {
       bed.position.set(gx, 0.15, gz);
       w.add(bed);
       for (let i = 0; i < 5; i++) {
-        const sprout = mesh(new THREE.ConeGeometry(0.16, 0.5, 5), i % 2 ? 0x7ac86a : 0x9fe06a);
+        const sprout = mesh(new THREE.BoxGeometry(0.22, 0.5, 0.22), i % 2 ? 0x7ac86a : 0x9fe06a);
         sprout.position.set(gx - 1.2 + i * 0.6, 0.55, gz + (i % 2 ? 0.4 : -0.35));
         w.add(sprout);
       }
     }
     // Caminho de pedras do centro ao portão sul.
     for (let i = 0; i < 8; i++) {
-      const stone = mesh(new THREE.CylinderGeometry(0.5 + rng() * 0.2, 0.5, 0.06, 7), 0x8a8578, { rough: 1, shadow: false, tex: 'stone' });
+      const stone = mesh(new THREE.BoxGeometry(0.9 + rng() * 0.3, 0.06, 0.9 + rng() * 0.3), 0x8a8578, { rough: 1, shadow: false, tex: 'stone' });
       stone.position.set((rng() - 0.5) * 1.2, 0.03, -3 - i * 2);
       w.add(stone);
     }
@@ -406,7 +406,7 @@ export class SettlementManager {
     for (const [x, z, ry] of huts) {
       const hut = new THREE.Group();
       for (const [lx, lz] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) {
-        const leg = mesh(new THREE.CylinderGeometry(0.13, 0.16, 1.3, 5), 0x4a3626, { tex: 'log' });
+        const leg = mesh(new THREE.BoxGeometry(0.26, 1.3, 0.26), 0x4a3626, { tex: 'log' });
         leg.position.set(lx, 0.65, lz);
         hut.add(leg);
       }
@@ -427,10 +427,13 @@ export class SettlementManager {
       pane.position.set(0.6, 2.45, 1.34);
       hut.add(pane);
       this._flames.push({ mesh: pane, base: 0.5, amp: 0.12, speed: 1.1, seed: x * 2 + z });
-      // Telhado piramidal com beiral largo (silhueta de palafita, não árvore).
-      const roof = mesh(new THREE.ConeGeometry(2.9, 1.5, 4), 0x54683a, { rough: 1, tex: 'thatch', trx: 3, try: 2 });
-      roof.position.y = 3.85;
-      roof.rotation.y = Math.PI / 4;
+      // Telhado piramidal em degraus (ADR 0077): camadas de palha no grid.
+      const roof = new THREE.Group();
+      for (const [size, ry2] of [[4.4, 3.35], [3.0, 3.85], [1.6, 4.35]]) {
+        const tier = mesh(new THREE.BoxGeometry(size, 0.52, size), 0x54683a, { rough: 1, tex: 'thatch', trx: 3, try: 1 });
+        tier.position.y = ry2;
+        roof.add(tier);
+      }
       const finial = mesh(new THREE.BoxGeometry(0.16, 0.5, 0.16), 0x4a3626, { shadow: false });
       finial.position.y = 4.75;
       // Guarda-corpo do deck (postes + corrimão nas três faces sem escada).
@@ -469,19 +472,18 @@ export class SettlementManager {
     for (let i = 0; i < 16; i++) {
       const a = rng() * Math.PI * 2;
       const r = 15 + rng() * 4;
-      const reed = mesh(new THREE.ConeGeometry(0.12, 1.4 + rng() * 0.9, 4), 0x5a6b2a, { shadow: false });
+      const reed = mesh(new THREE.BoxGeometry(0.16, 1.4 + rng() * 0.9, 0.16), 0x5a6b2a, { shadow: false });
       reed.position.set(Math.sin(a) * r, 0.7, Math.cos(a) * r);
       w.add(reed);
     }
     // Varal de pesca e barco.
     const rack = new THREE.Group();
     for (const px of [-1, 1]) {
-      const post = mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.6, 5), 0x4a3626);
+      const post = mesh(new THREE.BoxGeometry(0.18, 1.6, 0.18), 0x4a3626, { tex: 'log', trx: 1, try: 2 });
       post.position.set(px, 0.8, 0);
       rack.add(post);
     }
-    const bar = mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.2, 5), 0x4a3626, { shadow: false });
-    bar.rotation.z = Math.PI / 2;
+    const bar = mesh(new THREE.BoxGeometry(2.2, 0.12, 0.12), 0x4a3626, { shadow: false });
     bar.position.y = 1.5;
     rack.add(bar);
     for (let i = 0; i < 3; i++) {
@@ -510,9 +512,9 @@ export class SettlementManager {
       const a = (i / posts) * Math.PI * 2;
       if (Math.abs(Math.sin(a)) < 0.28) continue; // vãos dos portões no eixo Z
       const x = Math.sin(a) * 16.5, z = Math.cos(a) * 16.5;
-      const log = mesh(new THREE.CylinderGeometry(0.34, 0.4, 3.0 + (i % 2) * 0.4, 6), 0x4a3a2c, { tex: 'log' });
+      const log = mesh(new THREE.BoxGeometry(0.68, 3.0 + (i % 2) * 0.4, 0.68), 0x4a3a2c, { tex: 'log', trx: 1, try: 3 });
       log.position.set(x, 1.6, z);
-      const tip = mesh(new THREE.ConeGeometry(0.34, 0.5, 6), 0x3a2d22, { shadow: false });
+      const tip = mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), 0x3a2d22, { shadow: false });
       tip.position.set(x, 3.3 + (i % 2) * 0.4, z);
       w.add(log, tip);
       if (i % 2 === 0) w.collider(x, z, 1.5);
@@ -525,13 +527,11 @@ export class SettlementManager {
       // salientes nos cantos — a leitura clássica de cabana de lenhador.
       for (let li = 0; li < 4; li++) {
         const y = 0.28 + li * 0.5;
-        const logA = mesh(new THREE.CylinderGeometry(0.26, 0.26, 4.2, 6), li % 2 ? 0x5a4232 : 0x64493a, { tex: 'log' });
-        logA.rotation.z = Math.PI / 2;
+        const logA = mesh(new THREE.BoxGeometry(4.2, 0.5, 0.5), li % 2 ? 0x5a4232 : 0x64493a, { tex: 'log', trx: 4, try: 1 });
         logA.position.set(0, y, -1.5);
         const logB = logA.clone();
         logB.position.z = 1.5;
-        const logC = mesh(new THREE.CylinderGeometry(0.26, 0.26, 3.5, 6), li % 2 ? 0x64493a : 0x5a4232, { tex: 'log' });
-        logC.rotation.x = Math.PI / 2;
+        const logC = mesh(new THREE.BoxGeometry(0.5, 0.5, 3.5), li % 2 ? 0x64493a : 0x5a4232, { tex: 'log', trx: 1, try: 3 });
         logC.position.set(-1.95, y + 0.25, 0);
         const logD = logC.clone();
         logD.position.x = 1.95;
@@ -582,11 +582,9 @@ export class SettlementManager {
       trestle.position.set(px, 0.5, 0);
       mill.add(trestle);
     }
-    const trunk = mesh(new THREE.CylinderGeometry(0.4, 0.4, 3.4, 7), 0x6b4a33, { tex: 'log' });
-    trunk.rotation.z = Math.PI / 2;
+    const trunk = mesh(new THREE.BoxGeometry(3.4, 0.75, 0.75), 0x6b4a33, { tex: 'log', trx: 3, try: 1 });
     trunk.position.y = 1.15;
-    const blade = mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.08, 16), 0x9a9aa8, { rough: 0.4 });
-    blade.rotation.x = Math.PI / 2;
+    const blade = mesh(new THREE.BoxGeometry(1.7, 1.7, 0.08), 0x9a9aa8, { rough: 0.4 });
     blade.position.set(0, 1.15, 0.75);
     mill.add(trunk, blade);
     mill.position.set(-10, 0, 7);
@@ -596,15 +594,14 @@ export class SettlementManager {
     // Pilhas de toras e tocos.
     for (const [x, z] of [[10, 9], [12, 6]]) {
       for (let i = 0; i < 3; i++) {
-        const log = mesh(new THREE.CylinderGeometry(0.35, 0.35, 2.6, 7), 0x6b4a33, { tex: 'log' });
-        log.rotation.z = Math.PI / 2;
+        const log = mesh(new THREE.BoxGeometry(2.6, 0.62, 0.62), 0x6b4a33, { tex: 'log', trx: 3, try: 1 });
         log.position.set(x, 0.35 + Math.floor(i / 2) * 0.62, z + (i % 2) * 0.72 - 0.35);
         w.add(log);
       }
       w.collider(x, z, 1.4);
     }
     for (let i = 0; i < 6; i++) {
-      const stump = mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.5, 7), 0x5a4232, { tex: 'log' });
+      const stump = mesh(new THREE.BoxGeometry(0.78, 0.5, 0.78), 0x5a4232, { tex: 'log' });
       stump.position.set((rng() - 0.5) * 24, 0.25, (rng() - 0.5) * 24);
       w.add(stump);
     }
@@ -717,14 +714,18 @@ export class SettlementManager {
   _fire(w, x, z, color, lightBase) {
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      const stone = mesh(new THREE.DodecahedronGeometry(0.28, 0), 0x6a6a72, { shadow: false, tex: 'stone' });
+      const stone = mesh(new THREE.BoxGeometry(0.44, 0.36, 0.44), 0x6a6a72, { shadow: false, tex: 'stone' });
       stone.position.set(x + Math.sin(a) * 0.9, 0.18, z + Math.cos(a) * 0.9);
       w.add(stone);
     }
-    const flame = mesh(new THREE.ConeGeometry(0.45, 1.1, 6), color, { emissive: color, emissiveIntensity: 1.4, rough: 0.5 });
-    flame.position.set(x, 0.7, z);
-    w.add(flame);
+    // Chama em cubos empilhados (base larga + língua de fogo).
+    const flame = mesh(new THREE.BoxGeometry(0.62, 0.6, 0.62), color, { emissive: color, emissiveIntensity: 1.4, rough: 0.5 });
+    flame.position.set(x, 0.45, z);
+    const tongue = mesh(new THREE.BoxGeometry(0.32, 0.5, 0.32), color, { emissive: color, emissiveIntensity: 1.7, rough: 0.5, shadow: false });
+    tongue.position.set(x, 0.98, z);
+    w.add(flame, tongue);
     this._flames.push({ mesh: flame, base: 1.4, amp: 0.5, speed: 6.2, seed: x + z });
+    this._flames.push({ mesh: tongue, base: 1.7, amp: 0.7, speed: 7.4, seed: x * 2 + z });
     w.collider(x, z, 0.9);
     if (lightBase > 0) this._fireLight(w, x, z, color, lightBase);
   }
