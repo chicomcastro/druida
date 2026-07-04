@@ -5,6 +5,7 @@ import { makeRng } from '../utils/math.js';
 import { createLootOrb } from '../entities/factories.js';
 import { pixelTexture, tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { LORE } from '../data/lore.js';
+import { canopyGeo, pineGeo, rockGeo, mergeBoxes } from './voxelGeo.js';
 
 /**
  * Mundo aberto: zonas de bioma dispostas em anéis concêntricos a partir do
@@ -101,11 +102,13 @@ export class WorldManager {
       this.game.renderer.add(inst);
       return inst;
     };
-    this.trunkInst = mk(new THREE.CylinderGeometry(0.25, 0.35, 2.2, 6), 'log');
-    this.leafInst = mk(new THREE.IcosahedronGeometry(1.2, 0), 'leaves');
-    this.rockInst = mk(new THREE.DodecahedronGeometry(0.8, 0), 'stone');
+    // Vocabulário voxel (ADR 0074): troncos, copas, pinheiros e rochas são
+    // clusters de caixas fundidos — mesma silhueta cúbica do chão de blocos.
+    this.trunkInst = mk(new THREE.BoxGeometry(0.55, 2.2, 0.55), 'log');
+    this.leafInst = mk(canopyGeo(), 'leaves');
+    this.rockInst = mk(rockGeo(), 'stone');
     // Pinheiros (Picos Gélidos): silhueta própria por bioma (ADR 0055).
-    this.pineInst = mk(new THREE.ConeGeometry(1.35, 3.4, 7), 'leaves');
+    this.pineInst = mk(pineGeo(), 'leaves');
     this._freeTree = [];
     this._freeRock = [];
     this._freePine = [];
@@ -127,7 +130,7 @@ export class WorldManager {
     // sem colisor nem entidade — puro detalhe visual do bioma.
     const detailCap = this.maxDetails + 16;
     this.detailInst = new THREE.InstancedMesh(
-      new THREE.ConeGeometry(0.14, 0.55, 5),
+      new THREE.BoxGeometry(0.18, 0.55, 0.18),
       new THREE.MeshStandardMaterial({ roughness: 1 }),
       detailCap,
     );
@@ -257,13 +260,23 @@ export class WorldManager {
     // Carvalho-Mãe no centro do hub (marco visual + obstáculo).
     const { game } = this;
     const trunk = new THREE.Group();
+    // Voxel (ADR 0074): coluna quadrada + copa em cluster de blocos grandes.
     const t = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.4, 1.8, 6, 8),
+      mergeBoxes([
+        { w: 3.4, h: 1.2, d: 3.4, x: 0, y: 0.6, z: 0 },
+        { w: 2.7, h: 5.2, d: 2.7, x: 0, y: 3.2, z: 0 },
+      ]),
       new THREE.MeshStandardMaterial({ color: 0x6b4a2f, map: tiledPixelTexture('log', 3, 4) }),
     );
-    t.position.y = 3; t.castShadow = true;
+    t.castShadow = true;
     const crown = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(4.5, 0),
+      mergeBoxes([
+        { w: 7.5, h: 4.2, d: 7.5, x: 0, y: 0, z: 0 },
+        { w: 4.2, h: 2.6, d: 4.2, x: 3.2, y: 1.4, z: 1.0 },
+        { w: 3.6, h: 2.4, d: 3.6, x: -3.0, y: 0.9, z: -1.6 },
+        { w: 3.0, h: 2.2, d: 3.0, x: 0.6, y: 2.9, z: -2.2 },
+        { w: 2.6, h: 2.0, d: 2.6, x: -1.2, y: 3.1, z: 2.4 },
+      ]),
       new THREE.MeshStandardMaterial({ color: 0x4f8f3f, map: tiledPixelTexture('leaves', 3, 3) }),
     );
     crown.position.y = 8; crown.castShadow = true;
@@ -279,7 +292,8 @@ export class WorldManager {
   _spawnProp(x, z, biome) {
     const { game } = this;
     const def = this._effectiveDef(biome);
-    const rot = this.rng() * Math.PI * 2;
+    // Alinhado ao voxel (ADR 0074): só rotações de 90° — nada "torto" no mundo.
+    const rot = Math.floor(this.rng() * 4) * (Math.PI / 2);
     let rec;
     const wantTree = this.rng.chance(0.7); // decisão única árvore/rocha
     if (wantTree && biome === 'picos' && this._freePine.length && this._freeTree.length) {
@@ -288,7 +302,7 @@ export class WorldManager {
       const trunkSlot = this._freeTree.pop();
       const s = 0.8 + this.rng() * 0.6;
       this._setInstance(this.trunkInst, trunkSlot, x, 0.6 * s, z, rot, s * 0.7, 0x4a3a30);
-      this._setInstance(this.pineInst, slot, x, 2.5 * s, z, rot, s, def.propColor);
+      this._setInstance(this.pineInst, slot, x, 0.9 * s, z, rot, s, def.propColor);
       const id = game.world.createEntity();
       game.world.add(id, C.Transform, Transform(x, z));
       game.world.add(id, C.Collider, Collider(0.5, true));
@@ -305,7 +319,7 @@ export class WorldManager {
     } else if (this._freeRock.length) {
       const slot = this._freeRock.pop();
       const s = 0.7 + this.rng() * 0.6;
-      this._setInstance(this.rockInst, slot, x, 0.5 * s, z, rot, s, 0x6b6b6b);
+      this._setInstance(this.rockInst, slot, x, 0, z, rot, s, 0x6b6b6b);
       const id = game.world.createEntity();
       game.world.add(id, C.Transform, Transform(x, z));
       game.world.add(id, C.Collider, Collider(0.7 * s, true));
@@ -325,7 +339,7 @@ export class WorldManager {
     // Jitter sutil de tom para o tapete não parecer carimbado.
     const c = new THREE.Color(def.detailColor ?? def.propColor);
     c.multiplyScalar(0.85 + this.rng() * 0.3);
-    this._setInstance(this.detailInst, slot, x, 0.27 * s, z, this.rng() * Math.PI * 2, s, c.getHex());
+    this._setInstance(this.detailInst, slot, x, 0.27 * s, z, Math.floor(this.rng() * 4) * (Math.PI / 2), s, c.getHex());
     this.details.push({ x, z, slot });
   }
 

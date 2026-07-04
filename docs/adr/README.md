@@ -78,3 +78,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0071](0071-hud-mcd.md) | HUD no layout MCD: orbe de vida e slots (M15.5) | Aceito |
 | [0072](0072-inventario-slots.md) | Inventário e mercador em grade de slots RPG (M15.6) | Aceito |
 | [0073](0073-nublado-e-agua-em-blocos.md) | Overworld nublado + água e tendas em blocos (M15.7–8) | Aceito |
+| [0074](0074-voxelizacao-arvores-rochas.md) | Árvores, pinheiros e rochas em blocos (M16.1) | Aceito |
