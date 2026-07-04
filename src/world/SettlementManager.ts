@@ -4,6 +4,7 @@ import { SETTLEMENTS } from '../data/settlements.js';
 import { makeRng, angleTo } from '../utils/math.js';
 import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
 import { tiledPixelTexture } from '../core/render/pixelTextures.js';
+import { buildMerchantStall } from './landmarks.js';
 
 /**
  * Constrói e administra os assentamentos temáticos (uma cidade-vila por
@@ -159,13 +160,13 @@ export class SettlementManager {
     }
   }
 
-  /** Estandarte: mastro + pano que treme ao vento (coords locais). */
+  /** Estandarte: mastro quadrado alto + pano que treme ao vento (coords locais). */
   _flagAt(w, x, z, color) {
-    const pole = mesh(new THREE.CylinderGeometry(0.06, 0.08, 2.6, 5), 0x4a3626, { shadow: false });
-    pole.position.set(x, 1.3, z);
+    const pole = mesh(new THREE.BoxGeometry(0.14, 3.3, 0.14), 0x4a3626, { shadow: false, tex: 'log', trx: 1, try: 3 });
+    pole.position.set(x, 1.65, z);
     w.add(pole);
-    const cloth = mesh(new THREE.BoxGeometry(0.85, 0.5, 0.05), color, { shadow: false });
-    cloth.position.set(x + 0.45, 2.25, z);
+    const cloth = mesh(new THREE.BoxGeometry(1.05, 0.62, 0.06), color, { shadow: false, tex: 'cloth', trx: 1, try: 1 });
+    cloth.position.set(x + 0.55, 2.85, z);
     w.add(cloth);
     this._flags.push({ mesh: cloth, base: 0, seed: x + z });
   }
@@ -295,15 +296,16 @@ export class SettlementManager {
     const wx = s.x + s.merchant.x, wz = s.z + s.merchant.z;
     g.position.set(wx, 0, wz);
     game.renderer.add(g);
-    const stall = mesh(new THREE.BoxGeometry(1.6, 0.2, 1.0), 0x7a4a2a, { tex: 'planks', trx: 2, try: 1 });
-    stall.position.set(wx, 1.0, wz + 0.9);
+    // Banca-estrutura em escala MCD (ADR 0075), com toldo na cor do tema.
+    const stall = buildMerchantStall(s.theme === 'gelo' ? 0x4a8ab8 : 0xd8862a);
+    stall.position.set(wx, 0, wz);
     game.renderer.add(stall);
     const id = game.world.createEntity();
     game.world.add(id, C.Transform, Transform(wx, wz));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
     game.world.add(id, C.Collider, Collider(0.6, true));
     game.world.add(id, C.Interactable, {
-      kind: 'merchant', shopId: s.id, prompt: 'E — Mercador', range: 3, used: false,
+      kind: 'merchant', shopId: s.id, prompt: 'E — Mercador', range: 3.5, used: false,
     });
   }
 
@@ -358,12 +360,17 @@ export class SettlementManager {
     // Lanternas de vagalumes.
     const lampSpots = [[-7, -1], [7, 1], [-11, 6], [11, 7], [0, 9], [-1.5, -12]];
     for (const [x, z] of lampSpots) this._lantern(w, x, z, 0xd8ffa0);
-    // Cerca baixa a leste/oeste.
-    for (let i = 0; i < 6; i++) {
-      for (const sx of [-1, 1]) {
-        const post = mesh(new THREE.CylinderGeometry(0.09, 0.11, 1.0, 5), 0x6b4a2f, { shadow: false, tex: 'log' });
-        post.position.set(sx * 18, 0.5, -6 + i * 3.4);
+    // Cerca a leste/oeste: postes quadrados + travessa (escala MCD).
+    for (const sx of [-1, 1]) {
+      for (let i = 0; i < 6; i++) {
+        const post = mesh(new THREE.BoxGeometry(0.22, 1.25, 0.22), 0x6b4a2f, { shadow: false, tex: 'log', trx: 1, try: 1 });
+        post.position.set(sx * 18, 0.62, -6 + i * 3.4);
         w.add(post);
+        if (i < 5) {
+          const rail = mesh(new THREE.BoxGeometry(0.14, 0.14, 3.4), 0x5a4232, { shadow: false });
+          rail.position.set(sx * 18, 0.95, -6 + i * 3.4 + 1.7);
+          w.add(rail);
+        }
       }
     }
   }
@@ -696,17 +703,22 @@ export class SettlementManager {
 
   // --- Detalhes com luz/brilho ----------------------------------------------
 
-  /** Lanterna: poste + orbe emissivo que pulsa. */
+  /** Poste de lanterna em escala MCD (ADR 0075): mastro quadrado alto,
+   * braço e caixa de lanterna pendurada que pulsa. */
   _lantern(w, x, z, color) {
-    const pole = mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.9, 5), 0x4a3626, { shadow: false });
-    pole.position.set(x, 0.95, z);
-    const orb = mesh(new THREE.IcosahedronGeometry(0.22, 0), color, { emissive: color, emissiveIntensity: 1.0, rough: 0.4 });
-    orb.position.set(x, 1.95, z);
-    w.add(pole, orb);
-    this._flames.push({ mesh: orb, base: 1.0, amp: 0.35, speed: 3.1, seed: x * 7 + z });
+    const pole = mesh(new THREE.BoxGeometry(0.18, 3.1, 0.18), 0x3a2c20, { shadow: false, tex: 'log', trx: 1, try: 3 });
+    pole.position.set(x, 1.55, z);
+    const arm = mesh(new THREE.BoxGeometry(0.72, 0.14, 0.14), 0x3a2c20, { shadow: false });
+    arm.position.set(x + 0.3, 3.0, z);
+    const cap = mesh(new THREE.BoxGeometry(0.4, 0.1, 0.4), 0x2c211a, { shadow: false });
+    cap.position.set(x + 0.55, 2.86, z);
+    const lantern = mesh(new THREE.BoxGeometry(0.3, 0.38, 0.3), color, { emissive: color, emissiveIntensity: 1.0, rough: 0.4 });
+    lantern.position.set(x + 0.55, 2.6, z);
+    w.add(pole, arm, cap, lantern);
+    this._flames.push({ mesh: lantern, base: 1.0, amp: 0.35, speed: 3.1, seed: x * 7 + z });
     // Lanternas também entram no pool (ADR 0065): luz firme e curta.
-    const p = w.world(x, z);
-    this.game.lightPool?.register(p.x, 1.95, p.z, color, 8, 0.2);
+    const p = w.world(x + 0.55, z);
+    this.game.lightPool?.register(p.x, 2.6, p.z, color, 8, 0.2);
   }
 
   /** Fogueira: círculo de pedras + chama emissiva (+ luz se lightBase > 0). */

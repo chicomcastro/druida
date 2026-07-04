@@ -300,7 +300,8 @@ export class WorldManager {
       // Picos: pinheiros (cone) no lugar da copa redonda.
       const slot = this._freePine.pop();
       const trunkSlot = this._freeTree.pop();
-      const s = 0.8 + this.rng() * 0.6;
+      // Escala MCD (ADR 0075): cenário grande em relação ao herói.
+      const s = 1.0 + this.rng() * 0.7;
       this._setInstance(this.trunkInst, trunkSlot, x, 0.6 * s, z, rot, s * 0.7, 0x4a3a30);
       this._setInstance(this.pineInst, slot, x, 0.9 * s, z, rot, s, def.propColor);
       const id = game.world.createEntity();
@@ -309,7 +310,7 @@ export class WorldManager {
       rec = { id, x, z, type: 'pine', slot, trunkSlot };
     } else if (wantTree && this._freeTree.length) {
       const slot = this._freeTree.pop();
-      const s = 0.8 + this.rng() * 0.5;
+      const s = 1.0 + this.rng() * 0.6; // escala MCD (ADR 0075)
       this._setInstance(this.trunkInst, slot, x, 1.1 * s, z, rot, s, 0x4a3424);
       this._setInstance(this.leafInst, slot, x, 2.6 * s, z, rot, s, def.propColor);
       const id = game.world.createEntity();

@@ -79,3 +79,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0072](0072-inventario-slots.md) | Inventário e mercador em grade de slots RPG (M15.6) | Aceito |
 | [0073](0073-nublado-e-agua-em-blocos.md) | Overworld nublado + água e tendas em blocos (M15.7–8) | Aceito |
 | [0074](0074-voxelizacao-arvores-rochas.md) | Árvores, pinheiros e rochas em blocos (M16.1) | Aceito |
+| [0075](0075-escala-mcd-cenario.md) | Escala MCD: postes jumbo e banca-estrutura (M16.2) | Aceito |
