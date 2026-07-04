@@ -76,3 +76,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0069](0069-camera-mcd.md) | Câmera mais perto, estilo MCD (M15.3) | Aceito |
 | [0070](0070-copy-com-voz.md) | Copy com voz de mundo e dicas por dispositivo (M15.4) | Aceito |
 | [0071](0071-hud-mcd.md) | HUD no layout MCD: orbe de vida e slots (M15.5) | Aceito |
+| [0072](0072-inventario-slots.md) | Inventário e mercador em grade de slots RPG (M15.6) | Aceito |
