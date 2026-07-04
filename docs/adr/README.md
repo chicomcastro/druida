@@ -73,3 +73,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0066](0066-personagens-mcd.md) | Personagens MCD: proporção, trama de tecido e losango (M14.5) | Aceito |
 | [0067](0067-polish-mcd.md) | Polish final do estilo MCD: ruínas de POI e grade recalibrado (M14.6) | Aceito |
 | [0068](0068-mobile-ui.md) | UI mobile: sem teclado, sem sobreposição (M15.1) | Aceito |
+| [0069](0069-camera-mcd.md) | Câmera mais perto, estilo MCD (M15.3) | Aceito |
