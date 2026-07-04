@@ -208,7 +208,7 @@ plano completo em [`art-direction-mcd.md`](art-direction-mcd.md).
 - [x] 🎨 M14.2 Chão de blocos: grade de topos de bloco por bioma (InstancedMesh + atlas) — ADR 0063
 - [x] 🎨 M14.3 Elevação decorativa: falésias nas bordas de bioma + veios de lava no Coração — ADR 0064 (ruínas de POI → M14.6)
 - [x] 🎨 M14.4 Luz dramática: pool de PointLights (flicker + culling), masmorras no mood MCD — ADR 0065
-- [ ] 🎨 M14.5 Personagens MCD: proporção cabeçuda, textura pixel nas faces, losango de identidade
+- [x] 🎨 M14.5 Personagens MCD: proporção cabeçuda, trama de tecido, losango de identidade — ADR 0066
 - [ ] 🎨 M14.6 Polish: brasas com profundidade, rim light nos heróis, grade/vinheta recalibrados
 
 ---

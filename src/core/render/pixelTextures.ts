@@ -23,7 +23,7 @@ function rng(seed: number) {
   };
 }
 
-type Kind = 'grass' | 'dirt' | 'stone' | 'planks' | 'log' | 'leaves' | 'thatch' | 'snow';
+type Kind = 'grass' | 'dirt' | 'stone' | 'planks' | 'log' | 'leaves' | 'thatch' | 'snow' | 'cloth';
 
 /** Preenche a grade 16×16 com valores [0..1] de luminância por tipo. */
 function values(kind: Kind): number[] {
@@ -75,6 +75,12 @@ function values(kind: Kind): number[] {
   } else if (kind === 'snow') {
     for (let i = 0; i < v.length; i++) v[i] = 0.93 + r() * 0.07;
     for (let i = 0; i < 8; i++) v[at(Math.floor(r() * 16), Math.floor(r() * 16))] *= 0.9;
+  } else if (kind === 'cloth') {
+    // Tecido dos personagens (ADR 0066): trama sutil, sem contraste forte —
+    // é textura de pele/roupa, não de bloco.
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+      v[at(x, y)] = 0.92 + ((x + y) % 2) * 0.035 + r() * 0.045;
+    }
   }
 
   // Moldura 1px levemente escura: a leitura de "bloco" ao repetir no chão.

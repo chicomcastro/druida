@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { pixelTexture } from '../core/render/pixelTextures.js';
 
 /**
  * Modelos voxel data-driven, estilo "Minecraft Dungeons": cabeça cúbica grande,
@@ -366,7 +367,11 @@ const _boxGeo = new THREE.BoxGeometry(1, 1, 1);
 const _matCache = new Map<number, THREE.MeshStandardMaterial>();
 function mat(color: number) {
   let m = _matCache.get(color);
-  if (!m) { m = new THREE.MeshStandardMaterial({ color, roughness: 0.85 }); _matCache.set(color, m); }
+  if (!m) {
+    // Trama de tecido pixel-art sutil (ADR 0066) — tintada pela cor da parte.
+    m = new THREE.MeshStandardMaterial({ color, roughness: 0.85, map: pixelTexture('cloth') });
+    _matCache.set(color, m);
+  }
   return m;
 }
 
@@ -400,6 +405,9 @@ export function buildVoxelGroup(spec: VoxelModelSpec): THREE.Group {
       root.add(g);
     }
   }
+  // Proporção MCD (ADR 0066): cabeça um passo maior lê melhor à distância
+  // isométrica — a assinatura "cabeçuda" do Minecraft Dungeons.
+  if (parts.head) parts.head.scale.setScalar(1.14);
   if (spec.scale && spec.scale !== 1) root.scale.setScalar(spec.scale);
   root.userData.parts = parts;
   root.userData.gait = spec.gait;
