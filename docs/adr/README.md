@@ -75,3 +75,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0068](0068-mobile-ui.md) | UI mobile: sem teclado, sem sobreposição (M15.1) | Aceito |
 | [0069](0069-camera-mcd.md) | Câmera mais perto, estilo MCD (M15.3) | Aceito |
 | [0070](0070-copy-com-voz.md) | Copy com voz de mundo e dicas por dispositivo (M15.4) | Aceito |
+| [0071](0071-hud-mcd.md) | HUD no layout MCD: orbe de vida e slots (M15.5) | Aceito |

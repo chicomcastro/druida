@@ -14,16 +14,24 @@ const css = `
 #hud-root{position:fixed;inset:0;pointer-events:none;font-family:system-ui,sans-serif;color:#eaf3e6;z-index:10}
 #hud-root .title-font{font-family:'Cinzel',Georgia,serif;letter-spacing:.04em}
 #hud-players{position:absolute;left:14px;bottom:14px;display:flex;gap:10px;flex-wrap:wrap;max-width:60vw}
-.pp{background:linear-gradient(160deg,rgba(14,26,16,.88),rgba(6,12,8,.82));border:1px solid rgba(159,224,106,.28);border-radius:12px;padding:9px 12px;min-width:180px;box-shadow:0 6px 22px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(4px)}
-.pp .nm{font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;letter-spacing:.03em}
+/* Cluster do jogador estilo MCD (ADR 0071): orbe de vida circular com o
+   ícone da forma, coluna de Seiva e slots quadrados — chromeless, flutuando
+   sobre o mundo com sombra (como no jogo de referência). */
+.pp{padding:0;min-width:0}
+.pp .nm{font-size:11px;font-weight:700;display:flex;gap:8px;align-items:baseline;letter-spacing:.04em;text-shadow:0 1px 3px #000;margin-left:2px}
+.pp .nm .form{opacity:.75;font-weight:600;font-size:10px}
+.pp .row{display:flex;align-items:flex-end;gap:7px;margin-top:4px}
+.orb{width:62px;height:62px;border-radius:50%;position:relative;overflow:hidden;border:3px solid rgba(20,32,20,.9);background:rgba(26,10,10,.8);box-shadow:0 5px 16px rgba(0,0,0,.55),inset 0 2px 8px rgba(0,0,0,.65)}
+.orb > i{position:absolute;left:0;right:0;bottom:0;height:100%;background:linear-gradient(180deg,#ff9a5a,#e84a4a);transition:height .18s cubic-bezier(.3,.8,.4,1)}
+.orb .ic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:27px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.8))}
+.sapv{width:13px;height:56px;border-radius:8px;position:relative;overflow:hidden;border:2px solid rgba(20,32,20,.9);background:rgba(8,14,20,.8);box-shadow:0 4px 12px rgba(0,0,0,.45)}
+.sapv > i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,#6fe8b0,#3ab8ef);transition:height .18s}
 .bar{height:10px;border-radius:6px;background:rgba(10,18,10,.9);margin-top:5px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
-.bar > i{display:block;height:100%;border-radius:6px;transition:width .18s cubic-bezier(.3,.8,.4,1);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
-.hpb > i{background:linear-gradient(90deg,#e84a4a,#ff9a5a)}
-.sapb > i{background:linear-gradient(90deg,#3ab8ef,#6fe8b0)}
-.arts{display:flex;gap:6px;margin-top:7px}
-.art{flex:1;height:23px;border-radius:7px;background:rgba(24,36,20,.9);border:1px solid rgba(159,224,106,.22);font-size:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;text-align:center}
-.art .cd{position:absolute;inset:0;background:rgba(0,0,0,.62);transform-origin:bottom}
-.downed{color:#ff8a8a;font-size:11px;margin-top:4px}
+.bar > i{display:block;height:100%;border-radius:6px;transition:width .18s cubic-bezier(.3,.8,.4,1)}
+.arts{display:flex;gap:5px;align-items:flex-end}
+.art{width:37px;height:37px;flex:none;border-radius:9px;background:linear-gradient(160deg,rgba(24,36,20,.94),rgba(10,16,8,.92));border:2px solid rgba(159,224,106,.3);font-size:8.5px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.45);line-height:1.1;padding:2px}
+.art .cd{position:absolute;inset:0;background:rgba(0,0,0,.66);transform-origin:bottom}
+.downed{color:#ff8a8a;font-size:11px;margin-top:4px;text-shadow:0 1px 3px #000;font-weight:700}
 #hud-top{position:absolute;top:12px;left:50%;transform:translateX(-50%);text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.8)}
 #hud-top .biome{font-size:19px;font-weight:700;font-family:'Cinzel',Georgia,serif;letter-spacing:.06em}
 #hud-top .lvl{font-size:12px;opacity:.85}
@@ -165,19 +173,23 @@ export class Hud {
         const el = document.createElement('div');
         el.className = 'pp';
         el.innerHTML = `<div class="nm"><span class="who"></span><span class="form"></span></div>
-          <div class="bar hpb"><i></i></div><div class="bar sapb"><i></i></div>
-          <div class="arts"><div class="art"><span></span><div class="cd"></div></div><div class="art"><span></span><div class="cd"></div></div><div class="art"><span></span><div class="cd"></div></div></div>
+          <div class="row">
+            <div class="orb"><i></i><span class="ic"></span></div>
+            <div class="sapv"><i></i></div>
+            <div class="arts"><div class="art"><span></span><div class="cd"></div></div><div class="art"><span></span><div class="cd"></div></div><div class="art"><span></span><div class="cd"></div></div></div>
+          </div>
           <div class="downed"></div>`;
         this.playersEl.appendChild(el);
-        p = { el, hp: el.querySelector('.hpb > i'), sap: el.querySelector('.sapb > i'), who: el.querySelector('.who'), form: el.querySelector('.form'), arts: el.querySelectorAll('.art'), downed: el.querySelector('.downed') };
+        p = { el, orb: el.querySelector('.orb'), hp: el.querySelector('.orb > i'), ic: el.querySelector('.orb .ic'), sap: el.querySelector('.sapv > i'), who: el.querySelector('.who'), form: el.querySelector('.form'), arts: el.querySelectorAll('.art'), downed: el.querySelector('.downed') };
         this.panels.set(id, p);
       }
-      p.el.style.borderColor = '#' + pc.color.toString(16).padStart(6, '0');
+      p.orb.style.borderColor = '#' + pc.color.toString(16).padStart(6, '0');
       p.who.textContent = `P${pc.index + 1}`;
       const form = game.world.get(id, C.Form);
-      p.form.textContent = `${FORM_ICON[form.current] ?? ''} ${FORMS[form.current].name}`;
-      p.hp.style.width = Math.max(0, (hp.hp / hp.max) * 100) + '%';
-      p.sap.style.width = Math.max(0, (sap.value / sap.max) * 100) + '%';
+      p.form.textContent = FORMS[form.current].name;
+      p.ic.textContent = FORM_ICON[form.current] ?? '🧙';
+      p.hp.style.height = Math.max(0, (hp.hp / hp.max) * 100) + '%';
+      p.sap.style.height = Math.max(0, (sap.value / sap.max) * 100) + '%';
 
       const loadout = game.world.get(id, C.Loadout);
       const cds = game.world.get(id, C.Cooldowns);
