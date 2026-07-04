@@ -6,6 +6,7 @@ import { generateItem } from '../gameplay/loot.js';
 import { biomeAt } from './WorldManager.js';
 import { BIOMES } from '../data/biomes.js';
 import { DUNGEON_THEMES } from '../data/dungeons.js';
+import { tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { applyDamage, applyStatus } from '../gameplay/combat.js';
 
 /**
@@ -30,6 +31,7 @@ export class DungeonManager {
   _arenaBuilt: boolean;
   _floorMat: any;
   _wallMat: any;
+  _torchMats: any[];
   rng: any;
 
   constructor(game) {
@@ -37,6 +39,7 @@ export class DungeonManager {
     this.cleared = new Set();
     this.active = null;
     this._arenaBuilt = false;
+    this._torchMats = [];
     this.rng = makeRng((game.seed ^ 0x1b56c4e9) >>> 0);
     this.entrances = this._generate(game.seed ?? 1337);
     // Se o grupo for derrotado dentro da masmorra, sai (evita travar com o
@@ -86,8 +89,9 @@ export class DungeonManager {
     if (this._arenaBuilt) return;
     this._arenaBuilt = true;
     // Materiais próprios: recoloridos por tema a cada entrada (ADR 0048).
-    this._floorMat = new THREE.MeshStandardMaterial({ color: 0x241825 });
-    this._wallMat = new THREE.MeshStandardMaterial({ color: 0x2a1d2e });
+    // Pedra pixel-art (ADR 0062) tintada pela cor do tema.
+    this._floorMat = new THREE.MeshStandardMaterial({ color: 0x241825, map: tiledPixelTexture('stone', 24, 24) });
+    this._wallMat = new THREE.MeshStandardMaterial({ color: 0x2a1d2e, map: tiledPixelTexture('stone', 2, 3) });
     const floor = new THREE.Mesh(new THREE.CircleGeometry(ARENA_R, 32), this._floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(ARENA.x, 0.02, ARENA.z);
@@ -105,6 +109,27 @@ export class DungeonManager {
       const id = this.game.world.createEntity();
       this.game.world.add(id, C.Transform, Transform(x, z));
       this.game.world.add(id, C.Collider, Collider(1.4, true));
+    }
+    // Braseiros na borda (ADR 0065): o mood escuro do tema é esculpido por
+    // estas luzes — chama emissiva recolorida por tema no enter().
+    this._torchMats = [];
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+      const x = ARENA.x + Math.sin(a) * (ARENA_R - 2.2);
+      const z = ARENA.z + Math.cos(a) * (ARENA_R - 2.2);
+      const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.13, 2.2, 5),
+        new THREE.MeshStandardMaterial({ color: 0x3a2d22 }),
+      );
+      pole.position.set(x, 1.1, z);
+      const flameMat = new THREE.MeshStandardMaterial({
+        color: 0xffc06a, emissive: 0xff9a3a, emissiveIntensity: 1.2, roughness: 0.5,
+      });
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 6), flameMat);
+      flame.position.set(x, 2.5, z);
+      this.game.renderer.add(pole, flame);
+      this._torchMats.push(flameMat);
+      this.game.lightPool?.register(x, 2.5, z, 0xff9a3a, 30, 0.7);
     }
   }
 
@@ -137,6 +162,9 @@ export class DungeonManager {
       wave: -1, enemies: [], phase: 'fighting', timer: 0.5, rewardId: 0,
       hazardT: theme.hazard?.interval ?? 0,
     };
+    // Chamas dos braseiros na cor do perigo do tema (identidade da masmorra).
+    const flameColor = theme.hazard?.color ?? 0xff9a3a;
+    for (const m of this._torchMats) m.emissive.setHex(flameColor);
     this._teleport(ARENA.x, ARENA.z);
     this.game.renderer.setBiomeMood(theme.mood);
     this.game.emit('objective', { text: `🏛️ ${theme.name}: sobreviva às ondas!` });

@@ -22,6 +22,7 @@ import { VfxManager } from '../systems/vfx.js';
 import { WorldManager } from '../world/WorldManager.js';
 import { BlockGround } from '../world/BlockGround.js';
 import { TerrainFeatures } from '../world/TerrainFeatures.js';
+import { LightPool } from './render/LightPool.js';
 import { SettlementManager } from '../world/SettlementManager.js';
 import { PurityManager } from '../world/PurityManager.js';
 import { DayNightManager } from '../world/DayNightManager.js';
@@ -60,7 +61,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
-  worldManager: any; blockGround: any; terrain: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
   inDungeon: boolean;
   // Estado.
   seed: number;
@@ -108,6 +109,7 @@ export class Game {
     registerBoonHooks(this); // dons dos santuários (ADR 0050)
 
     this.inDungeon = false;
+    this.lightPool = new LightPool(this); // luzes pontuais com culling (ADR 0065)
     this.worldManager = new WorldManager(this);
     this.blockGround = new BlockGround(this); // chão de blocos MCD (ADR 0063)
     // Assentamentos antes dos POIs/masmorras: eles geram posições evitando as vilas.
@@ -145,6 +147,7 @@ export class Game {
       pickupSystem,
       spawnerSystem,
       (g, dt) => g.worldManager.update(dt),
+      (g, dt) => g.lightPool.update(dt), // N luzes mais próximas acesas (ADR 0065)
       (g, dt) => g.dayNight.update(dt),
       (g, dt) => g.telemetry.update(dt),
       (g, dt) => g.settlements.update(dt),
@@ -361,6 +364,9 @@ export class Game {
     }
     this.blockGround.update(); // grade de blocos segue o grupo (ADR 0063)
     this.settlements.animate(t); // lanternas/chamas das vilas pulsam
+    // Masmorra não tem céu: o domo esconde (o vazio além das muralhas é o
+    // background escuro do tema, não um horizonte com brilho).
+    if (this.renderer.sky) this.renderer.sky.visible = !this.inDungeon;
     this.camera.follow(this.groupCenter, this.groupSpread, this.dt);
     this.renderer.updateSun(this.groupCenter); // sombras acompanham o grupo
     this.renderer.followSky?.(this.groupCenter);

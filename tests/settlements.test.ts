@@ -104,7 +104,8 @@ describe('SettlementManager', () => {
     const g = makeGame();
     const sm = new SettlementManager(g);
     expect(sm._flames.length).toBeGreaterThan(0);
-    expect(sm._lights.length).toBeGreaterThan(0);
+    // Fogueiras/lanternas agora entram no pool de luzes (ADR 0065).
+    expect(g.lightPool.regs.length).toBeGreaterThan(0);
     const before = sm._flames[0].mesh.material.emissiveIntensity;
     sm.animate(0.9);
     sm.animate(1.7);
