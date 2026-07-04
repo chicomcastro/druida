@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { C, Transform, Collider } from '../core/ecs/components.js';
 import { LANDMARKS } from '../gameplay/story.js';
 import { buildVoxelModel } from '../entities/voxelModels.js';
@@ -25,7 +26,7 @@ function buildMerchant(game, pos) {
   g.position.set(pos.x, 0, pos.z);
   game.renderer.add(g);
   // Banca de vendas à frente do mascate (mesh próprio: não balança com o idle).
-  const stall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 1.0), new THREE.MeshStandardMaterial({ color: 0x7a4a2a }));
+  const stall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 1.0), new THREE.MeshStandardMaterial({ color: 0x7a4a2a, map: tiledPixelTexture('planks', 2, 1) }));
   stall.position.set(pos.x, 1.0, pos.z + 0.9);
   stall.castShadow = true;
   game.renderer.add(stall);
@@ -38,7 +39,7 @@ function buildMerchant(game, pos) {
 
 function buildChest(game, pos) {
   const g = new THREE.Group();
-  const box = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.7, 0.7), new THREE.MeshStandardMaterial({ color: 0x8a5a2a }));
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.7, 0.7), new THREE.MeshStandardMaterial({ color: 0x8a5a2a, map: tiledPixelTexture('planks', 1, 1) }));
   box.position.y = 0.45; box.castShadow = true;
   const lid = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.2, 0.75), new THREE.MeshStandardMaterial({ color: 0xc8a23a }));
   lid.position.y = 0.85;
@@ -67,9 +68,9 @@ function buildNpc(game, pos) {
 function buildSanctuary(game, pos, form) {
   const color = FORM_GLOW[form] ?? 0x9fe06a;
   const g = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 0.5, 6), new THREE.MeshStandardMaterial({ color: 0x4a4a55 }));
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 0.5, 6), new THREE.MeshStandardMaterial({ color: 0x4a4a55, map: tiledPixelTexture('stone', 2, 1) }));
   base.position.y = 0.25; base.receiveShadow = true;
-  const stone = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.4, 0.8), new THREE.MeshStandardMaterial({ color: 0x3a3a45 }));
+  const stone = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.4, 0.8), new THREE.MeshStandardMaterial({ color: 0x3a3a45, map: tiledPixelTexture('stone', 1, 3) }));
   stone.position.y = 1.5; stone.castShadow = true;
   const crystal = new THREE.Mesh(
     new THREE.OctahedronGeometry(0.6, 0),

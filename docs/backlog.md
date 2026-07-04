@@ -218,7 +218,7 @@ plano completo em [`art-direction-mcd.md`](art-direction-mcd.md).
 Feedback jogando no celular (prints) + refinamentos aprovados:
 
 - [x] 🐛 M15.1 UI mobile: sem dicas de teclado no touch, sem sobreposições (retrato/paisagem) — ADR 0068
-- [ ] 🎨 M15.2 Texturas faltantes nos props (banca do mercador, caminho de pedras, menires, cercas…)
+- [x] 🎨 M15.2 Texturas faltantes nos props (banca, caminho de pedras, menires, cercas, baú, santuários…) — aplica ADR 0062 em 100% dos props
 - [ ] 🎨 M15.3 Câmera mais perto (frustum 14→11, min 9) estilo MCD
 - [ ] 📖 M15.4 Copy com voz: textos divertidos e intencionais + dicas por dispositivo
 - [ ] 🖥️ M15.5 HUD com layout MCD
