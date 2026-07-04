@@ -44,11 +44,24 @@ export class VfxManager {
       const c = e.bossName ? 0xb06bd0 : 0xff6a4a;
       this.burst(e.x, e.z, c, e.bossName ? 26 : 14);
       this.ring(e.x, e.z, e.bossName ? 4 : 2.2, c, 0.5);
+      this.shockwave(e.x, e.z, e.bossName ? 5 : 2.8, c);
+      this.flash(e.x, 0.9, e.z, c, e.bossName ? 1.6 : 0.9);
     });
     game.on('damage', (e) => {
       if (e.dot || e.x === undefined) return;
       const c = elementColor(e.effect) ?? e.color ?? 0xfff0a0;
       this.burst(e.x, e.z, c, 5);
+      this.flash(e.x, 0.9, e.z, c, 0.55);
+    });
+    game.on('heal', (e) => {
+      if ((e.amount ?? 0) < 3) return;
+      const tr = game.world?.get?.(e.id, C.Transform);
+      if (!tr) return;
+      this.flash(tr.x, 1.0, tr.z, 0x8affa0, 0.5);
+      for (let i = 0; i < 5; i++) {
+        this._spawn(tr.x + (Math.random() - 0.5) * 0.8, 0.4 + Math.random() * 0.5,
+          tr.z + (Math.random() - 0.5) * 0.8, 0x8affa0, 0.6, 0, 1.6 + Math.random(), 0, 0.7);
+      }
     });
 
     this.particles = [];
@@ -116,14 +129,54 @@ export class VfxManager {
     });
   }
 
+  /** Clarão de impacto: esfera aditiva que incha e some em ~0.12s. */
+  flash(x, y, z, color, scale = 0.6) {
+    const geo = new THREE.IcosahedronGeometry(0.5, 1);
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.scale.setScalar(scale * 0.4);
+    this._add(m, 0.14, (fx, t) => {
+      m.scale.setScalar(scale * (0.4 + (1 - t) * 1.4));
+      mat.opacity = 0.85 * t;
+    });
+  }
+
+  /** Onda de choque no chão: anel fino aditivo que expande (mortes/explosões). */
+  shockwave(x, z, radius, color) {
+    const geo = new THREE.RingGeometry(0.82, 1.0, 36);
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0.9, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x, 0.1, z);
+    this._add(m, 0.45, (fx, t) => {
+      const k = 1 - t; // 0 -> 1 ao longo da vida
+      m.scale.setScalar(0.3 + k * radius);
+      mat.opacity = 0.9 * t * t;
+    });
+  }
+
   swing({ x, z, angle, range = 2, arc = 1, color = 0xffffff }) {
     const geo = new THREE.RingGeometry(0.3, range, 18, 1, -arc, arc * 2);
-    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0.75, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
     const m = new THREE.Mesh(geo, mat);
     m.rotation.x = -Math.PI / 2;
     m.rotation.z = -angle;
     m.position.set(x, 0.12, z);
-    this._add(m, 0.2, (fx, t) => { mat.opacity = 0.6 * t; });
+    // Varredura: o arco gira no sentido do golpe enquanto some — leitura de
+    // movimento em vez de um decalque estático.
+    this._add(m, 0.22, (fx, t) => {
+      m.rotation.z = -angle - (1 - t) * arc * 0.9;
+      mat.opacity = 0.75 * t;
+    });
     // Faíscas de impacto na ponta do golpe, na cor do elemento.
     const tipX = x + Math.sin(angle) * range * 0.8;
     const tipZ = z + Math.cos(angle) * range * 0.8;

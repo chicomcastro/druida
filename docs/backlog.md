@@ -195,7 +195,7 @@ Pacote de revisão visual (feedback de playtest 2) + higiene de dependências:
 - [x] 🎨 Iluminação diurna legível + sombras visíveis (sol dominante) — ADR 0058
 - [x] 🎨 Animação de locomoção revisada (andar natural) — ADR 0059
 - [x] 🎨 Modelos das casas/construções revisados — ADR 0060
-- [ ] 🎨 VFX de combate e polish visual
+- [x] 🎨 VFX de combate e polish visual — ADR 0061
 
 ---
 
