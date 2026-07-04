@@ -191,8 +191,8 @@ Pacote de polish visual/UX (feedback de playtest em tablet):
 
 Pacote de revisão visual (feedback de playtest 2) + higiene de dependências:
 
-- [ ] 🚀 Zerar vulnerabilidades do Dependabot (vite 7, vitest 4, cypress 15) — ADR 0057
-- [ ] 🎨 Sombras dinâmicas + iluminação revisada
+- [x] 🚀 Zerar vulnerabilidades do Dependabot (vite 7, vitest 4, cypress 15) — ADR 0057
+- [x] 🎨 Iluminação diurna legível + sombras visíveis (sol dominante) — ADR 0058
 - [ ] 🎨 Animação de locomoção revisada (andar natural)
 - [ ] 🎨 Modelos das casas/construções revisados
 - [ ] 🎨 VFX de combate e polish visual

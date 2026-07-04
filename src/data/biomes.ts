@@ -7,15 +7,15 @@
 export const BIOMES = {
   clareira: {
     name: 'Clareira Viva', level: 1,
-    ground: 0x3e6b3a, background: 0x1a2a1e, fogNear: 40, fogFar: 95,
-    propColor: 0x2f5a2c, propDensity: 0.05, detailColor: 0x5a8f3f,
-    light: { sun: 0xffedbe, sunIntensity: 1.25, hemi: 0xa8d8ff, hemiGround: 0x2e4426, hemiIntensity: 0.75 },
+    ground: 0x6da052, background: 0x9cc48e, fogNear: 48, fogFar: 120,
+    propColor: 0x3f7a38, propDensity: 0.05, detailColor: 0x7ab84f,
+    light: { sun: 0xfff1c4, sunIntensity: 1.8, hemi: 0xbfe0ff, hemiGround: 0x3c5a30, hemiIntensity: 0.5 },
     ambient: { color: 0xd8ffa0, size: 0.16, rise: 0.15, sway: 0.5, opacity: 0.8 }, // vagalumes
     // Região curada pela campanha: mundo visivelmente mais vivo (ADR 0044).
     purified: {
-      ground: 0x4a7d42, background: 0x22382a, fogNear: 46, fogFar: 105,
-      propColor: 0x3f7a34, detailColor: 0x6fae4f,
-      light: { sun: 0xfff2c8, sunIntensity: 1.35, hemiIntensity: 0.85 },
+      ground: 0x7cb35c, background: 0xaed49c, fogNear: 54, fogFar: 132,
+      propColor: 0x4c9440, detailColor: 0x8fd05f,
+      light: { sun: 0xfff6d2, sunIntensity: 1.95, hemiIntensity: 0.55 },
       ambient: { color: 0xe8ffb0, opacity: 0.95, rise: 0.22 },
     },
     // Clareira inicial: combate corpo-a-corpo (sem inimigos ranged). Ver ADR 0035.
@@ -31,14 +31,14 @@ export const BIOMES = {
   },
   pantano: {
     name: 'Pântano Apodrecido', level: 3,
-    ground: 0x40492f, background: 0x161c14, fogNear: 38, fogFar: 88,
-    propColor: 0x55502a, propDensity: 0.06, detailColor: 0x6b6b32,
-    light: { sun: 0xd8e6a8, sunIntensity: 1.1, hemi: 0x9fb884, hemiGround: 0x232c1c, hemiIntensity: 0.8 },
+    ground: 0x6b7a46, background: 0x8a996e, fogNear: 42, fogFar: 106,
+    propColor: 0x6b6534, propDensity: 0.06, detailColor: 0x8a8a44,
+    light: { sun: 0xeaf2b6, sunIntensity: 1.62, hemi: 0xa8c090, hemiGround: 0x2c381f, hemiIntensity: 0.52 },
     ambient: { color: 0x9fd06a, size: 0.2, rise: 0.08, sway: 0.35, opacity: 0.6 }, // esporos
     purified: {
-      ground: 0x49573a, background: 0x1d2a1c, fogNear: 44, fogFar: 98,
-      propColor: 0x5f6b34, detailColor: 0x7d8a42,
-      light: { sun: 0xe8f0c0, sunIntensity: 1.2, hemiIntensity: 0.9 },
+      ground: 0x7c9052, background: 0x9cab7c, fogNear: 48, fogFar: 118,
+      propColor: 0x8a9c4c, detailColor: 0xaac05f,
+      light: { sun: 0xf2f8cc, sunIntensity: 1.75, hemiIntensity: 0.58 },
       ambient: { color: 0xb8f0a0, opacity: 0.85, rise: 0.18, sway: 0.5 }, // vagalumes do brejo
     },
     // Introduz ranged aos poucos (corvo-sombra/xamã) em região mais avançada.
@@ -57,14 +57,14 @@ export const BIOMES = {
   },
   bosque_cinza: {
     name: 'Bosque Cinza', level: 5,
-    ground: 0x4a4036, background: 0x241c18, fogNear: 40, fogFar: 92,
-    propColor: 0x35302a, propDensity: 0.07, detailColor: 0x565048,
-    light: { sun: 0xe8d8c0, sunIntensity: 1.1, hemi: 0x9a9aa2, hemiGround: 0x342c24, hemiIntensity: 0.8 },
+    ground: 0x8d8071, background: 0x9e968a, fogNear: 44, fogFar: 108,
+    propColor: 0x4c463e, propDensity: 0.07, detailColor: 0x7a7266,
+    light: { sun: 0xf4e2c8, sunIntensity: 1.58, hemi: 0xb0b0b8, hemiGround: 0x453c32, hemiIntensity: 0.52 },
     ambient: { color: 0xb0a89a, size: 0.18, rise: -0.25, sway: 0.6, opacity: 0.55 }, // cinza caindo
     purified: {
-      ground: 0x51584a, background: 0x2a2c20, fogNear: 46, fogFar: 100,
-      propColor: 0x47543a, detailColor: 0x6a7a4a,
-      light: { sun: 0xf4e4c8, sunIntensity: 1.2, hemi: 0xa8b0a2, hemiIntensity: 0.9 },
+      ground: 0x97a479, background: 0xacb494, fogNear: 50, fogFar: 122,
+      propColor: 0x627450, detailColor: 0x92a865,
+      light: { sun: 0xf8ecd2, sunIntensity: 1.72, hemi: 0xb8c0b2, hemiIntensity: 0.58 },
       ambient: { color: 0xc8e8a0, opacity: 0.75, rise: 0.12, sway: 0.5 }, // folhas novas
     },
     enemies: [
@@ -81,13 +81,13 @@ export const BIOMES = {
   },
   picos: {
     name: 'Picos Gélidos', level: 7,
-    ground: 0xb8c6d0, background: 0x223040, fogNear: 26, fogFar: 70,
-    propColor: 0x8aa0b0, propDensity: 0.04, detailColor: 0xd8e4ea,
-    light: { sun: 0xeaf4ff, sunIntensity: 1.35, hemi: 0xcfe8ff, hemiGround: 0x5a6a78, hemiIntensity: 0.9 },
+    ground: 0xc8d6e0, background: 0xa8bccc, fogNear: 30, fogFar: 82,
+    propColor: 0x8aa0b0, propDensity: 0.04, detailColor: 0xe2eef4,
+    light: { sun: 0xfff8e8, sunIntensity: 1.75, hemi: 0xcfe8ff, hemiGround: 0x5a6a78, hemiIntensity: 0.6 },
     ambient: { color: 0xffffff, size: 0.2, rise: -0.7, sway: 0.9, opacity: 0.85 }, // neve
     purified: {
-      ground: 0xc6d4de, background: 0x2c4054, fogNear: 44, fogFar: 100,
-      light: { sun: 0xf4faff, sunIntensity: 1.5, hemiIntensity: 1.0 },
+      ground: 0xd4e2ea, background: 0xbcd0de, fogNear: 48, fogFar: 112,
+      light: { sun: 0xfffaf0, sunIntensity: 1.9, hemiIntensity: 0.65 },
       ambient: { color: 0xd8f0ff, size: 0.16, rise: -0.35, opacity: 0.9 }, // cintilar de gelo limpo
     },
     enemies: [
@@ -102,14 +102,14 @@ export const BIOMES = {
   },
   coracao: {
     name: 'Coração Corrompido', level: 9,
-    ground: 0x2a1f2a, background: 0x140d16, fogNear: 30, fogFar: 72,
-    propColor: 0x3a2440, propDensity: 0.06, detailColor: 0x4a2a52,
-    light: { sun: 0xc09ac8, sunIntensity: 0.85, hemi: 0x7a5a8a, hemiGround: 0x1c1220, hemiIntensity: 0.65 },
+    ground: 0x5a4660, background: 0x4c3a56, fogNear: 34, fogFar: 86,
+    propColor: 0x523460, propDensity: 0.06, detailColor: 0x644070,
+    light: { sun: 0xdebae6, sunIntensity: 1.45, hemi: 0x8a6a9a, hemiGround: 0x241a2a, hemiIntensity: 0.5 },
     ambient: { color: 0xff6a9a, size: 0.18, rise: 0.5, sway: 0.4, opacity: 0.7 }, // fagulhas da podridão
     purified: {
-      ground: 0x3a5040, background: 0x1c2a20, fogNear: 40, fogFar: 92,
-      propColor: 0x3f6a3a, detailColor: 0x5f9a4f,
-      light: { sun: 0xd8f0c0, sunIntensity: 1.15, hemi: 0x9ac89a, hemiGround: 0x1c2a1c, hemiIntensity: 0.85 },
+      ground: 0x5f8a54, background: 0x83a878, fogNear: 44, fogFar: 104,
+      propColor: 0x4c8442, detailColor: 0x7ab85f,
+      light: { sun: 0xe8f8d0, sunIntensity: 1.65, hemi: 0xa8d0a8, hemiGround: 0x243424, hemiIntensity: 0.55 },
       ambient: { color: 0xb8ffb0, opacity: 0.9, rise: 0.25 }, // a semente renasce
     },
     boss: 'rotlord',
