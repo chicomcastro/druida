@@ -370,16 +370,28 @@ export class SettlementManager {
 
   /** Vau das Palafitas: lagoa, casas sobre estacas, passarelas e juncos. */
   _buildPalafitas(w, rng) {
-    // Lagoa rasa sob a vila.
-    const water = new THREE.Mesh(
-      new THREE.CircleGeometry(19, 28),
-      new THREE.MeshStandardMaterial({ color: 0x24403c, roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.85 }),
-    );
-    water.rotation.x = -Math.PI / 2;
-    water.position.y = 0.04;
+    // Lagoa rasa em BLOCOS de água (M15.8): grade instanciada dentro do
+    // raio — o vocabulário MC também na água. Material único pulsa no animate.
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x2a4a44, roughness: 0.3, metalness: 0.1, transparent: true, opacity: 0.85,
+    });
+    const cells: [number, number][] = [];
+    for (let gx = -19; gx <= 19; gx++) for (let gz = -19; gz <= 19; gz++) {
+      if (gx * gx + gz * gz <= 19 * 19) cells.push([gx, gz]);
+    }
+    const water = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.22, 1), waterMat, cells.length);
     water.receiveShadow = true;
+    const dummyW = new THREE.Object3D();
+    const colW = new THREE.Color();
+    cells.forEach(([gx, gz], i) => {
+      dummyW.position.set(gx, -0.06 + ((gx * 13 + gz * 7) % 3) * 0.015, gz); // topo ~0.05, ondulação sutil
+      dummyW.updateMatrix();
+      water.setMatrixAt(i, dummyW.matrix);
+      colW.setHex(0xffffff).multiplyScalar(0.92 + ((gx * 31 + gz * 17) % 5) * 0.035);
+      water.setColorAt(i, colW);
+    });
     w.add(water);
-    this._waterRef = water.material;
+    this._waterRef = waterMat;
     // Casas sobre estacas.
     const huts = [[-8, -4, 0.4], [6, -8, -0.5], [-2, 8, 0.2], [10, 4, 0.9]];
     for (const [x, z, ry] of huts) {
@@ -599,11 +611,25 @@ export class SettlementManager {
     // Tendas de pele com capuz de neve.
     const tents = [[-7, 3, 0.5], [6, -3, -0.7], [-3, -8, 0.1], [8, 8, 0.9]];
     for (const [x, z, ry] of tents) {
-      const tent = mesh(new THREE.ConeGeometry(2.3, 2.8, 7), 0x7a5a44, { tex: 'cloth', trx: 3, try: 2 });
-      tent.position.set(x, 1.4, z);
+      // Tenda em blocos (M15.8): pirâmide 3-2-1 de pele, no vocabulário MC.
+      const tent = new THREE.Group();
+      const tiers = [
+        { n: 3, size: 1.05, y: 0.5 },
+        { n: 2, size: 1.0, y: 1.45 },
+        { n: 1, size: 0.95, y: 2.3 },
+      ];
+      for (const t of tiers) {
+        for (let bx = 0; bx < t.n; bx++) for (let bz = 0; bz < t.n; bz++) {
+          const b = mesh(new THREE.BoxGeometry(t.size, 0.95, t.size), (bx + bz) % 2 ? 0x7a5a44 : 0x715340, { tex: 'cloth' });
+          b.position.set((bx - (t.n - 1) / 2) * t.size, t.y, (bz - (t.n - 1) / 2) * t.size);
+          tent.add(b);
+        }
+      }
+      tent.position.set(x, 0, z);
       tent.rotation.y = ry;
-      const snow = mesh(new THREE.ConeGeometry(0.8, 0.7, 7), 0xeaf4ff, { rough: 1, shadow: false });
-      snow.position.set(x, 3.0, z);
+      const snow = mesh(new THREE.BoxGeometry(1.05, 0.22, 1.05), 0xeaf4ff, { rough: 1, shadow: false, tex: 'snow' });
+      snow.position.set(x, 2.9, z);
+      snow.rotation.y = ry;
       w.add(tent, snow);
       // Armação de varas cruzadas saindo do topo (tenda de pele, não cone).
       for (let pi = 0; pi < 3; pi++) {

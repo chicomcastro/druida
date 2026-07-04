@@ -7,9 +7,9 @@
 export const BIOMES = {
   clareira: {
     name: 'Clareira Viva', level: 1,
-    ground: 0x6da052, groundTex: 'grass', background: 0x9cc48e, fogNear: 48, fogFar: 120,
+    ground: 0x6da052, groundTex: 'grass', background: 0x81a878, fogNear: 44, fogFar: 112,
     propColor: 0x3f7a38, propDensity: 0.05, detailColor: 0x7ab84f,
-    light: { sun: 0xfff1c4, sunIntensity: 1.8, hemi: 0xbfe0ff, hemiGround: 0x3c5a30, hemiIntensity: 0.5 },
+    light: { sun: 0xffedb6, sunIntensity: 1.65, hemi: 0xb2d4f2, hemiGround: 0x3c5a30, hemiIntensity: 0.42 },
     ambient: { color: 0xd8ffa0, size: 0.16, rise: 0.15, sway: 0.5, opacity: 0.8 }, // vagalumes
     // Região curada pela campanha: mundo visivelmente mais vivo (ADR 0044).
     purified: {
@@ -31,9 +31,9 @@ export const BIOMES = {
   },
   pantano: {
     name: 'Pântano Apodrecido', level: 3,
-    ground: 0x6b7a46, groundTex: 'grass', background: 0x8a996e, fogNear: 42, fogFar: 106,
+    ground: 0x6b7a46, groundTex: 'grass', background: 0x73825c, fogNear: 38, fogFar: 98,
     propColor: 0x6b6534, propDensity: 0.06, detailColor: 0x8a8a44,
-    light: { sun: 0xeaf2b6, sunIntensity: 1.62, hemi: 0xa8c090, hemiGround: 0x2c381f, hemiIntensity: 0.52 },
+    light: { sun: 0xeaf2b6, sunIntensity: 1.5, hemi: 0xa8c090, hemiGround: 0x2c381f, hemiIntensity: 0.44 },
     ambient: { color: 0x9fd06a, size: 0.2, rise: 0.08, sway: 0.35, opacity: 0.6 }, // esporos
     purified: {
       ground: 0x7c9052, background: 0x9cab7c, fogNear: 48, fogFar: 118,
@@ -57,9 +57,9 @@ export const BIOMES = {
   },
   bosque_cinza: {
     name: 'Bosque Cinza', level: 5,
-    ground: 0x8d8071, groundTex: 'dirt', background: 0x9e968a, fogNear: 44, fogFar: 108,
+    ground: 0x8d8071, groundTex: 'dirt', background: 0x857e72, fogNear: 40, fogFar: 100,
     propColor: 0x4c463e, propDensity: 0.07, detailColor: 0x7a7266,
-    light: { sun: 0xf4e2c8, sunIntensity: 1.58, hemi: 0xb0b0b8, hemiGround: 0x453c32, hemiIntensity: 0.52 },
+    light: { sun: 0xf4e2c8, sunIntensity: 1.45, hemi: 0xb0b0b8, hemiGround: 0x453c32, hemiIntensity: 0.44 },
     ambient: { color: 0xb0a89a, size: 0.18, rise: -0.25, sway: 0.6, opacity: 0.55 }, // cinza caindo
     purified: {
       ground: 0x97a479, background: 0xacb494, fogNear: 50, fogFar: 122,
@@ -81,9 +81,9 @@ export const BIOMES = {
   },
   picos: {
     name: 'Picos Gélidos', level: 7,
-    ground: 0xc8d6e0, groundTex: 'snow', background: 0xa8bccc, fogNear: 30, fogFar: 82,
+    ground: 0xc8d6e0, groundTex: 'snow', background: 0x91a8bc, fogNear: 27, fogFar: 76,
     propColor: 0x8aa0b0, propDensity: 0.04, detailColor: 0xe2eef4,
-    light: { sun: 0xfff8e8, sunIntensity: 1.75, hemi: 0xcfe8ff, hemiGround: 0x5a6a78, hemiIntensity: 0.6 },
+    light: { sun: 0xfff8e8, sunIntensity: 1.6, hemi: 0xcfe8ff, hemiGround: 0x5a6a78, hemiIntensity: 0.5 },
     ambient: { color: 0xffffff, size: 0.2, rise: -0.7, sway: 0.9, opacity: 0.85 }, // neve
     purified: {
       ground: 0xd4e2ea, background: 0xbcd0de, fogNear: 48, fogFar: 112,

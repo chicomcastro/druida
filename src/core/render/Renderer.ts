@@ -12,7 +12,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 const GradeShader = {
   uniforms: {
     tDiffuse: { value: null },
-    vignette: { value: 0.24 },
+    vignette: { value: 0.28 },
     saturation: { value: 1.16 },
     contrast: { value: 1.07 },
   },
@@ -170,7 +170,7 @@ export class Renderer {
       sunI: this.sun.intensity,
       hemiI: this.hemi.intensity,
       // Céu: topo mais profundo, horizonte com brilho (derivado do bioma).
-      skyTop: bg.clone().multiplyScalar(0.5),
+      skyTop: bg.clone().multiplyScalar(0.42),
       skyBottom: bg.clone().lerp(new THREE.Color(0xfff2d0), 0.22),
     };
     this._skyMat?.uniforms.top.value.copy(this._base.skyTop);
