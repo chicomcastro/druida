@@ -20,6 +20,7 @@ import { renderSyncSystem } from '../systems/render.js';
 import { VfxManager } from '../systems/vfx.js';
 
 import { WorldManager } from '../world/WorldManager.js';
+import { BlockGround } from '../world/BlockGround.js';
 import { SettlementManager } from '../world/SettlementManager.js';
 import { PurityManager } from '../world/PurityManager.js';
 import { DayNightManager } from '../world/DayNightManager.js';
@@ -58,7 +59,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
-  worldManager: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  worldManager: any; blockGround: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
   inDungeon: boolean;
   // Estado.
   seed: number;
@@ -107,6 +108,7 @@ export class Game {
 
     this.inDungeon = false;
     this.worldManager = new WorldManager(this);
+    this.blockGround = new BlockGround(this); // chão de blocos MCD (ADR 0063)
     // Assentamentos antes dos POIs/masmorras: eles geram posições evitando as vilas.
     this.settlements = new SettlementManager(this);
     this.poi = new PoiManager(this);
@@ -355,6 +357,7 @@ export class Game {
         c.position.y = 3.1 + Math.sin(t * 2) * 0.12;
       }
     }
+    this.blockGround.update(); // grade de blocos segue o grupo (ADR 0063)
     this.settlements.animate(t); // lanternas/chamas das vilas pulsam
     this.camera.follow(this.groupCenter, this.groupSpread, this.dt);
     this.renderer.updateSun(this.groupCenter); // sombras acompanham o grupo
