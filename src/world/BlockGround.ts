@@ -14,7 +14,7 @@ import { makeRng } from '../utils/math.js';
  * antigo vira horizonte por baixo (coberto pela névoa).
  */
 const RADIUS = 34; // blocos para cada lado do centro (69×69 células)
-const KINDS = ['grass', 'dirt', 'snow', 'stone'] as const;
+const KINDS = ['grass', 'dirt', 'snow', 'stone', 'lava'] as const;
 
 export class BlockGround {
   game: any;
@@ -32,7 +32,11 @@ export class BlockGround {
     this._pools = {};
     for (const kind of KINDS) {
       const geo = new THREE.BoxGeometry(1, 0.3, 1);
-      const mat = new THREE.MeshStandardMaterial({ roughness: 1, map: pixelTexture(kind) });
+      // Lava (ADR 0064): emissiva forte — o bloom faz o resto. Sem map: a
+      // cor do brilho é o próprio material.
+      const mat = kind === 'lava'
+        ? new THREE.MeshStandardMaterial({ color: 0x2a1006, emissive: 0xff5a1a, emissiveIntensity: 1.15, roughness: 1 })
+        : new THREE.MeshStandardMaterial({ roughness: 1, map: pixelTexture(kind) });
       const inst = new THREE.InstancedMesh(geo, mat, cap);
       inst.receiveShadow = true;
       inst.castShadow = false;
@@ -58,18 +62,21 @@ export class BlockGround {
     if (Math.abs(cx - this._lastCx) < 2 && Math.abs(cz - this._lastCz) < 2) return;
     this._lastCx = cx; this._lastCz = cz;
 
-    const counts: Record<string, number> = { grass: 0, dirt: 0, snow: 0, stone: 0 };
+    const counts: Record<string, number> = { grass: 0, dirt: 0, snow: 0, stone: 0, lava: 0 };
     for (let gx = cx - RADIUS; gx <= cx + RADIUS; gx++) {
       for (let gz = cz - RADIUS; gz <= cz + RADIUS; gz++) {
         const biome = biomeAt(gx, gz);
         const def = this.game.worldManager?._effectiveDef?.(biome) ?? BIOMES[biome];
-        const kind = def.groundTex ?? 'grass';
-        const inst = this._pools[kind];
-        if (!inst) continue;
+        let kind = def.groundTex ?? 'grass';
         // RNG determinístico por célula: o mundo não "ferve" ao recompor.
         const r = makeRng(((gx * 73856093) ^ (gz * 19349663)) >>> 0);
         const sunken = r() < 0.06;
-        this._dummy.position.set(gx, sunken ? -0.26 : -0.16, gz); // topo ~0 / afundado
+        // Coração (não purificado): veios de lava afundados entre a pedra.
+        const lava = kind === 'stone' && biome === 'coracao' && r() < 0.05;
+        if (lava) kind = 'lava';
+        const inst = this._pools[kind];
+        if (!inst) continue;
+        this._dummy.position.set(gx, lava || sunken ? -0.26 : -0.16, gz); // topo ~0 / afundado
         this._dummy.rotation.y = (Math.floor(r() * 4) * Math.PI) / 2; // gira a textura
         this._dummy.scale.set(1, 1, 1);
         this._dummy.updateMatrix();
@@ -77,7 +84,8 @@ export class BlockGround {
         inst.setMatrixAt(i, this._dummy.matrix);
         // Jitter de valor por bloco (±7%) sobre a cor do bioma; afundado escurece.
         const v = 0.93 + r() * 0.14;
-        this._color.setHex(def.ground).multiplyScalar(sunken ? v * 0.78 : v);
+        if (lava) this._color.setHex(0xffffff);
+        else this._color.setHex(def.ground).multiplyScalar(sunken ? v * 0.78 : v);
         inst.setColorAt(i, this._color);
       }
     }
