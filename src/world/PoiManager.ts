@@ -44,7 +44,7 @@ export class PoiManager {
         const h = rng() < 0.3 ? 2 : 1;
         for (let y = 0; y < h; y++) {
           dummy.position.set(camp.x + Math.sin(a) * 4.2, 0.45 + y * 0.85, camp.z + Math.cos(a) * 4.2);
-          dummy.rotation.y = rng() * Math.PI;
+          dummy.rotation.y = Math.floor(rng() * 4) * (Math.PI / 2); // grid voxel (ADR 0076)
           dummy.scale.setScalar(0.85 + rng() * 0.3);
           dummy.updateMatrix();
           mats.push(dummy.matrix.clone());
