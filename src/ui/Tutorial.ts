@@ -3,6 +3,8 @@
  * "visto" persistido em localStorage) e some sozinha. Disparadas por eventos do
  * jogo + uma sequência introdutória no início. Ver ADR 0019.
  */
+import { isTouchDevice } from './TouchControls.js';
+
 const KEY = 'druida.tutorial.v1';
 
 const css = `
@@ -35,12 +37,23 @@ export class Tutorial {
     this.el.id = 'tut';
     document.body.appendChild(this.el);
 
-    game.on('itemPickup', () => this.hint('bag', 'Itens vão para a <span class="k">mochila</span>. Abra o inventário com <span class="k">B</span> para equipar, encantar e desmontar.'));
-    game.on('levelUp', () => this.hint('level', 'Você subiu de nível! Gaste <span class="k">pontos de encanto</span> nos itens (inventário <span class="k">B</span>).'));
-    game.on('formUnlocked', () => this.hint('form', 'Nova <span class="k">Forma Ancestral</span>! Alterne entre formas com as teclas <span class="k">5–9</span>.'));
-    game.on('playerDowned', () => this.hint('downed', 'Você caiu! Um aliado revive chegando perto. A <span class="k">esquiva (Shift)</span> tem invulnerabilidade — use-a.'));
+    // Copy com voz de mundo (ADR 0070): a floresta ensina, não um manual.
+    // Cada dica tem versão por dispositivo — touch vê botões, teclado vê teclas.
+    const t = isTouchDevice();
+    game.on('itemPickup', () => this.hint('bag', t
+      ? 'O que a mata dá, a <span class="k">mochila</span> guarda. Toque em <span class="k">⏸</span> para equipar, encantar e desmontar.'
+      : 'O que a mata dá, a <span class="k">mochila</span> guarda. Abra com <span class="k">B</span> para equipar, encantar e desmontar.'));
+    game.on('levelUp', () => this.hint('level', 'Você cresce como cresce o carvalho. Gaste <span class="k">pontos de encanto</span> nos itens — eles florescem junto.'));
+    game.on('formUnlocked', () => this.hint('form', t
+      ? 'Uma nova <span class="k">Forma Ancestral</span> corre nas suas veias! Troque de pele com <span class="k">🐾</span>.'
+      : 'Uma nova <span class="k">Forma Ancestral</span> corre nas suas veias! Troque de pele com <span class="k">5–9</span>.'));
+    game.on('playerDowned', () => this.hint('downed', t
+      ? 'Suas raízes falharam! Um aliado te ergue chegando perto — e <span class="k">💨</span> te faz intocável por um instante.'
+      : 'Suas raízes falharam! Um aliado te ergue chegando perto — e a <span class="k">esquiva (Shift)</span> te faz intocável por um instante.'));
     game.on('biomeChanged', (e) => {
-      if (e.biome && e.biome !== 'clareira') this.hint('biome', 'Quanto mais longe do hub, <span class="k">mais perigoso</span> — e melhor o loot. Abra o mapa com <span class="k">M</span>.');
+      if (e.biome && e.biome !== 'clareira') this.hint('biome', t
+        ? 'Longe do Carvalho, a Corrupção engrossa — e os tesouros também. O <span class="k">🗺️</span> conhece os caminhos.'
+        : 'Longe do Carvalho, a Corrupção engrossa — e os tesouros também. O mapa (<span class="k">M</span>) conhece os caminhos.');
     });
   }
 
@@ -53,8 +66,13 @@ export class Tutorial {
 
   /** Sequência inicial (chamada ao começar o jogo). */
   intro() {
-    this.hint('move', 'Bem-vindo, Druida. <span class="k">WASD</span> move — você olha para onde anda. <span class="k">J</span>/<span class="k">clique</span> ataca na direção que encara.');
-    this.hint('artifacts', 'Use artefatos com <span class="k">U/I/O</span> e esquive com <span class="k">Shift</span>. Fale com a Guardiã (<span class="k">E</span>) para começar.');
+    if (isTouchDevice()) {
+      this.hint('move', 'A floresta acorda com seus passos, Druida. Deslize o <span class="k">polegar esquerdo</span> para caminhar — <span class="k">⚔️</span> golpeia por onde você olha.');
+      this.hint('artifacts', 'Seus dons vivem nos botões <span class="k">U/I/O</span> — e <span class="k">💨</span> desvia como o vento. A Guardiã espera junto ao Carvalho-Mãe: chegue perto e toque <span class="k">✋</span>.');
+    } else {
+      this.hint('move', 'A floresta acorda com seus passos, Druida. <span class="k">WASD</span> caminha — <span class="k">J</span> ou <span class="k">clique</span> golpeia por onde você olha.');
+      this.hint('artifacts', 'Seus dons vivem em <span class="k">U/I/O</span> — e <span class="k">Shift</span> desvia como o vento. A Guardiã espera junto ao Carvalho-Mãe (<span class="k">E</span>).');
+    }
   }
 
   hint(id, text) {

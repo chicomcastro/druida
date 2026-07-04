@@ -95,7 +95,7 @@ export class Hud {
       <div id="hud-toast"></div>
       <div id="hud-save">💾 Salvo</div>
       <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
-      <div id="hud-hint">WASD mover (olha p/ onde anda) · J/Clique atacar<br>5–9 trocar forma · U/I/O artefatos · Shift esquivar · E interagir · B inventário · M mapa · T recuar ao hub</div>`;
+      <div id="hud-hint">WASD andar · J atacar · Shift esquivar · E falar<br>5–9 formas · U/I/O dons · B mochila · M mapa · T voltar ao Carvalho</div>`;
     document.body.appendChild(this.root);
     // Touch não tem teclado: as dicas de atalho só confundem (ADR 0068).
     if (isTouchDevice()) {
