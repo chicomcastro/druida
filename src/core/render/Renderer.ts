@@ -12,7 +12,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 const GradeShader = {
   uniforms: {
     tDiffuse: { value: null },
-    vignette: { value: 0.32 },
+    vignette: { value: 0.24 },
     saturation: { value: 1.12 },
     contrast: { value: 1.05 },
   },
@@ -90,6 +90,11 @@ export class Renderer {
     sun.shadow.camera.bottom = -s;
     sun.shadow.camera.near = 1;
     sun.shadow.camera.far = 120;
+    // Sombras legíveis sem acne: bias negativo pequeno + normalBias para as
+    // faces grandes do low-poly; radius suaviza a borda no PCFSoft.
+    sun.shadow.bias = -0.0004;
+    sun.shadow.normalBias = 0.04;
+    sun.shadow.radius = 3;
     this.scene.add(sun);
     this.scene.add(sun.target);
     this.sun = sun;
