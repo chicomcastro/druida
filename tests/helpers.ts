@@ -30,6 +30,8 @@ export function makeGame() {
     events,
     // Managers stub (testes podem sobrescrever para espionar).
     story: { onInteract() {}, objective: () => 'obj', update() {}, step: 0 },
+    // Pool de luzes (ADR 0065): grava registros p/ os testes inspecionarem.
+    lightPool: { regs: [] as any[], register(x, y, z, color, intensity, flicker = 0.5) { this.regs.push({ x, y, z, color, intensity, flicker }); }, update() {} },
     menus: { openShop() {}, openStash() {} },
     dungeon: { enter() {}, claimReward() {} },
     progress: { xp: 0, level: 1, enchantPoints: 0 },

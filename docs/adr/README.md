@@ -69,3 +69,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0062](0062-pixel-art-procedural.md) | Texturas pixel-art procedurais (spike M14.1 do estilo MCD) | Aceito |
 | [0063](0063-chao-de-blocos.md) | Chão de blocos: grade instanciada que segue o grupo (M14.2) | Aceito |
 | [0064](0064-elevacao-decorativa.md) | Elevação decorativa: falésias nas bordas e lava no Coração (M14.3) | Aceito |
+| [0065](0065-luz-dramatica.md) | Luz dramática: pool de luzes pontuais e masmorras MCD (M14.4) | Aceito |

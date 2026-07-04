@@ -678,6 +678,9 @@ export class SettlementManager {
     orb.position.set(x, 1.95, z);
     w.add(pole, orb);
     this._flames.push({ mesh: orb, base: 1.0, amp: 0.35, speed: 3.1, seed: x * 7 + z });
+    // Lanternas também entram no pool (ADR 0065): luz firme e curta.
+    const p = w.world(x, z);
+    this.game.lightPool?.register(p.x, 1.95, p.z, color, 8, 0.2);
   }
 
   /** Fogueira: círculo de pedras + chama emissiva (+ luz se lightBase > 0). */
@@ -696,11 +699,11 @@ export class SettlementManager {
     if (lightBase > 0) this._fireLight(w, x, z, color, lightBase);
   }
 
+  /** Fogueiras/braseiros entram no pool de luzes (ADR 0065): só as N mais
+   * próximas do grupo acendem de verdade — o resto fica no emissivo. */
   _fireLight(w, x, z, color, base) {
-    const light = new THREE.PointLight(color, base, 22, 1.8);
-    light.position.set(x, 1.6, z);
-    w.add(light);
-    this._lights.push({ light, base, seed: x * 3 + z });
+    const p = w.world(x, z);
+    this.game.lightPool?.register(p.x, 1.6, p.z, color, base * 22, 0.6);
   }
 }
 
@@ -709,6 +712,7 @@ function wrap(group, s, mgr, rng) {
   return {
     add: (...objs) => group.add(...objs),
     collider: (lx, lz, r) => mgr._collider(s.x + lx, s.z + lz, r),
+    world: (lx, lz) => ({ x: s.x + lx, z: s.z + lz }),
     rng,
   };
 }
