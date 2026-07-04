@@ -204,7 +204,7 @@ Pacote de revisão visual (feedback de playtest 2) + higiene de dependências:
 Pivot de direção de arte (playtest 3, com referências visuais). Análise e
 plano completo em [`art-direction-mcd.md`](art-direction-mcd.md).
 
-- [ ] 🎨 M14.1 Spike: atlas pixel-art procedural (NearestFilter) no chão + casas da clareira — validar o look
+- [x] 🎨 M14.1 Spike: atlas pixel-art procedural (NearestFilter) no chão, props e construções — ADR 0062
 - [ ] 🎨 M14.2 Chão de blocos: grade de topos de bloco por bioma (InstancedMesh + atlas), transições em degraus
 - [ ] 🎨 M14.3 Elevação decorativa: falésias nas bordas de bioma, desfiladeiro de lava no Coração, ruínas nos POIs
 - [ ] 🎨 M14.4 Luz dramática: tochas/braseiros com PointLight real (flicker + culling), masmorras no mood MCD

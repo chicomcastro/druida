@@ -3,6 +3,7 @@ import { C, Transform, Collider } from '../core/ecs/components.js';
 import { BIOMES } from '../data/biomes.js';
 import { makeRng } from '../utils/math.js';
 import { createLootOrb } from '../entities/factories.js';
+import { pixelTexture, tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { LORE } from '../data/lore.js';
 
 /**
@@ -62,7 +63,9 @@ export class WorldManager {
 
     // Chão grande recolorido conforme o bioma, com ruído sutil (quebra o
     // "chapado"; a textura vem do Renderer — nula em ambiente headless).
-    const groundTex = game.renderer.groundTexture?.() ?? null;
+    // Chão de "blocos": textura pixel-art 1 unidade = 1 bloco de 16px (ADR
+    // 0062) — a moldura sutil da textura desenha a grade estilo MCD.
+    const groundTex = tiledPixelTexture('grass', 600, 600);
     this.groundMat = new THREE.MeshStandardMaterial({ color: BIOMES.clareira.ground, roughness: 1, map: groundTex });
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), this.groundMat);
     ground.rotation.x = -Math.PI / 2;
@@ -83,19 +86,23 @@ export class WorldManager {
   _initInstancedProps() {
     const cap = this.maxProps + 16;
     this._dummy = new THREE.Object3D();
-    const mk = (geo) => {
-      const inst = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: 0.9 }), cap);
+    const mk = (geo, tex?) => {
+      const inst = new THREE.InstancedMesh(
+        geo,
+        new THREE.MeshStandardMaterial({ roughness: 0.9, map: tex ? pixelTexture(tex) : null }),
+        cap,
+      );
       inst.castShadow = true;
       inst.receiveShadow = true;
       inst.frustumCulled = false; // instâncias espalhadas; evita sumiço por culling
       this.game.renderer.add(inst);
       return inst;
     };
-    this.trunkInst = mk(new THREE.CylinderGeometry(0.25, 0.35, 2.2, 6));
-    this.leafInst = mk(new THREE.IcosahedronGeometry(1.2, 0));
-    this.rockInst = mk(new THREE.DodecahedronGeometry(0.8, 0));
+    this.trunkInst = mk(new THREE.CylinderGeometry(0.25, 0.35, 2.2, 6), 'log');
+    this.leafInst = mk(new THREE.IcosahedronGeometry(1.2, 0), 'leaves');
+    this.rockInst = mk(new THREE.DodecahedronGeometry(0.8, 0), 'stone');
     // Pinheiros (Picos Gélidos): silhueta própria por bioma (ADR 0055).
-    this.pineInst = mk(new THREE.ConeGeometry(1.35, 3.4, 7));
+    this.pineInst = mk(new THREE.ConeGeometry(1.35, 3.4, 7), 'leaves');
     this._freeTree = [];
     this._freeRock = [];
     this._freePine = [];
@@ -247,9 +254,15 @@ export class WorldManager {
     // Carvalho-Mãe no centro do hub (marco visual + obstáculo).
     const { game } = this;
     const trunk = new THREE.Group();
-    const t = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.8, 6, 8), new THREE.MeshStandardMaterial({ color: 0x6b4a2f }));
+    const t = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.4, 1.8, 6, 8),
+      new THREE.MeshStandardMaterial({ color: 0x6b4a2f, map: tiledPixelTexture('log', 3, 4) }),
+    );
     t.position.y = 3; t.castShadow = true;
-    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(4.5, 0), new THREE.MeshStandardMaterial({ color: 0x4f8f3f }));
+    const crown = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(4.5, 0),
+      new THREE.MeshStandardMaterial({ color: 0x4f8f3f, map: tiledPixelTexture('leaves', 3, 3) }),
+    );
     crown.position.y = 8; crown.castShadow = true;
     trunk.add(t); trunk.add(crown);
     trunk.position.set(0, 0, -10);
@@ -338,6 +351,9 @@ export class WorldManager {
   /** Aplica cor do chão e partículas de uma definição de bioma (base/curada). */
   applyBiomeDef(def) {
     this.groundMat.color.setHex(def.ground);
+    // Material do bloco por bioma (grama/terra/neve/pedra — ADR 0062).
+    const tex = tiledPixelTexture(def.groundTex ?? 'grass', 600, 600);
+    if (tex && this.groundMat.map !== tex) this.groundMat.map = tex;
     if (this.ambPoints) {
       this.ambPoints.material.color.setHex(def.ambient.color);
       this.ambPoints.material.size = def.ambient.size;

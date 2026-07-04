@@ -7,7 +7,7 @@
 export const BIOMES = {
   clareira: {
     name: 'Clareira Viva', level: 1,
-    ground: 0x6da052, background: 0x9cc48e, fogNear: 48, fogFar: 120,
+    ground: 0x6da052, groundTex: 'grass', background: 0x9cc48e, fogNear: 48, fogFar: 120,
     propColor: 0x3f7a38, propDensity: 0.05, detailColor: 0x7ab84f,
     light: { sun: 0xfff1c4, sunIntensity: 1.8, hemi: 0xbfe0ff, hemiGround: 0x3c5a30, hemiIntensity: 0.5 },
     ambient: { color: 0xd8ffa0, size: 0.16, rise: 0.15, sway: 0.5, opacity: 0.8 }, // vagalumes
@@ -31,7 +31,7 @@ export const BIOMES = {
   },
   pantano: {
     name: 'Pântano Apodrecido', level: 3,
-    ground: 0x6b7a46, background: 0x8a996e, fogNear: 42, fogFar: 106,
+    ground: 0x6b7a46, groundTex: 'grass', background: 0x8a996e, fogNear: 42, fogFar: 106,
     propColor: 0x6b6534, propDensity: 0.06, detailColor: 0x8a8a44,
     light: { sun: 0xeaf2b6, sunIntensity: 1.62, hemi: 0xa8c090, hemiGround: 0x2c381f, hemiIntensity: 0.52 },
     ambient: { color: 0x9fd06a, size: 0.2, rise: 0.08, sway: 0.35, opacity: 0.6 }, // esporos
@@ -57,7 +57,7 @@ export const BIOMES = {
   },
   bosque_cinza: {
     name: 'Bosque Cinza', level: 5,
-    ground: 0x8d8071, background: 0x9e968a, fogNear: 44, fogFar: 108,
+    ground: 0x8d8071, groundTex: 'dirt', background: 0x9e968a, fogNear: 44, fogFar: 108,
     propColor: 0x4c463e, propDensity: 0.07, detailColor: 0x7a7266,
     light: { sun: 0xf4e2c8, sunIntensity: 1.58, hemi: 0xb0b0b8, hemiGround: 0x453c32, hemiIntensity: 0.52 },
     ambient: { color: 0xb0a89a, size: 0.18, rise: -0.25, sway: 0.6, opacity: 0.55 }, // cinza caindo
@@ -81,7 +81,7 @@ export const BIOMES = {
   },
   picos: {
     name: 'Picos Gélidos', level: 7,
-    ground: 0xc8d6e0, background: 0xa8bccc, fogNear: 30, fogFar: 82,
+    ground: 0xc8d6e0, groundTex: 'snow', background: 0xa8bccc, fogNear: 30, fogFar: 82,
     propColor: 0x8aa0b0, propDensity: 0.04, detailColor: 0xe2eef4,
     light: { sun: 0xfff8e8, sunIntensity: 1.75, hemi: 0xcfe8ff, hemiGround: 0x5a6a78, hemiIntensity: 0.6 },
     ambient: { color: 0xffffff, size: 0.2, rise: -0.7, sway: 0.9, opacity: 0.85 }, // neve
@@ -102,12 +102,12 @@ export const BIOMES = {
   },
   coracao: {
     name: 'Coração Corrompido', level: 9,
-    ground: 0x5a4660, background: 0x4c3a56, fogNear: 34, fogFar: 86,
+    ground: 0x5a4660, groundTex: 'stone', background: 0x4c3a56, fogNear: 34, fogFar: 86,
     propColor: 0x523460, propDensity: 0.06, detailColor: 0x644070,
     light: { sun: 0xdebae6, sunIntensity: 1.45, hemi: 0x8a6a9a, hemiGround: 0x241a2a, hemiIntensity: 0.5 },
     ambient: { color: 0xff6a9a, size: 0.18, rise: 0.5, sway: 0.4, opacity: 0.7 }, // fagulhas da podridão
     purified: {
-      ground: 0x5f8a54, background: 0x83a878, fogNear: 44, fogFar: 104,
+      ground: 0x5f8a54, groundTex: 'grass', background: 0x83a878, fogNear: 44, fogFar: 104,
       propColor: 0x4c8442, detailColor: 0x7ab85f,
       light: { sun: 0xe8f8d0, sunIntensity: 1.65, hemi: 0xa8d0a8, hemiGround: 0x243424, hemiIntensity: 0.55 },
       ambient: { color: 0xb8ffb0, opacity: 0.9, rise: 0.25 }, // a semente renasce
