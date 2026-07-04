@@ -22,8 +22,8 @@ export const LANDMARKS = {
 };
 
 const STEPS = [
-  { id: 'talk', objective: 'Fale com a Guardiã do Carvalho-Mãe (E)' },
-  { id: 'purify_clearing', objective: 'Purifique a Clareira: derrote 8 criaturas corrompidas', kills: 8 },
+  { id: 'talk', objective: 'Fale com a Guardiã do Carvalho-Mãe' },
+  { id: 'purify_clearing', objective: 'Purifique a Clareira: devolva 8 criaturas corrompidas à terra', kills: 8 },
   { id: 'find_bear', objective: 'Vá ao Pântano e desperte o Santuário do Urso' },
   { id: 'slay_miniboss', objective: 'Derrote a Árvore-Carniça no Pântano' },
   { id: 'find_raven', objective: 'Encontre o Santuário do Corvo no Bosque Cinza' },

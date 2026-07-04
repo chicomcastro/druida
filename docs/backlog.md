@@ -220,7 +220,7 @@ Feedback jogando no celular (prints) + refinamentos aprovados:
 - [x] 🐛 M15.1 UI mobile: sem dicas de teclado no touch, sem sobreposições (retrato/paisagem) — ADR 0068
 - [x] 🎨 M15.2 Texturas faltantes nos props (banca, caminho de pedras, menires, cercas, baú, santuários…) — aplica ADR 0062 em 100% dos props
 - [x] 🎨 M15.3 Câmera mais perto (frustum 14→11, min 9) estilo MCD — ADR 0069
-- [ ] 📖 M15.4 Copy com voz: textos divertidos e intencionais + dicas por dispositivo
+- [x] 📖 M15.4 Copy com voz: textos divertidos e intencionais + dicas por dispositivo — ADR 0070
 - [ ] 🖥️ M15.5 HUD com layout MCD
 - [ ] 🖥️ M15.6 Inventário e mercador com grade de slots RPG
 - [ ] 🎨 M15.7 Overworld dramático (nublado MCD) sem perder legibilidade

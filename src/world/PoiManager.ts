@@ -117,7 +117,7 @@ export class PoiManager {
       const id = game.spawnEnemyByKey(key, ex, ez);
       if (id) game.world.add(id, C.CampMember, { campId: camp.id });
     }
-    game.emit('objective', { text: 'Acampamento corrompido! Elimine os guardas.' });
+    game.emit('objective', { text: 'A Corrupção acampou aqui. Devolva este chão à floresta!' });
     game.emit('vfxRing', { x: camp.x, z: camp.z, radius: 5, color: 0x8a3aa0 });
   }
 
@@ -142,7 +142,7 @@ export class PoiManager {
       createLootOrb(game.world, game.renderer, { x: camp.x + (Math.random() - 0.5) * 2, z: camp.z + (Math.random() - 0.5) * 2, item: generateItem(lvl) });
     }
     createLootOrb(game.world, game.renderer, { x: camp.x, z: camp.z, item: { essence: 8 + lvl * 2, rarityColor: 0x9fe06a } });
-    game.emit('objective', { text: 'Acampamento purificado!' });
+    game.emit('objective', { text: '🌱 A terra respira de novo. Acampamento purificado!' });
     game.emit('campPurified', { id: camp.id });
     game.emit('vfxRing', { x: camp.x, z: camp.z, radius: 6, color: 0x9fe06a });
     game.camera?.addShake(0.4);

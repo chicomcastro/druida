@@ -261,7 +261,7 @@ export class Game {
       if (fac.team !== 'enemy' || hp.dead) continue;
       const dx = tr.x - c.x, dz = tr.z - c.z;
       if (dx * dx + dz * dz < 20 * 20) {
-        this.emit('objective', { text: 'Não dá para viajar com inimigos por perto!' });
+        this.emit('objective', { text: 'A floresta não abre caminho com inimigos à espreita!' });
         return false;
       }
     }
@@ -273,7 +273,7 @@ export class Game {
       i++;
     }
     this.groupCenter = { x, z };
-    this.emit('objective', { text: `Viajou para: ${label}.` });
+    this.emit('objective', { text: `🍃 O vento te levou: ${label}.` });
     this.emit('fastTravel', { x, z, label });
     this.emit('vfxRing', { x, z, radius: 3, color: 0x9fe06a });
     return true;
