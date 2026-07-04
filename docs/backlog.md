@@ -237,7 +237,7 @@ rotações arbitrárias. A sensação de "câmera longe" era na verdade cenário
 pequeno.
 
 - [x] 🎨 M16.1 Árvores, pinheiros e rochas em blocos (copas em cluster de cubos, Carvalho-Mãe voxel) — ADR 0074
-- [ ] 🎨 M16.2 Escala MCD: postes jumbo, banca do mercador com toldo grande, props do cenário maiores
+- [x] 🎨 M16.2 Escala MCD: postes jumbo, banca do mercador com toldo grande, props do cenário maiores — ADR 0075
 - [ ] 🎨 M16.3 Alinhamento voxel: construções e props sempre em rotações de 90°, posições no grid
 - [ ] 🎨 M16.4 Sweep final de sólidos: cilindros/cones/esferas restantes viram blocos (fonte, moinho, barcos, braseiros, santuários, POIs)
 

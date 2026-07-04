@@ -21,20 +21,56 @@ export function buildLandmarks(game) {
   buildChest(game, { x: 6, z: -8 });
 }
 
+/**
+ * Banca de mercador em escala MCD (ADR 0075): estrutura inteira com postes
+ * altos, toldo listrado, balcão e caixotes — não uma mesinha. Base na origem;
+ * o NPC fica no centro e o balcão em +Z (lado do jogador).
+ */
+export function buildMerchantStall(canopyColor = 0xd8862a) {
+  const g = new THREE.Group();
+  const box = (w, h, d, x, y, z, color, tex?, trx = 1, try_ = 1, extra: any = {}) => {
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, d),
+      new THREE.MeshStandardMaterial({ color, map: tex ? tiledPixelTexture(tex, trx, try_) : null, ...extra }),
+    );
+    m.position.set(x, y, z);
+    m.castShadow = true; m.receiveShadow = true;
+    g.add(m);
+    return m;
+  };
+  // Postes de canto (altura MCD: ~2× o herói).
+  for (const [px, pz] of [[-1.9, -1.35], [1.9, -1.35], [-1.9, 1.35], [1.9, 1.35]]) {
+    box(0.22, 3.0, 0.22, px, 1.5, pz, 0x4a3626, 'log', 1, 3);
+  }
+  // Toldo: laje larga + listra central mais clara (leitura de tenda de feira).
+  box(4.6, 0.28, 3.6, 0, 3.1, 0, canopyColor, 'cloth', 4, 3);
+  const c = new THREE.Color(canopyColor).multiplyScalar(1.35);
+  box(4.62, 0.16, 1.2, 0, 3.32, 0, c.getHex(), 'cloth', 4, 1);
+  // Balcão de vendas no lado do jogador (+Z) com mercadorias em cubos.
+  box(3.6, 0.95, 1.15, 0, 0.48, 1.35, 0x7a4a2a, 'planks', 4, 1);
+  box(0.55, 0.32, 0.45, -1.1, 1.12, 1.3, 0x9fe06a);
+  box(0.4, 0.26, 0.4, 0.15, 1.09, 1.45, 0xd8b04a);
+  box(0.5, 0.38, 0.4, 1.15, 1.15, 1.25, 0xb85a3a);
+  // Caixotes empilhados nas laterais.
+  box(0.85, 0.85, 0.85, -2.55, 0.43, 0.9, 0x8a5a2a, 'planks', 1, 1);
+  box(0.7, 0.7, 0.7, -2.5, 1.2, 0.85, 0x9a6a3a, 'planks', 1, 1);
+  box(0.85, 0.85, 0.85, 2.55, 0.43, 0.6, 0x8a5a2a, 'planks', 1, 1);
+  return g;
+}
+
 function buildMerchant(game, pos) {
   const g = buildVoxelModel('merchant');
   g.position.set(pos.x, 0, pos.z);
   game.renderer.add(g);
-  // Banca de vendas à frente do mascate (mesh próprio: não balança com o idle).
-  const stall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 1.0), new THREE.MeshStandardMaterial({ color: 0x7a4a2a, map: tiledPixelTexture('planks', 2, 1) }));
-  stall.position.set(pos.x, 1.0, pos.z + 0.9);
-  stall.castShadow = true;
+  // Banca-estrutura (mesh próprio: não balança com o idle do NPC).
+  const stall = buildMerchantStall();
+  stall.position.set(pos.x, 0, pos.z);
   game.renderer.add(stall);
   const id = game.world.createEntity();
   game.world.add(id, C.Transform, Transform(pos.x, pos.z));
   game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
   game.world.add(id, C.Collider, Collider(0.6, true));
-  game.world.add(id, C.Interactable, { kind: 'merchant', prompt: 'E — Mercador', range: 3, used: false });
+  game.world.add(id, C.Interactable, { kind: 'merchant', prompt: 'E — Mercador', range: 3.5, used: false });
 }
 
 function buildChest(game, pos) {
