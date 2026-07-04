@@ -16,7 +16,7 @@ function stubGame(over: any = {}) {
 describe('BlockGround (ADR 0063)', () => {
   it('cria 4 pools (um por textura) e preenche a grade no update', () => {
     const g = new BlockGround(stubGame());
-    expect(Object.keys(g._pools)).toEqual(['grass', 'dirt', 'snow', 'stone']);
+    expect(Object.keys(g._pools)).toEqual(['grass', 'dirt', 'snow', 'stone', 'lava']);
     g.update();
     // No centro do mundo (clareira), a grade inteira é grama.
     const total = Object.values(g._pools).reduce((s: number, p: any) => s + p.count, 0);
@@ -32,6 +32,11 @@ describe('BlockGround (ADR 0063)', () => {
     const gp = new BlockGround(stubGame({ groupCenter: { x: 0, z: 190 } }));
     gp.update();
     expect((gp._pools.snow as any).count).toBeGreaterThan(1000);
+    // No Coração, veios de lava emergem entre a pedra (ADR 0064).
+    const gc = new BlockGround(stubGame({ groupCenter: { x: 0, z: 300 } }));
+    gc.update();
+    expect((gc._pools.lava as any).count).toBeGreaterThan(50);
+    expect((gc._pools.stone as any).count).toBeGreaterThan(3000);
   });
 
   it('não recompõe sem andar 2+ células e se esconde em masmorra', () => {

@@ -21,6 +21,7 @@ import { VfxManager } from '../systems/vfx.js';
 
 import { WorldManager } from '../world/WorldManager.js';
 import { BlockGround } from '../world/BlockGround.js';
+import { TerrainFeatures } from '../world/TerrainFeatures.js';
 import { SettlementManager } from '../world/SettlementManager.js';
 import { PurityManager } from '../world/PurityManager.js';
 import { DayNightManager } from '../world/DayNightManager.js';
@@ -59,7 +60,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
-  worldManager: any; blockGround: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  worldManager: any; blockGround: any; terrain: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
   inDungeon: boolean;
   // Estado.
   seed: number;
@@ -111,6 +112,7 @@ export class Game {
     this.blockGround = new BlockGround(this); // chão de blocos MCD (ADR 0063)
     // Assentamentos antes dos POIs/masmorras: eles geram posições evitando as vilas.
     this.settlements = new SettlementManager(this);
+    this.terrain = new TerrainFeatures(this); // falésias nas bordas de bioma (ADR 0064)
     this.poi = new PoiManager(this);
     this.events = new EventManager(this);
     this.dungeon = new DungeonManager(this);

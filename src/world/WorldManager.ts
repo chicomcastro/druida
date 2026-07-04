@@ -12,7 +12,7 @@ import { LORE } from '../data/lore.js';
  * Props (árvores/rochas) são gerados em anel ao redor do grupo e descartados
  * ao se distanciar — pseudo-streaming. Ver docs/adr/0008-open-world.md.
  */
-const RING_RADII = [
+export const RING_RADII = [
   { biome: 'clareira', max: 55 },
   { biome: 'pantano', max: 110 },
   { biome: 'bosque_cinza', max: 165 },
@@ -69,6 +69,9 @@ export class WorldManager {
     this.groundMat = new THREE.MeshStandardMaterial({ color: BIOMES.clareira.ground, roughness: 1, map: groundTex });
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), this.groundMat);
     ground.rotation.x = -Math.PI / 2;
+    // Abaixo da grade de blocos (ADR 0063/0064): o plano é só o horizonte
+    // distante sob a névoa — a superfície de verdade são os blocos.
+    ground.position.y = -0.35;
     ground.receiveShadow = true;
     game.renderer.add(ground);
 
