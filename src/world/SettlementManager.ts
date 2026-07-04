@@ -171,6 +171,78 @@ export class SettlementManager {
 
   // --- Peças compartilhadas -------------------------------------------------
 
+  /**
+   * Casa de vigas com telhado de duas águas (ADR 0060): fundação de pedra,
+   * cantos em viga, beiral generoso, sótão fechando a empena, porta com verga
+   * e janela acesa (pulsa junto das chamas — brilha mais à noite). A leitura
+   * de "casa" à distância isométrica vem da silhueta assimétrica do telhado —
+   * o cone/cilindro antigo confundia com as copas das árvores.
+   */
+  _house(w, x, z, ry, opts: any = {}) {
+    const bw = opts.w ?? 3.6, d = opts.d ?? 2.9, h = opts.h ?? 1.7;
+    const wall = opts.wall ?? 0x8a6b4a, beam = opts.beam ?? 0x54402e;
+    const roofC = opts.roof ?? 0x6d8a3d, trim = opts.trim ?? 0xb08d52;
+    const g = new THREE.Group();
+    const found = mesh(new THREE.BoxGeometry(bw + 0.5, 0.35, d + 0.5), 0x7d7c80, { rough: 1 });
+    found.position.y = 0.18;
+    const walls = mesh(new THREE.BoxGeometry(bw, h, d), wall);
+    walls.position.y = 0.35 + h / 2;
+    g.add(found, walls);
+    for (const [cx, cz] of [[-bw / 2, -d / 2], [bw / 2, -d / 2], [-bw / 2, d / 2], [bw / 2, d / 2]]) {
+      const post = mesh(new THREE.BoxGeometry(0.22, h + 0.1, 0.22), beam, { shadow: false });
+      post.position.set(cx, 0.35 + h / 2, cz);
+      g.add(post);
+    }
+    const top = 0.35 + h;
+    const rise = opts.rise ?? 1.1, ov = 0.55; // cumeeira e beiral
+    // Sótão: fecha o vão da empena sob as duas águas.
+    const attic = mesh(new THREE.BoxGeometry(bw * 0.62, rise * 0.8, d - 0.3), wall);
+    attic.position.y = top + rise * 0.4;
+    g.add(attic);
+    const slope = Math.hypot(bw / 2 + ov, rise);
+    const pitch = Math.atan2(rise, bw / 2 + ov);
+    for (const s of [-1, 1]) {
+      const slab = mesh(new THREE.BoxGeometry(slope + 0.15, 0.14, d + 0.8), roofC, { rough: 1 });
+      slab.position.set((s * (bw / 2 + ov)) / 2, top + rise / 2 + 0.06, 0);
+      slab.rotation.z = -s * pitch;
+      g.add(slab);
+    }
+    const ridge = mesh(new THREE.BoxGeometry(0.26, 0.2, d + 0.9), trim, { shadow: false });
+    ridge.position.y = top + rise + 0.1;
+    g.add(ridge);
+    // Porta com verga e degrau (na face +Z — o chamador gira a casa).
+    const door = mesh(new THREE.BoxGeometry(0.85, 1.25, 0.14), 0x39281a);
+    door.position.set(-0.5, 0.35 + 0.62, d / 2 + 0.06);
+    const lintel = mesh(new THREE.BoxGeometry(1.1, 0.16, 0.2), beam, { shadow: false });
+    lintel.position.set(-0.5, 0.35 + 1.32, d / 2 + 0.08);
+    const step = mesh(new THREE.BoxGeometry(0.9, 0.14, 0.5), 0x7d7c80, { shadow: false });
+    step.position.set(-0.5, 0.07, d / 2 + 0.4);
+    g.add(door, lintel, step);
+    // Janela acesa (vida dentro da casa; entra no boost noturno).
+    const pane = mesh(new THREE.BoxGeometry(0.6, 0.55, 0.08), 0xffd890, {
+      emissive: 0xffb85a, emissiveIntensity: 0.55, shadow: false,
+    });
+    pane.position.set(0.8, 0.35 + h * 0.62, d / 2 + 0.05);
+    const frame = mesh(new THREE.BoxGeometry(0.76, 0.7, 0.06), beam, { shadow: false });
+    frame.position.set(0.8, 0.35 + h * 0.62, d / 2 + 0.02);
+    g.add(frame, pane);
+    this._flames.push({ mesh: pane, base: 0.55, amp: 0.12, speed: 1.3, seed: x + z });
+    if (opts.chimney) {
+      const chim = mesh(new THREE.BoxGeometry(0.5, rise + 0.9, 0.5), 0x6f6f76);
+      chim.position.set(bw / 2 - 0.55, top + (rise + 0.9) / 2, -d / 4);
+      g.add(chim);
+    }
+    g.position.set(x, 0, z);
+    g.rotation.y = ry;
+    w.add(g);
+    return g;
+  }
+
+  /** Offset local -> mundo (rotação Y) p/ acoplar fumaça/props a uma casa girada. */
+  _spun(x, z, ry, lx, lz) {
+    return { x: x + lx * Math.cos(ry) + lz * Math.sin(ry), z: z - lx * Math.sin(ry) + lz * Math.cos(ry) };
+  }
+
   _collider(x, z, r) {
     const id = this.game.world.createEntity();
     this.game.world.add(id, C.Transform, Transform(x, z));
@@ -238,20 +310,21 @@ export class SettlementManager {
 
   /** Vila druida (hub): cabanas de teto vivo, jardins, lanternas e menires. */
   _buildDruida(w, rng) {
-    // Cabanas em anel, deixando o sul (−Z) aberto — é o caminho da campanha.
+    // Casas em anel, deixando o sul (−Z) aberto — é o caminho da campanha.
+    // Teto vivo de musgo com cumeeira de palha; porta voltada ao centro.
     const huts = [[-14, -2], [14, -4], [-9, 10], [9, 11], [0, 16]];
-    for (const [x, z] of huts) {
-      const wall = mesh(new THREE.CylinderGeometry(2.1, 2.3, 1.9, 10), 0x8a6b4a);
-      wall.position.set(x, 0.95, z);
-      const roof = mesh(new THREE.ConeGeometry(3.0, 2.3, 10), 0x4f7a3a, { rough: 1 });
-      roof.position.set(x, 2.9, z);
-      const door = mesh(new THREE.BoxGeometry(0.9, 1.3, 0.2), 0x3a2a1c);
-      const a = Math.atan2(-x, -z); // porta voltada ao centro
-      door.position.set(x + Math.sin(a) * 2.2, 0.65, z + Math.cos(a) * 2.2);
-      door.rotation.y = a;
-      w.add(wall, roof, door);
-      w.collider(x, z, 2.4);
-    }
+    huts.forEach(([x, z], i) => {
+      const ry = Math.atan2(-x, -z); // face +Z (porta) olha o centro
+      this._house(w, x, z, ry, {
+        wall: 0x8a6b4a, beam: 0x54402e, roof: 0x5f8a3a, trim: 0xb89b5a,
+        chimney: i % 2 === 0,
+      });
+      w.collider(x, z, 2.6);
+      if (i % 2 === 0) {
+        const c = this._spun(x, z, ry, 1.25, -0.72);
+        this._smokeAt(w, c.x, 3.6, c.z);
+      }
+    });
     // Fogueira comunal (com fumaça subindo).
     this._fire(w, 0, 4, 0xff9a4a, 1.1);
     this._smokeAt(w, 0, 1.6, 4);
@@ -317,14 +390,47 @@ export class SettlementManager {
       }
       const deck = mesh(new THREE.BoxGeometry(4.2, 0.25, 4.2), 0x6b4a33);
       deck.position.y = 1.35;
-      const cabin = mesh(new THREE.BoxGeometry(3.1, 1.7, 3.1), 0x7a5a3d);
-      cabin.position.y = 2.35;
-      const roof = mesh(new THREE.ConeGeometry(2.7, 1.7, 4), 0x54683a, { rough: 1 });
-      roof.position.y = 4.0;
+      const cabin = mesh(new THREE.BoxGeometry(2.9, 1.6, 2.6), 0x7a5a3d);
+      cabin.position.y = 2.3;
+      hut.add(deck, cabin);
+      // Vigas de canto e janela acesa na cabine.
+      for (const [cx, cz] of [[-1.45, -1.3], [1.45, -1.3], [-1.45, 1.3], [1.45, 1.3]]) {
+        const post = mesh(new THREE.BoxGeometry(0.18, 1.7, 0.18), 0x4a3626, { shadow: false });
+        post.position.set(cx, 2.3, cz);
+        hut.add(post);
+      }
+      const pane = mesh(new THREE.BoxGeometry(0.55, 0.5, 0.08), 0xd8ffe8, {
+        emissive: 0x6affc8, emissiveIntensity: 0.5, shadow: false,
+      });
+      pane.position.set(0.6, 2.45, 1.34);
+      hut.add(pane);
+      this._flames.push({ mesh: pane, base: 0.5, amp: 0.12, speed: 1.1, seed: x * 2 + z });
+      // Telhado piramidal com beiral largo (silhueta de palafita, não árvore).
+      const roof = mesh(new THREE.ConeGeometry(2.9, 1.5, 4), 0x54683a, { rough: 1 });
+      roof.position.y = 3.85;
       roof.rotation.y = Math.PI / 4;
+      const finial = mesh(new THREE.BoxGeometry(0.16, 0.5, 0.16), 0x4a3626, { shadow: false });
+      finial.position.y = 4.75;
+      // Guarda-corpo do deck (postes + corrimão nas três faces sem escada).
+      const rails = new THREE.Group();
+      for (const side of [-1, 1]) {
+        const rail = mesh(new THREE.BoxGeometry(0.08, 0.08, 4.0), 0x4a3626, { shadow: false });
+        rail.position.set(side * 2.0, 1.95, 0);
+        rails.add(rail);
+        if (side === 1) { // fundo; a frente fica aberta para a escada
+          const railB = mesh(new THREE.BoxGeometry(4.0, 0.08, 0.08), 0x4a3626, { shadow: false });
+          railB.position.set(0, 1.95, -2.0);
+          rails.add(railB);
+        }
+        for (let pi = -1; pi <= 1; pi++) {
+          const p1 = mesh(new THREE.BoxGeometry(0.09, 0.5, 0.09), 0x4a3626, { shadow: false });
+          p1.position.set(side * 2.0, 1.72, pi * 1.9);
+          rails.add(p1);
+        }
+      }
       const ladder = mesh(new THREE.BoxGeometry(0.7, 1.3, 0.12), 0x4a3626, { shadow: false });
       ladder.position.set(0, 0.65, 2.15);
-      hut.add(deck, cabin, roof, ladder);
+      hut.add(roof, finial, rails, ladder);
       hut.position.set(x, 0, z);
       hut.rotation.y = ry;
       w.add(hut);
@@ -394,21 +500,58 @@ export class SettlementManager {
     const cabins = [[-7, -6, 0.3], [7, -4, -0.4], [0, 9, 0.1]];
     for (const [x, z, ry] of cabins) {
       const cabin = new THREE.Group();
-      const base = mesh(new THREE.BoxGeometry(4.0, 1.9, 3.2), 0x5a4232);
-      base.position.y = 0.95;
-      const roof = mesh(new THREE.CylinderGeometry(2.0, 2.0, 4.4, 3), 0x3a2f28);
-      roof.rotation.z = Math.PI / 2;
-      roof.rotation.y = Math.PI / 2;
-      roof.position.y = 2.6;
-      const chimney = mesh(new THREE.BoxGeometry(0.5, 1.2, 0.5), 0x6a6a72);
-      chimney.position.set(1.2, 3.2, 0);
-      cabin.add(base, roof, chimney);
+      // Paredes de toras: cilindros horizontais empilhados, com os topos
+      // salientes nos cantos — a leitura clássica de cabana de lenhador.
+      for (let li = 0; li < 4; li++) {
+        const y = 0.28 + li * 0.5;
+        const logA = mesh(new THREE.CylinderGeometry(0.26, 0.26, 4.2, 6), li % 2 ? 0x5a4232 : 0x64493a);
+        logA.rotation.z = Math.PI / 2;
+        logA.position.set(0, y, -1.5);
+        const logB = logA.clone();
+        logB.position.z = 1.5;
+        const logC = mesh(new THREE.CylinderGeometry(0.26, 0.26, 3.5, 6), li % 2 ? 0x64493a : 0x5a4232);
+        logC.rotation.x = Math.PI / 2;
+        logC.position.set(-1.95, y + 0.25, 0);
+        const logD = logC.clone();
+        logD.position.x = 1.95;
+        cabin.add(logA, logB, logC, logD);
+      }
+      // Fechamento interno (evita ver através das frestas das toras).
+      const fill = mesh(new THREE.BoxGeometry(3.8, 1.9, 2.9), 0x4a3628, { shadow: false });
+      fill.position.y = 1.1;
+      cabin.add(fill);
+      // Telhado de duas águas com beiral (tábuas escuras) + cumeeira.
+      const rise = 1.05, half = 2.35;
+      for (const s of [-1, 1]) {
+        const slab = mesh(new THREE.BoxGeometry(Math.hypot(half, rise) + 0.15, 0.14, 3.9), 0x3a2f28, { rough: 1 });
+        slab.position.set((s * half) / 2, 2.15 + rise / 2, 0);
+        slab.rotation.z = -s * Math.atan2(rise, half);
+        cabin.add(slab);
+      }
+      const gable = mesh(new THREE.BoxGeometry(2.4, rise * 0.8, 2.7), 0x5a4232);
+      gable.position.y = 2.15 + rise * 0.38;
+      const ridge = mesh(new THREE.BoxGeometry(0.24, 0.18, 4.0), 0x2e2620, { shadow: false });
+      ridge.position.y = 2.15 + rise + 0.08;
+      cabin.add(gable, ridge);
+      // Porta, janela acesa e chaminé de pedra.
+      const door = mesh(new THREE.BoxGeometry(0.85, 1.3, 0.14), 0x2e2118);
+      door.position.set(-0.7, 0.93, 1.62);
+      const pane = mesh(new THREE.BoxGeometry(0.55, 0.5, 0.1), 0xffc878, {
+        emissive: 0xff9a3a, emissiveIntensity: 0.6, shadow: false,
+      });
+      pane.position.set(0.9, 1.25, 1.62);
+      cabin.add(door, pane);
+      this._flames.push({ mesh: pane, base: 0.6, amp: 0.16, speed: 1.7, seed: x - z });
+      const chimney = mesh(new THREE.BoxGeometry(0.55, 1.6, 0.55), 0x6a6a72);
+      chimney.position.set(1.35, 2.9, -0.6);
+      cabin.add(chimney);
       cabin.position.set(x, 0, z);
       cabin.rotation.y = ry;
       w.add(cabin);
-      w.collider(x, z, 2.5);
+      w.collider(x, z, 2.6);
       // Chaminé acesa: a vila queima madeira dia e noite (worldbuilding).
-      this._smokeAt(w, x + Math.sin(ry + Math.PI / 2) * 1.2 + 1.2 * Math.cos(ry), 3.9, z, 0xa8a098);
+      const c = this._spun(x, z, ry, 1.35, -0.6);
+      this._smokeAt(w, c.x, 3.9, c.z, 0xa8a098);
     }
     this._flagAt(w, 1.8, -16.2, 0xc8a06a); // estandarte no portão sul
     // Serraria: cavaletes com tronco e lâmina circular.
@@ -460,11 +603,27 @@ export class SettlementManager {
       tent.rotation.y = ry;
       const snow = mesh(new THREE.ConeGeometry(0.8, 0.7, 7), 0xeaf4ff, { rough: 1, shadow: false });
       snow.position.set(x, 3.0, z);
-      const door = mesh(new THREE.BoxGeometry(0.8, 1.1, 0.2), 0x2a2018);
+      w.add(tent, snow);
+      // Armação de varas cruzadas saindo do topo (tenda de pele, não cone).
+      for (let pi = 0; pi < 3; pi++) {
+        const pole = mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.4, 4), 0x4a3626, { shadow: false });
+        const pa = ry + (pi / 3) * Math.PI * 2;
+        pole.position.set(x + Math.sin(pa) * 0.35, 3.25, z + Math.cos(pa) * 0.35);
+        pole.rotation.set(Math.cos(pa) * 0.5, 0, -Math.sin(pa) * 0.5);
+        w.add(pole);
+      }
+      // Aba de entrada aberta (duas placas inclinadas) voltada ao centro.
       const a = Math.atan2(-x, -z);
-      door.position.set(x + Math.sin(a) * 2.0, 0.55, z + Math.cos(a) * 2.0);
-      door.rotation.y = a;
-      w.add(tent, snow, door);
+      for (const s of [-1, 1]) {
+        const flap = mesh(new THREE.BoxGeometry(0.55, 1.2, 0.1), 0x66493a, { shadow: false });
+        flap.position.set(x + Math.sin(a) * 1.9 + Math.cos(a) * s * 0.45, 0.6, z + Math.cos(a) * 1.9 - Math.sin(a) * s * 0.45);
+        flap.rotation.y = a + s * 0.5;
+        w.add(flap);
+      }
+      const gap = mesh(new THREE.BoxGeometry(0.7, 1.1, 0.12), 0x241a12);
+      gap.position.set(x + Math.sin(a) * 1.95, 0.55, z + Math.cos(a) * 1.95);
+      gap.rotation.y = a;
+      w.add(gap);
       w.collider(x, z, 2.1);
     }
     // Cairns: pilhas de pedra que marcam a trilha antiga ao Coração.
