@@ -17,8 +17,11 @@ export class IsoCamera {
   shake: number;
 
   constructor() {
-    this.frustum = 14; // metade da altura visível (em unidades de mundo)
-    this.minFrustum = 11;
+    // Enquadramento estilo MCD (ADR 0069): mais perto = personagens com
+    // presença e as texturas/animações visíveis. O coop continua afastando
+    // dinamicamente até o max pra caber todo mundo.
+    this.frustum = 11; // metade da altura visível (em unidades de mundo)
+    this.minFrustum = 9;
     this.maxFrustum = 28;
     this.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
     // Offset isométrico em relação ao alvo.
