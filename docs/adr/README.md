@@ -65,3 +65,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0058](0058-iluminacao-diurna-sombras.md) | Iluminação diurna legível: sol dominante e sombras visíveis | Aceito |
 | [0059](0059-locomocao-natural.md) | Locomoção natural: easing de amplitude e contrapeso corporal | Aceito |
 | [0060](0060-casas-legiveis.md) | Construções legíveis: casas de duas águas por tema | Aceito |
+| [0061](0061-vfx-impacto.md) | VFX de impacto: clarão aditivo, varredura e onda de choque | Aceito |
