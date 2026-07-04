@@ -213,6 +213,21 @@ plano completo em [`art-direction-mcd.md`](art-direction-mcd.md).
 
 ---
 
+## M15 — Playtest 3: UI, câmera e voz 🟡
+
+Feedback jogando no celular (prints) + refinamentos aprovados:
+
+- [x] 🐛 M15.1 UI mobile: sem dicas de teclado no touch, sem sobreposições (retrato/paisagem) — ADR 0068
+- [ ] 🎨 M15.2 Texturas faltantes nos props (banca do mercador, caminho de pedras, menires, cercas…)
+- [ ] 🎨 M15.3 Câmera mais perto (frustum 14→11, min 9) estilo MCD
+- [ ] 📖 M15.4 Copy com voz: textos divertidos e intencionais + dicas por dispositivo
+- [ ] 🖥️ M15.5 HUD com layout MCD
+- [ ] 🖥️ M15.6 Inventário e mercador com grade de slots RPG
+- [ ] 🎨 M15.7 Overworld dramático (nublado MCD) sem perder legibilidade
+- [ ] 🎨 M15.8 Tendas do Degelo em blocos + lagoa do Vau em blocos de água
+
+---
+
 ## Caminho crítico (resumo)
 
 ```

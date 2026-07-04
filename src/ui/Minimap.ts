@@ -1,6 +1,7 @@
 import { C, Factions } from '../core/ecs/components.js';
 import { LANDMARKS } from '../gameplay/story.js';
 import { SETTLEMENTS } from '../data/settlements.js';
+import { isTouchDevice } from './TouchControls.js';
 
 /**
  * Minimapa/radar top-down no canto superior direito. Mostra hub, jogadores,
@@ -16,7 +17,9 @@ export class Minimap {
     this.game = game;
     this.range = 60; // unidades de mundo visíveis (raio)
     const c = document.createElement('canvas');
-    c.width = 168; c.height = 168;
+    // Touch: menor (a tela é preciosa) e abaixo dos botões de pausa/mapa.
+    const size = isTouchDevice() ? 112 : 168;
+    c.width = size; c.height = size;
     c.style.cssText = 'position:fixed;top:64px;right:12px;z-index:9;border-radius:50%;border:2px solid rgba(159,224,106,.4);background:rgba(8,16,10,.6)';
     document.body.appendChild(c);
     this.canvas = c;

@@ -1,6 +1,7 @@
 import { C } from '../core/ecs/components.js';
 import { FORMS } from '../gameplay/forms.js';
 import { xpForLevel } from '../gameplay/progression.js';
+import { isTouchDevice } from './TouchControls.js';
 
 /**
  * HUD em overlay DOM (mais simples e acessível que desenhar no canvas).
@@ -44,6 +45,25 @@ const css = `
 #hud-victory h1{font-size:52px;margin:0;color:#9fe06a;text-shadow:0 3px 18px rgba(159,224,106,.5);font-family:'Cinzel',Georgia,serif}
 #hud-victory p{opacity:.85;max-width:520px}
 .dmgnum{position:absolute;font-weight:800;font-size:15px;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.6);pointer-events:none;transform:translate(-50%,-50%);transition:none}
+/* Touch: os slots de artefato do painel duplicam os botões U/I/O na tela —
+   esconde e o painel volta a ser compacto (nome + barras). */
+#hud-root.touch .arts{display:none}
+#hud-root.touch .pp{min-width:150px}
+/* Mobile (ADR 0068): objetivo vira faixa no topo, título de bioma desce,
+   painéis encolhem e diálogo sobe acima dos botões de toque. */
+@media (max-width:620px){
+  #hud-objective{top:8px;left:8px;right:8px;max-width:none;font-size:12px;padding:6px 10px}
+  #hud-top{top:76px}
+  #hud-top .biome{font-size:15px}
+  #hud-xp{width:160px}
+  #hud-boss{top:120px;width:78vw}
+  #hud-toast{font-size:20px;top:36%;width:88vw;text-align:center}
+  #hud-players{left:8px;bottom:8px;transform:scale(.78);transform-origin:bottom left}
+  .pp{min-width:150px}
+  #hud-dialogue{bottom:232px;width:min(560px,92vw);font-size:13px;padding:10px 14px}
+  #hud-prompt{bottom:188px;font-size:12.5px}
+  #hud-save{bottom:auto;top:120px}
+}
 `;
 
 const FORM_ICON = { humanoid: '🧙', wolf: '🐺', bear: '🐻', raven: '🐦‍⬛', frog: '🐸' };
@@ -77,6 +97,11 @@ export class Hud {
       <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
       <div id="hud-hint">WASD mover (olha p/ onde anda) · J/Clique atacar<br>5–9 trocar forma · U/I/O artefatos · Shift esquivar · E interagir · B inventário · M mapa · T recuar ao hub</div>`;
     document.body.appendChild(this.root);
+    // Touch não tem teclado: as dicas de atalho só confundem (ADR 0068).
+    if (isTouchDevice()) {
+      this.root.classList.add('touch');
+      (this.root.querySelector('#hud-hint') as HTMLElement).style.display = 'none';
+    }
     this.objEl = this.root.querySelector('#hud-objective .o');
     this.promptEl = this.root.querySelector('#hud-prompt');
     this.dialogueEl = this.root.querySelector('#hud-dialogue');
