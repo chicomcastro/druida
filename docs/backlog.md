@@ -213,7 +213,7 @@ plano completo em [`art-direction-mcd.md`](art-direction-mcd.md).
 
 ---
 
-## M15 — Playtest 3: UI, câmera e voz 🟡
+## M15 — Playtest 3: UI, câmera e voz ✅
 
 Feedback jogando no celular (prints) + refinamentos aprovados:
 
@@ -223,8 +223,8 @@ Feedback jogando no celular (prints) + refinamentos aprovados:
 - [x] 📖 M15.4 Copy com voz: textos divertidos e intencionais + dicas por dispositivo — ADR 0070
 - [x] 🖥️ M15.5 HUD com layout MCD: orbe de vida + coluna de Seiva + slots — ADR 0071
 - [x] 🖥️ M15.6 Inventário e mercador com grade de slots RPG + tooltip de comparação — ADR 0072
-- [ ] 🎨 M15.7 Overworld dramático (nublado MCD) sem perder legibilidade
-- [ ] 🎨 M15.8 Tendas do Degelo em blocos + lagoa do Vau em blocos de água
+- [x] 🎨 M15.7 Overworld dramático (nublado MCD) sem perder legibilidade — ADR 0073
+- [x] 🎨 M15.8 Tendas do Degelo em blocos + lagoa do Vau em blocos de água — ADR 0073
 
 ---
 
