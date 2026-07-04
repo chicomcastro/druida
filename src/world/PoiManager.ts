@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { pixelTexture } from '../core/render/pixelTextures.js';
 import { C } from '../core/ecs/components.js';
 import { dist, makeRng, weightedPick } from '../utils/math.js';
 import { biomeAt } from './WorldManager.js';
@@ -22,7 +23,45 @@ export class PoiManager {
     this.game = game;
     this.cleared = new Set(); // ids purificados (persistido)
     this.camps = this._generateCamps(game.seed ?? 1337);
+    this._buildRuins();
     game.on('kill', (e) => this._onKill(e));
+  }
+
+  /**
+   * Ruínas de pedra nos acampamentos (ADR 0067): círculo quebrado de blocos
+   * — o POI lê à distância como "lugar antigo", no vocabulário MCD. Ficam
+   * mesmo depois de purificar (a história aconteceu ali). 1 InstancedMesh.
+   */
+  _buildRuins() {
+    const rng = makeRng(((this.game.seed ?? 1337) ^ 0x51ab3e) >>> 0);
+    const dummy = new THREE.Object3D();
+    const mats: THREE.Matrix4[] = [];
+    for (const camp of this.camps) {
+      const n = 5 + Math.floor(rng() * 3);
+      for (let i = 0; i < n; i++) {
+        if (rng() < 0.3) continue; // círculo quebrado
+        const a = (i / n) * Math.PI * 2 + rng() * 0.3;
+        const h = rng() < 0.3 ? 2 : 1;
+        for (let y = 0; y < h; y++) {
+          dummy.position.set(camp.x + Math.sin(a) * 4.2, 0.45 + y * 0.85, camp.z + Math.cos(a) * 4.2);
+          dummy.rotation.y = rng() * Math.PI;
+          dummy.scale.setScalar(0.85 + rng() * 0.3);
+          dummy.updateMatrix();
+          mats.push(dummy.matrix.clone());
+        }
+      }
+    }
+    if (!mats.length) return;
+    const inst = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(0.9, 0.9, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0x8a857e, roughness: 1, map: pixelTexture('stone') }),
+      mats.length,
+    );
+    inst.castShadow = true;
+    inst.receiveShadow = true;
+    inst.frustumCulled = false;
+    for (let i = 0; i < mats.length; i++) inst.setMatrixAt(i, mats[i]);
+    this.game.renderer?.add(inst);
   }
 
   _generateCamps(seed) {

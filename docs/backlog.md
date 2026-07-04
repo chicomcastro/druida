@@ -199,7 +199,7 @@ Pacote de revisão visual (feedback de playtest 2) + higiene de dependências:
 
 ---
 
-## M14 — Direção de arte Minecraft Dungeons 🔴
+## M14 — Direção de arte Minecraft Dungeons ✅
 
 Pivot de direção de arte (playtest 3, com referências visuais). Análise e
 plano completo em [`art-direction-mcd.md`](art-direction-mcd.md).
@@ -209,7 +209,7 @@ plano completo em [`art-direction-mcd.md`](art-direction-mcd.md).
 - [x] 🎨 M14.3 Elevação decorativa: falésias nas bordas de bioma + veios de lava no Coração — ADR 0064 (ruínas de POI → M14.6)
 - [x] 🎨 M14.4 Luz dramática: pool de PointLights (flicker + culling), masmorras no mood MCD — ADR 0065
 - [x] 🎨 M14.5 Personagens MCD: proporção cabeçuda, trama de tecido, losango de identidade — ADR 0066
-- [ ] 🎨 M14.6 Polish: brasas com profundidade, rim light nos heróis, grade/vinheta recalibrados
+- [x] 🎨 M14.6 Polish: ruínas nos POIs, grade recalibrado (rim light dispensado) — ADR 0067
 
 ---
 
