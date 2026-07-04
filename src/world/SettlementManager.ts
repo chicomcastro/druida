@@ -6,6 +6,9 @@ import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
 import { tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { buildMerchantStall } from './landmarks.js';
 
+/** Alinha um ângulo ao grid voxel — só rotações de 90°, como no MCD (ADR 0076). */
+const snap90 = (a) => Math.round(a / (Math.PI / 2)) * (Math.PI / 2);
+
 /**
  * Constrói e administra os assentamentos temáticos (uma cidade-vila por
  * região): geometria procedural por tema, moradores interativos (diálogo de
@@ -317,7 +320,7 @@ export class SettlementManager {
     // Teto vivo de musgo com cumeeira de palha; porta voltada ao centro.
     const huts = [[-14, -2], [14, -4], [-9, 10], [9, 11], [0, 16]];
     huts.forEach(([x, z], i) => {
-      const ry = Math.atan2(-x, -z); // face +Z (porta) olha o centro
+      const ry = snap90(Math.atan2(-x, -z)); // porta olha o centro, no grid voxel
       this._house(w, x, z, ry, {
         wall: 0x8a6b4a, beam: 0x54402e, roof: 0x5f8a3a, trim: 0xb89b5a,
         chimney: i % 2 === 0,
@@ -353,7 +356,6 @@ export class SettlementManager {
     for (const mx of [-2.6, 2.6]) {
       const menhir = mesh(new THREE.BoxGeometry(1.0, 3.2, 0.8), 0x6a6a72, { tex: 'stone', trx: 1, try: 3 });
       menhir.position.set(mx, 1.6, -18);
-      menhir.rotation.y = mx > 0 ? 0.2 : -0.2;
       w.add(menhir);
       w.collider(mx, -18, 0.8);
     }
@@ -400,7 +402,7 @@ export class SettlementManager {
     w.add(water);
     this._waterRef = waterMat;
     // Casas sobre estacas.
-    const huts = [[-8, -4, 0.4], [6, -8, -0.5], [-2, 8, 0.2], [10, 4, 0.9]];
+    const huts = [[-8, -4, 0], [6, -8, -Math.PI / 2], [-2, 8, 0], [10, 4, Math.PI / 2]];
     for (const [x, z, ry] of huts) {
       const hut = new THREE.Group();
       for (const [lx, lz] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) {
@@ -457,7 +459,7 @@ export class SettlementManager {
       w.collider(x, z, 2.4);
     }
     // Passarelas de tábua ligando as casas ao centro.
-    for (const [x, z, len, ry] of [[-4, -2, 7, 1.1], [3, -4, 7, -0.6], [-1, 4, 7, 0.15], [5, 2, 7, 1.0]]) {
+    for (const [x, z, len, ry] of [[-4, -2, 7, Math.PI / 2], [3, -4, 7, 0], [-1, 4, 7, 0], [5, 2, 7, Math.PI / 2]]) {
       const walk = mesh(new THREE.BoxGeometry(1.1, 0.12, len), 0x5a4028, { shadow: false, tex: 'planks', trx: 1, try: 6 });
       walk.position.set(x, 0.12, z);
       walk.rotation.y = ry;
@@ -469,7 +471,6 @@ export class SettlementManager {
       const r = 15 + rng() * 4;
       const reed = mesh(new THREE.ConeGeometry(0.12, 1.4 + rng() * 0.9, 4), 0x5a6b2a, { shadow: false });
       reed.position.set(Math.sin(a) * r, 0.7, Math.cos(a) * r);
-      reed.rotation.z = (rng() - 0.5) * 0.25;
       w.add(reed);
     }
     // Varal de pesca e barco.
@@ -492,7 +493,7 @@ export class SettlementManager {
     w.add(rack);
     const boat = mesh(new THREE.BoxGeometry(2.6, 0.5, 1.0), 0x5a4028, { tex: 'planks', trx: 2, try: 1 });
     boat.position.set(-13, 0.25, 6);
-    boat.rotation.y = 0.7;
+    boat.rotation.y = Math.PI / 2;
     w.add(boat);
     w.collider(-13, 6, 1.2);
     this._water.push({ mat: this._waterRef, base: 0.85, seed: 1.3, bob: boat });
@@ -517,7 +518,7 @@ export class SettlementManager {
       if (i % 2 === 0) w.collider(x, z, 1.5);
     }
     // Cabanas de tronco com telhado de duas águas (prisma triangular).
-    const cabins = [[-7, -6, 0.3], [7, -4, -0.4], [0, 9, 0.1]];
+    const cabins = [[-7, -6, 0], [7, -4, Math.PI / 2], [0, 9, 0]];
     for (const [x, z, ry] of cabins) {
       const cabin = new THREE.Group();
       // Paredes de toras: cilindros horizontais empilhados, com os topos
@@ -589,7 +590,7 @@ export class SettlementManager {
     blade.position.set(0, 1.15, 0.75);
     mill.add(trunk, blade);
     mill.position.set(-10, 0, 7);
-    mill.rotation.y = 0.6;
+    mill.rotation.y = Math.PI / 2;
     w.add(mill);
     w.collider(-10, 7, 1.8);
     // Pilhas de toras e tocos.
@@ -616,7 +617,7 @@ export class SettlementManager {
   /** Abrigo do Degelo: tendas de pele, cairns, cristais e a chama azul. */
   _buildDegelo(w, rng) {
     // Tendas de pele com capuz de neve.
-    const tents = [[-7, 3, 0.5], [6, -3, -0.7], [-3, -8, 0.1], [8, 8, 0.9]];
+    const tents = [[-7, 3, 0], [6, -3, -Math.PI / 2], [-3, -8, 0], [8, 8, Math.PI / 2]];
     for (const [x, z, ry] of tents) {
       // Tenda em blocos (M15.8): pirâmide 3-2-1 de pele, no vocabulário MC.
       const tent = new THREE.Group();
@@ -638,20 +639,12 @@ export class SettlementManager {
       snow.position.set(x, 2.9, z);
       snow.rotation.y = ry;
       w.add(tent, snow);
-      // Armação de varas cruzadas saindo do topo (tenda de pele, não cone).
-      for (let pi = 0; pi < 3; pi++) {
-        const pole = mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.4, 4), 0x4a3626, { shadow: false });
-        const pa = ry + (pi / 3) * Math.PI * 2;
-        pole.position.set(x + Math.sin(pa) * 0.35, 3.25, z + Math.cos(pa) * 0.35);
-        pole.rotation.set(Math.cos(pa) * 0.5, 0, -Math.sin(pa) * 0.5);
-        w.add(pole);
-      }
-      // Aba de entrada aberta (duas placas inclinadas) voltada ao centro.
-      const a = Math.atan2(-x, -z);
+      // Entrada voltada ao centro, alinhada ao grid: batentes retos + vão.
+      const a = snap90(Math.atan2(-x, -z));
       for (const s of [-1, 1]) {
         const flap = mesh(new THREE.BoxGeometry(0.55, 1.2, 0.1), 0x66493a, { shadow: false });
-        flap.position.set(x + Math.sin(a) * 1.9 + Math.cos(a) * s * 0.45, 0.6, z + Math.cos(a) * 1.9 - Math.sin(a) * s * 0.45);
-        flap.rotation.y = a + s * 0.5;
+        flap.position.set(x + Math.sin(a) * 1.9 + Math.cos(a) * s * 0.55, 0.6, z + Math.cos(a) * 1.9 - Math.sin(a) * s * 0.55);
+        flap.rotation.y = a;
         w.add(flap);
       }
       const gap = mesh(new THREE.BoxGeometry(0.7, 1.1, 0.12), 0x241a12);
@@ -664,9 +657,9 @@ export class SettlementManager {
     const cairns = [[0, -13], [-11, -7], [12, 2], [-9, 10], [4, 13]];
     for (const [x, z] of cairns) {
       for (let i = 0; i < 3; i++) {
-        const rock = mesh(new THREE.DodecahedronGeometry(0.7 - i * 0.18, 0), 0xb8c6d0, { rough: 1, tex: 'stone' });
-        rock.position.set(x, 0.4 + i * 0.75, z);
-        rock.rotation.y = rng() * Math.PI;
+        const s = 1.3 - i * 0.34;
+        const rock = mesh(new THREE.BoxGeometry(0.85 * s, 0.6, 0.85 * s), 0xb8c6d0, { rough: 1, tex: 'stone' });
+        rock.position.set(x, 0.3 + i * 0.62, z);
         w.add(rock);
       }
       w.collider(x, z, 0.9);
@@ -678,7 +671,7 @@ export class SettlementManager {
           emissive: 0x3a7ab8, emissiveIntensity: 0.5, rough: 0.2,
         });
         ice.position.set(x + (rng() - 0.5) * 1.6, 0.5 + rng() * 0.5, z + (rng() - 0.5) * 1.6);
-        ice.rotation.set(rng(), rng(), rng());
+        ice.rotation.set(0, Math.floor(rng() * 4) * (Math.PI / 2), 0); // cristal em pé, no grid
         w.add(ice);
         this._flames.push({ mesh: ice, base: 0.5, amp: 0.2, speed: 1.4, seed: x + i });
       }
@@ -693,7 +686,6 @@ export class SettlementManager {
     for (let i = 0; i < 3; i++) {
       const block = mesh(new THREE.BoxGeometry(0.9 - i * 0.15, 0.8, 0.9 - i * 0.15), i % 2 ? 0x6a5a48 : 0x8a7458, { tex: 'log' });
       block.position.y = 0.4 + i * 0.8;
-      block.rotation.y = i * 0.4;
       totem.add(block);
     }
     totem.position.set(-4, 0, 8);
