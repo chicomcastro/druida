@@ -194,7 +194,7 @@ Pacote de revisão visual (feedback de playtest 2) + higiene de dependências:
 - [x] 🚀 Zerar vulnerabilidades do Dependabot (vite 7, vitest 4, cypress 15) — ADR 0057
 - [x] 🎨 Iluminação diurna legível + sombras visíveis (sol dominante) — ADR 0058
 - [x] 🎨 Animação de locomoção revisada (andar natural) — ADR 0059
-- [ ] 🎨 Modelos das casas/construções revisados
+- [x] 🎨 Modelos das casas/construções revisados — ADR 0060
 - [ ] 🎨 VFX de combate e polish visual
 
 ---
