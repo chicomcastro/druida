@@ -13,8 +13,8 @@ const GradeShader = {
   uniforms: {
     tDiffuse: { value: null },
     vignette: { value: 0.24 },
-    saturation: { value: 1.12 },
-    contrast: { value: 1.05 },
+    saturation: { value: 1.16 },
+    contrast: { value: 1.07 },
   },
   vertexShader: /* glsl */ `
     varying vec2 vUv;

@@ -71,3 +71,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0064](0064-elevacao-decorativa.md) | Elevação decorativa: falésias nas bordas e lava no Coração (M14.3) | Aceito |
 | [0065](0065-luz-dramatica.md) | Luz dramática: pool de luzes pontuais e masmorras MCD (M14.4) | Aceito |
 | [0066](0066-personagens-mcd.md) | Personagens MCD: proporção, trama de tecido e losango (M14.5) | Aceito |
+| [0067](0067-polish-mcd.md) | Polish final do estilo MCD: ruínas de POI e grade recalibrado (M14.6) | Aceito |
