@@ -36,6 +36,20 @@ const css = `
 .mini:hover{background:#27361f}
 .mini:disabled{opacity:.4;cursor:not-allowed;border-color:#555}
 .close{float:right;opacity:.6;cursor:pointer}
+/* Grade de slots RPG (ADR 0072): quadrados com ícone, raridade na borda,
+   tooltip de comparação e preço no mercador. */
+.eqrow{display:flex;gap:8px;margin:6px 0 26px}
+.gslot{width:54px;height:54px;border-radius:10px;border:2px solid rgba(255,255,255,.16);background:linear-gradient(160deg,rgba(20,32,18,.92),rgba(8,14,8,.92));display:flex;align-items:center;justify-content:center;font-size:24px;position:relative;cursor:pointer;transition:transform .1s,border-color .1s,box-shadow .1s;box-shadow:inset 0 2px 6px rgba(0,0,0,.5)}
+.gslot:hover{transform:translateY(-2px);border-color:#9fe06a;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.gslot.empty{opacity:.4;cursor:default}
+.gslot.empty:hover{transform:none;border-color:rgba(255,255,255,.16);box-shadow:inset 0 2px 6px rgba(0,0,0,.5)}
+.gslot.sel{border-color:#ffd56a;box-shadow:0 0 14px rgba(255,213,106,.3)}
+.gslot .tag{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-size:8.5px;white-space:nowrap;opacity:.6;text-transform:uppercase;letter-spacing:.06em}
+.gslot .price{position:absolute;bottom:1px;right:3px;font-size:9.5px;color:#ffd56a;font-weight:700;text-shadow:0 1px 2px #000}
+.ggrid{display:grid;grid-template-columns:repeat(6,54px);gap:7px;max-height:252px;overflow:auto;padding:2px}
+#tip{position:fixed;z-index:60;pointer-events:none;display:none;max-width:240px;background:linear-gradient(165deg,#152315,#0a130c);border:1px solid rgba(159,224,106,.4);border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.45;box-shadow:0 12px 32px rgba(0,0,0,.6);color:#eaf3e6;font-family:system-ui,sans-serif}
+#tip b{font-size:13px}
+#tip .up{color:#8affa0}#tip .down{color:#ff8a8a}
 `;
 
 const RCOLOR = { common: '#d6d6d6', rare: '#5aa0ff', unique: '#ffc83a' };
@@ -43,8 +57,9 @@ const RCOLOR = { common: '#d6d6d6', rare: '#5aa0ff', unique: '#ffc83a' };
 export class Menus {
   game: any;
   main: any; pause: any; inv: any;
-  shop: any; stash: any; controls: any;
+  shop: any; stash: any; controls: any; tip: any;
   _rebinding: string | null;
+  _selSlot: string;
   constructor(game) {
     this.game = game;
     // Despertar de santuário oferece a escolha de um dom (ADR 0050).
@@ -60,7 +75,10 @@ export class Menus {
     this.stash = this._make('menu-stash');
     this.controls = this._make('menu-controls');
     this._rebinding = null;
-    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls);
+    this._selSlot = 'weapon'; // slot equipado selecionado p/ encantar
+    this.tip = document.createElement('div');
+    this.tip.id = 'tip';
+    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls, this.tip);
 
     addEventListener('keydown', (e) => {
       if (game.menuMain) return; // bloqueia até iniciar
@@ -229,67 +247,109 @@ export class Menus {
     const inv = this.game.world.get(id, C.Inventory);
     const forms = this.game.world.get(id, C.Form).list.map((f) => FORMS[f].name).join(', ');
 
+    const EQ = [
+      { key: 'weapon', label: 'Arma', item: loadout.weapon },
+      { key: 'armor', label: 'Armadura', item: loadout.armor },
+      { key: 'artifact0', label: 'Dom 1', item: loadout.artifacts[0] },
+      { key: 'artifact1', label: 'Dom 2', item: loadout.artifacts[1] },
+      { key: 'artifact2', label: 'Dom 3', item: loadout.artifacts[2] },
+    ];
+    const sel = EQ.find((e) => e.key === this._selSlot) ?? EQ[0];
     this.inv.innerHTML = `<div class="panel">
       <span class="close" id="iv-close">✕ (B)</span>
-      <h2>Inventário — P1</h2>
-      <p class="sub">Pontos de encanto: <b>${loadout.enchantPoints}</b> · Essência: <b>${inv.essence}</b> · Formas: ${forms}</p>
+      <h2>Mochila do Druida</h2>
+      <p class="sub">Pontos de encanto: <b>${loadout.enchantPoints}</b> · Essência: <b>${inv.essence}</b> ✦ · Formas: ${forms}</p>
       <div class="inv">
         <div>
-          <div class="lbl" style="margin-bottom:4px">Equipado</div>
-          ${this._slotHtml('Arma', loadout.weapon)}
-          ${this._slotHtml('Armadura', loadout.armor)}
-          ${this._slotHtml('Artefato 1', loadout.artifacts[0])}
-          ${this._slotHtml('Artefato 2', loadout.artifacts[1])}
-          ${this._slotHtml('Artefato 3', loadout.artifacts[2])}
+          <div class="lbl" style="margin-bottom:4px">Equipado — clique para encantar</div>
+          <div class="eqrow">
+            ${EQ.map((e) => this._gslot(e.item, { tag: e.label, sel: e.key === this._selSlot, data: `data-slot="${e.key}"` })).join('')}
+          </div>
+          <div id="iv-detail">${this._detailHtml(sel.label, sel.item)}</div>
         </div>
         <div>
-          <div class="lbl" style="margin-bottom:4px">Mochila (clique p/ equipar · botão direito p/ desmontar)</div>
-          <div class="items" id="iv-items">
-            ${inv.items.length ? inv.items.map((it, i) => this._itemHtml(it, i)).join('') : '<div class="sub">Vazia. Derrote inimigos para coletar loot.</div>'}
+          <div class="lbl" style="margin-bottom:4px">Mochila — clique equipa · direito desmonta (+✦)</div>
+          <div class="ggrid" id="iv-items">
+            ${inv.items.length ? inv.items.map((it, i) => this._gslot(it, { data: `data-i="${i}"` })).join('') : '<div class="sub" style="grid-column:1/-1">Vazia. A floresta provê a quem caça.</div>'}
           </div>
         </div>
       </div>
     </div>`;
 
     this.inv.querySelector('#iv-close').onclick = () => this.toggleInventory();
-    this.inv.querySelectorAll('.it').forEach((el) => {
+    this.inv.querySelectorAll('.gslot[data-i]').forEach((el: any) => {
       const i = +el.dataset.i;
-      el.onclick = () => this._equipFromBag(id, i);
-      el.oncontextmenu = (e) => { e.preventDefault(); this._salvage(id, i); };
+      el.onclick = () => { this._hideTip(); this._equipFromBag(id, i); };
+      el.oncontextmenu = (e) => { e.preventDefault(); this._hideTip(); this._salvage(id, i); };
+      this._bindTip(el, inv.items[i], loadout);
     });
-    this.inv.querySelectorAll('.mini[data-ench]').forEach((el) => {
+    this.inv.querySelectorAll('.gslot[data-slot]').forEach((el: any) => {
+      el.onclick = () => { this._selSlot = el.dataset.slot; this.refreshInventory(); };
+      const eq = EQ.find((q) => q.key === el.dataset.slot);
+      if (eq?.item) this._bindTip(el, eq.item, null);
+    });
+    this.inv.querySelectorAll('.mini[data-ench]').forEach((el: any) => {
       el.onclick = () => this._invest(id, el.dataset.slot, +el.dataset.ench);
     });
   }
 
-  _slotHtml(label, item) {
+  /** Slot quadrado com ícone e raridade na borda (grade RPG — ADR 0072). */
+  _gslot(item, { tag = '', sel = false, data = '', price = null }: any = {}) {
+    const icon = item ? (item.type === 'weapon' ? '⚔️' : item.type === 'armor' ? '🛡️' : '🌿') : '';
+    const border = item ? `style="border-color:${RCOLOR[item.rarity]}"` : '';
+    const cls = `gslot${item ? '' : ' empty'}${sel ? ' sel' : ''}`;
+    return `<div class="${cls}" ${border} ${data}>${icon}
+      ${price != null ? `<span class="price">${price}✦</span>` : ''}
+      ${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
+  }
+
+  /** Painel de detalhes do slot equipado selecionado (encantos). */
+  _detailHtml(label, item) {
     if (!item) return `<div class="slot"><div class="lbl">${label}</div>— vazio —</div>`;
     const enchHtml = (item.enchants ?? []).map((e, ei) => {
       const def = ENCHANTMENTS[e.id];
       const can = this._canInvest(item, e);
       return `<div class="row"><span title="${def?.desc ?? ''}">• ${def?.name ?? e.id} <b>${e.level}/${e.max}</b></span>
-        <button class="mini" data-ench="${ei}" data-slot="${this._slotKey(label)}" ${can ? '' : 'disabled'}>+1</button></div>`;
+        <button class="mini" data-ench="${ei}" data-slot="${this._selSlot}" ${can ? '' : 'disabled'}>+1</button></div>`;
     }).join('');
-    const stat = item.type === 'weapon' ? `dano ${item.damage} · ${item.element}`
-      : item.type === 'armor' ? `armadura ${(item.armor * 100) | 0}%`
-      : `concede habilidade`;
     return `<div class="slot"><div class="lbl">${label}</div>
       <span class="dot" style="background:${RCOLOR[item.rarity]}"></span><b>${item.name}</b>
-      <div class="sub" style="margin:2px 0">${stat}</div>
+      <div class="sub" style="margin:2px 0">${this._statText(item)}</div>
       <div class="ench">${enchHtml || '<span class="sub">sem slots de encanto</span>'}</div></div>`;
   }
 
-  _slotKey(label) {
-    if (label.startsWith('Arma')) return label === 'Armadura' ? 'armor' : 'weapon';
-    if (label.startsWith('Armadura')) return 'armor';
-    if (label.startsWith('Artefato')) return 'artifact' + (label.split(' ')[1] - 1);
-    return 'weapon';
+  _statText(it) {
+    return it.type === 'weapon' ? `dano ${it.damage} · ${it.element}`
+      : it.type === 'armor' ? `armadura ${(it.armor * 100) | 0}%`
+      : 'concede habilidade';
   }
 
-  _itemHtml(it, i) {
-    const stat = it.type === 'weapon' ? `dano ${it.damage}` : it.type === 'armor' ? `arm ${(it.armor * 100) | 0}%` : 'artefato';
-    return `<div class="it" data-i="${i}"><span><span class="dot" style="background:${RCOLOR[it.rarity]}"></span>${it.name}</span><span class="sub">${stat}</span></div>`;
+  /** Tooltip com comparação contra o equipado (mochila/mercador). */
+  _bindTip(el, item, loadout) {
+    if (!item) return;
+    el.onmouseenter = () => {
+      let cmp = '';
+      if (loadout) {
+        if (item.type === 'weapon' && loadout.weapon) {
+          const d = item.damage - loadout.weapon.damage;
+          cmp = `<div class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d)} dano vs equipada</div>`;
+        } else if (item.type === 'armor' && loadout.armor) {
+          const d = Math.round((item.armor - loadout.armor.armor) * 100);
+          cmp = `<div class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d)}% armadura vs equipada</div>`;
+        }
+      }
+      const ench = (item.enchants ?? []).map((e) => `• ${ENCHANTMENTS[e.id]?.name ?? e.id} ${e.level}/${e.max}`).join('<br>');
+      this.tip.innerHTML = `<b style="color:${RCOLOR[item.rarity]}">${item.name}</b><br>
+        <span style="opacity:.8">${this._statText(item)}</span>${cmp}${ench ? `<div style="opacity:.75;margin-top:4px">${ench}</div>` : ''}`;
+      const r = el.getBoundingClientRect();
+      this.tip.style.display = 'block';
+      this.tip.style.left = Math.min(innerWidth - 250, r.right + 10) + 'px';
+      this.tip.style.top = Math.max(8, r.top - 8) + 'px';
+    };
+    el.onmouseleave = () => this._hideTip();
   }
+
+  _hideTip() { this.tip.style.display = 'none'; }
 
   _canInvest(item, ench) {
     const id = this._playerId();
@@ -339,26 +399,29 @@ export class Menus {
 
   refreshShop() {
     const essence = this.game.partyEssence();
-    const rows = this.game.shopStock.map((s, i) => {
-      const it = s.item;
-      const afford = essence >= s.price;
-      const stat = it.type === 'weapon' ? `dano ${it.damage} · ${it.element}` : it.type === 'armor' ? `arm ${(it.armor * 100) | 0}%` : 'artefato';
-      return `<div class="it" style="cursor:default"><span><span class="dot" style="background:${RCOLOR[it.rarity]}"></span>${it.name} <span class="sub">${stat}</span></span>
-        <button class="mini" data-buy="${i}" ${afford ? '' : 'disabled'}>${s.price} ✦</button></div>`;
-    }).join('');
+    const pid = this._playerId();
+    const loadout = pid != null ? this.game.world.get(pid, C.Loadout) : null;
+    const slots = this.game.shopStock.map((s, i) =>
+      this._gslot(s.item, { data: `data-buy="${i}"`, price: s.price })).join('');
     this.shop.innerHTML = `<div class="panel">
       <span class="close" id="sh-close">✕ (E/Esc)</span>
       <h2>🪙 Mercador</h2>
-      <p class="sub">Essência do grupo: <b>${essence}</b> ✦</p>
-      <div class="items" style="min-width:380px">${rows}</div>
-      <button class="btn" id="sh-reroll" style="text-align:center;margin-top:10px" ${essence >= 5 ? '' : 'disabled'}>🔄 Renovar estoque (5 ✦)</button>
+      <p class="sub">"Pegue o que a floresta mandou — e deixe a essência." · Grupo: <b>${essence}</b> ✦</p>
+      <div class="ggrid" style="grid-template-columns:repeat(4,54px)">${slots}</div>
+      <button class="btn" id="sh-reroll" style="text-align:center;margin-top:14px" ${essence >= 5 ? '' : 'disabled'}>🔄 Renovar estoque (5 ✦)</button>
     </div>`;
+    this.shop.querySelectorAll('.gslot[data-buy]').forEach((el: any) => {
+      const i = +el.dataset.buy;
+      const offer = this.game.shopStock[i];
+      if (offer) this._bindTip(el, offer.item, loadout);
+      if (offer && essence < offer.price) { el.style.opacity = '.45'; el.style.cursor = 'not-allowed'; }
+    });
     this.shop.querySelector('#sh-close').onclick = () => this.closeShop();
     this.shop.querySelector('#sh-reroll').onclick = () => {
       if (this.game.spendEssence(5)) { this.game.rerollShop(); this.refreshShop(); }
     };
-    this.shop.querySelectorAll('.mini[data-buy]').forEach((el) => {
-      el.onclick = () => this._buy(+el.dataset.buy);
+    this.shop.querySelectorAll('.gslot[data-buy]').forEach((el: any) => {
+      el.onclick = () => { this._hideTip(); this._buy(+el.dataset.buy); };
     });
   }
 
