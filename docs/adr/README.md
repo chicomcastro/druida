@@ -63,3 +63,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0056](0056-ui-profissional.md) | UI profissional: tipografia, HUD refinado e números de dano | Aceito |
 | [0057](0057-upgrade-deps-seguranca.md) | Upgrade de toolchain por segurança (vite 7, vitest 4, cypress 15) | Aceito |
 | [0058](0058-iluminacao-diurna-sombras.md) | Iluminação diurna legível: sol dominante e sombras visíveis | Aceito |
+| [0059](0059-locomocao-natural.md) | Locomoção natural: easing de amplitude e contrapeso corporal | Aceito |
