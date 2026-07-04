@@ -20,35 +20,62 @@ export interface AnimState {
 export function animateBody(body: any, dt: number, st: AnimState): void {
   const parts = body?.userData?.parts;
   if (!parts) return;
+  const ud = body.userData;
 
-  const freq = st.moving ? 7 + Math.min(st.speed, 8) : 2.4;
-  body.userData._phase = (body.userData._phase ?? 0) + dt * freq;
-  const ph = body.userData._phase;
+  // Amplitude com easing: entra/sai da caminhada em ~0.1s em vez de "pop"
+  // de pose ao começar/parar. Cadência ligada à velocidade (passada curta).
+  const targetAmp = st.moving ? Math.min(1, 0.35 + st.speed * 0.11) : 0;
+  ud._amp = (ud._amp ?? 0) + (targetAmp - (ud._amp ?? 0)) * Math.min(1, dt * 12);
+  const amp = ud._amp;
+  const freq = st.moving ? 5.5 + Math.min(st.speed, 8) : 2.4;
+  ud._phase = (ud._phase ?? 0) + dt * freq;
+  const ph = ud._phase;
   const sw = Math.sin(ph);
-  const amp = st.moving ? Math.min(1, 0.3 + st.speed * 0.12) : 0;
   const idle = Math.sin(ph * 0.5) * 0.04;
   const a = Math.min(1, st.attack ?? 0);
   const r = Math.min(1, st.react ?? 0);
+  const walk = Math.min(1, amp * 3); // 0 = parado, 1 = andando (p/ blends)
 
-  // Bob do corpo: saltitante ao andar, respiração leve parado.
-  if (body.position) body.position.y = st.moving ? Math.abs(sw) * 0.06 : idle;
+  // Bob do corpo: dois apoios por ciclo (2×freq), afundando no contato do
+  // pé — o "peso" da passada; respiração leve quando parado.
+  if (body.position) {
+    const step = (0.5 - 0.5 * Math.cos(ph * 2)) * 0.075 * amp;
+    body.position.y = step * walk + idle * (1 - walk);
+  }
 
   // --- Locomoção por gait --------------------------------------------------
   let headX = 0;
   if (st.gait === 'biped') {
-    if (parts.legL) parts.legL.rotation.x = sw * 0.6 * amp;
-    if (parts.legR) parts.legR.rotation.x = -sw * 0.6 * amp;
-    if (parts.armL) parts.armL.rotation.x = -sw * 0.5 * amp;
-    if (parts.armR) parts.armR.rotation.x = sw * 0.5 * amp;
-    if (parts.head) parts.head.rotation.z = idle;
+    if (parts.legL) parts.legL.rotation.x = sw * 0.72 * amp;
+    if (parts.legR) parts.legR.rotation.x = -sw * 0.72 * amp;
+    // Braços contra-balançam com leve atraso (follow-through) e abertos.
+    const arm = Math.sin(ph - 0.3);
+    if (parts.armL) { parts.armL.rotation.x = -arm * 0.5 * amp; parts.armL.rotation.z = 0.09 * amp; }
+    if (parts.armR) { parts.armR.rotation.x = arm * 0.5 * amp; parts.armR.rotation.z = -0.09 * amp; }
+    // Tronco torce contra o quadril e rola de leve a cada apoio; a cabeça
+    // compensa a torção (o olhar fica estável — vida sem robotismo).
+    if (parts.torso) {
+      parts.torso.rotation.y = sw * 0.1 * amp;
+      parts.torso.rotation.z = Math.sin(ph * 2) * 0.03 * amp;
+    }
+    if (parts.head) {
+      parts.head.rotation.y = -sw * 0.08 * amp;
+      parts.head.rotation.z = idle * (1 - walk);
+    }
+    headX = Math.sin(ph * 2 + 0.6) * 0.05 * amp; // aceno sutil no passo
   } else if (st.gait === 'quadruped') {
-    const g = sw * 0.7 * amp;
+    const g = sw * 0.75 * amp;
     if (parts.legFL) parts.legFL.rotation.x = g;
     if (parts.legBR) parts.legBR.rotation.x = g;
     if (parts.legFR) parts.legFR.rotation.x = -g;
     if (parts.legBL) parts.legBL.rotation.x = -g;
-    if (parts.tail) parts.tail.rotation.x = Math.sin(ph * 0.6) * 0.2 + 0.1;
-    headX = idle;
+    // Coluna ondula no trote; cauda balança nos dois eixos.
+    if (parts.torso) parts.torso.rotation.x = Math.sin(ph * 2) * 0.05 * amp;
+    if (parts.tail) {
+      parts.tail.rotation.x = Math.sin(ph * 0.6) * 0.2 + 0.1;
+      parts.tail.rotation.y = Math.sin(ph * 1.3) * 0.25 * (0.4 + amp);
+    }
+    headX = idle + Math.sin(ph * 2) * 0.04 * amp;
   } else if (st.gait === 'bird') {
     const flap = Math.sin(ph * 1.6) * (st.moving ? 0.9 : 0.4);
     if (parts.wingL) parts.wingL.rotation.z = flap;
@@ -62,7 +89,8 @@ export function animateBody(body: any, dt: number, st: AnimState): void {
     if (parts.weapon) parts.weapon.rotation.x = -0.4 * a;
     headX = -0.35 * a; // investida de cabeça (gore p/ quadrúpedes)
   } else if (parts.weapon) {
-    parts.weapon.rotation.x = 0;
+    // Arma acompanha a passada com um leve atraso (peso na mão).
+    parts.weapon.rotation.x = -Math.sin(ph - 0.6) * 0.08 * amp;
   }
 
   // --- Recuo ao tomar dano (flinch) — domina ataque/idle -------------------
@@ -70,5 +98,10 @@ export function animateBody(body: any, dt: number, st: AnimState): void {
     headX = 0.6 * r; // cabeça pra trás
   }
   if (parts.head) parts.head.rotation.x = headX;
-  if (parts.torso) parts.torso.rotation.x = 0.3 * r; // tronco recua (0 quando r=0)
+  // Tronco: bípede inclina à frente com a passada (quadrúpede já ondulou a
+  // coluna acima); o recuo do flinch domina.
+  if (parts.torso) {
+    const lean = st.gait === 'quadruped' ? parts.torso.rotation.x : -0.1 * amp;
+    parts.torso.rotation.x = lean * (1 - r) + 0.3 * r;
+  }
 }
