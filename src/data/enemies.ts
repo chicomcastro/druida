@@ -62,4 +62,17 @@ export const BOSSES = {
     aggroRange: 40, attackRange: 3.0, attackCooldown: 1.6, xp: 300,
     loot: { dropChance: 1 },
   },
+  // Chefes de bioma (ADR 0101, E8.4): fases/slam via bossSystem.
+  mirelord: {
+    name: 'Senhor do Lodo', mesh: 'husk', behavior: 'summoner', boss: true,
+    hp: 700, speed: 1.8, damage: 18, radius: 1.5, scale: 1.7,
+    aggroRange: 34, attackRange: 2.6, attackCooldown: 2.2, summon: 'bogbrute', xp: 220,
+    loot: { dropChance: 1 },
+  },
+  frostreaver: {
+    name: 'Ceifador Gélido', mesh: 'wolf', behavior: 'melee', boss: true,
+    hp: 760, speed: 2.6, damage: 20, radius: 1.4, scale: 1.6,
+    aggroRange: 36, attackRange: 2.4, attackCooldown: 1.6, onHit: { freeze: 1.0 }, xp: 240,
+    loot: { dropChance: 1 },
+  },
 };

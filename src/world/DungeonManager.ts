@@ -189,9 +189,11 @@ export class DungeonManager {
     }
     if (last) {
       const mb = a.theme.miniboss;
-      const id = this.game.spawnMiniBoss(ARENA.x, ARENA.z - 6, {
-        name: mb.name, mesh: mb.mesh, hp: Math.round(420 * mb.hpMul),
-      });
+      // Temas com `boss` invocam um chefe pleno (fases + slam + invocações —
+      // ADR 0101); os demais mantêm o mini-chefe temático (ADR 0048).
+      const id = mb.boss
+        ? this.game.spawnBossByKey(mb.boss, ARENA.x, ARENA.z - 6)
+        : this.game.spawnMiniBoss(ARENA.x, ARENA.z - 6, { name: mb.name, mesh: mb.mesh, hp: Math.round(420 * mb.hpMul) });
       if (id) a.enemies.push(id);
       this.game.emit('objective', { text: `${mb.name} desperta!` });
     } else {

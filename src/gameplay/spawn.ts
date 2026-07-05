@@ -131,6 +131,17 @@ export function spawnBossFight(game, x, z) {
   return id;
 }
 
+/** Spawna um chefe do catálogo BOSSES (fases/slam via bossSystem — ADR 0101). */
+export function spawnBossByKey(game, key, x, z) {
+  const def = BOSSES[key];
+  if (!def) return null;
+  const id = spawnEnemyByKey(game, key, x, z);
+  const boss = game.world.get(id, C.Boss);
+  if (boss) boss.name = def.name;
+  game.emit('objective', { text: `${def.name} desperta!` });
+  return id;
+}
+
 export function spawnMiniBoss(game, x, z, overrides: any = {}) {
   const def = {
     name: 'Árvore-Carniça', mesh: 'husk', behavior: 'melee', boss: true,
