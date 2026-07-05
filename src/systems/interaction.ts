@@ -22,6 +22,9 @@ export function interactionSystem(game, dt) {
         else if (inter.kind === 'dungeon') game.dungeon.enter(inter.entranceId);
         else if (inter.kind === 'dungeon_reward') game.dungeon.claimReward();
         else if (inter.kind === 'villager') game.emit('dialogue', { lines: inter.lines });
+        else if (inter.kind === 'house') game.interiors.enter(inter.interiorTheme, inter.houseLabel);
+        else if (inter.kind === 'house_exit') game.interiors.exit();
+        else if (inter.kind === 'tavern') { game.emit('dialogue', { lines: inter.lines }); game.interiors.rest(); }
         else if (inter.kind === 'quest_giver') game.quests?.onTalk(inter);
         else game.story.onInteract(inter, pc.index);
         game.emit('interacted', { iid, by: pc.index });

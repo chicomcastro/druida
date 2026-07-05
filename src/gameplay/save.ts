@@ -18,7 +18,7 @@ const KEY = 'druida.save.v1';
 const AUTOSAVE_DEBOUNCE = 1500; // ms — coalesce vários gatilhos próximos
 
 // Eventos que representam progresso digno de persistir.
-const AUTOSAVE_EVENTS = ['levelUp', 'storyStep', 'formUnlocked', 'campPurified', 'fastTravel', 'victory', 'questCompleted', 'boonChosen'];
+const AUTOSAVE_EVENTS = ['levelUp', 'storyStep', 'formUnlocked', 'campPurified', 'fastTravel', 'victory', 'questCompleted', 'boonChosen', 'rested'];
 
 export function serialize(game): SaveV1 {
   const players: PlayerSnapshot[] = [];

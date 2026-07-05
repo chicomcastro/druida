@@ -5,6 +5,7 @@ import { makeRng, angleTo } from '../utils/math.js';
 import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
 import { pixelTexture, tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { buildMerchantStall } from './landmarks.js';
+import { interiorTheme } from '../data/interiors.js';
 
 /** Alinha um ângulo ao grid voxel — só rotações de 90°, como no MCD (ADR 0076). */
 const snap90 = (a) => Math.round(a / (Math.PI / 2)) * (Math.PI / 2);
@@ -342,6 +343,28 @@ export class SettlementManager {
   }
 
   /**
+   * Porta entrável de uma casa (ADR 0094): placa suspensa na cor do tema como
+   * marca visual + entidade interativa que abre o interior. `lx/lz` são coords
+   * locais da vila (convertidas para mundo pela entidade).
+   */
+  _houseDoor(w, lx, lz, themeId) {
+    const theme = interiorTheme(themeId);
+    const sign = mesh(new THREE.BoxGeometry(0.7, 0.42, 0.1), theme.accent, {
+      emissive: theme.accent, emissiveIntensity: 0.7, shadow: false,
+    });
+    sign.position.set(lx, 2.55, lz);
+    w.add(sign);
+    this._flames.push({ mesh: sign, base: 0.7, amp: 0.2, speed: 2.2, seed: lx + lz });
+    const wp = w.world(lx, lz);
+    const id = this.game.world.createEntity();
+    this.game.world.add(id, C.Transform, Transform(wp.x, wp.z));
+    this.game.world.add(id, C.Interactable, {
+      kind: 'house', interiorTheme: themeId, houseLabel: theme.role,
+      prompt: `E — Entrar (${theme.role})`, range: 3.2, used: false,
+    });
+  }
+
+  /**
    * Validador de sobreposição (ADR 0085): cada estrutura registra sua pegada
    * (AABB em coords locais da vila). `overlaps()` devolve os pares que se
    * intersectam — o teste de layout falha se houver qualquer um, e o console
@@ -461,6 +484,10 @@ export class SettlementManager {
       [-7, 19, { annex: true }],
       [7, 19, { w: 4, d: 4, roof: 0x4c7a34 }],
     ];
+    // Interiores acessíveis (ADR 0094, E5): cada casa é uma loja/serviço com
+    // propósito. Mercado geral fica na banca externa; aqui vão as lojas
+    // especializadas, a taverna, a liderança, o salão e moradias.
+    const HOUSE_THEMES = ['weapons', 'armor', 'tavern', 'leader', 'hall', 'home', 'home', 'home', 'home'];
     // Espigões de porta (ADR 0083): cada casa ganha um caminho da SUA porta
     // até a artéria mais próxima — nenhuma porta dá no nada.
     const spurs: number[][] = [];
@@ -481,6 +508,7 @@ export class SettlementManager {
       }
       const dpos = this._spun(hg.position.x, hg.position.z, ry, -0.7, (o.d ?? 4) / 2 + 0.8);
       const dx = Math.round(dpos.x), dz = Math.round(dpos.z);
+      this._houseDoor(w, dpos.x, dpos.z, HOUSE_THEMES[i] ?? 'home'); // porta entrável (ADR 0094)
       if (dz >= 15) spurs.push([dx, dz, dx, 14], [dx, 14, 0, 14]); // casas do norte via rua z14
       else spurs.push(Math.abs(dz - 4) <= Math.abs(dx) ? [dx, dz, dx, 4] : [dx, dz, 0, dz]);
       if (i % 2 === 0) {
