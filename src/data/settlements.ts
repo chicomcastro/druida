@@ -91,6 +91,33 @@ export const SETTLEMENTS: SettlementDef[] = [
           'Ruda: Os coletores do Vau das Palafitas ainda resistem lá. Leve notícias nossas, se chegar.',
         ],
       },
+      {
+        name: 'Ferreiro-de-Raízes Cedro',
+        x: 11,
+        z: 1,
+        lines: [
+          'Cedro: Eu não forjo ferro — eu convenço a madeira. Cabo bom é o que ainda lembra de ser galho.',
+          'Cedro: Se a sua arma rachar, traga aqui. Raiz viva emenda melhor que prego.',
+        ],
+      },
+      {
+        name: 'Tecelã Urze',
+        x: -11,
+        z: 2,
+        lines: [
+          'Urze: Cada telhado desta vila passou pelo meu tear. Musgo por cima, oração por baixo.',
+          'Urze: Teço com fibra de junco do Vau. Quando o comércio parar, a vila fica descoberta — em todo sentido.',
+        ],
+      },
+      {
+        name: 'Velho Sabugo',
+        x: 3,
+        z: 8,
+        lines: [
+          'Sabugo: Eu era vigia quando a Carvalho-Mãe ainda cabia num abraço. Hoje só vigio a fogueira.',
+          'Sabugo: Sente o cheiro? Fumaça de lenha limpa. Enquanto durar esse cheiro, a vila está de pé.',
+        ],
+      },
     ],
   },
   {
@@ -136,6 +163,24 @@ export const SETTLEMENTS: SettlementDef[] = [
         lines: [
           'Íris: A seiva boa desce da Clareira. A ruim sobe do Coração. No meio, a gente filtra.',
           'Íris: Se as suas botas afundarem no lodo, ande pelas passarelas. O pântano engole quem tem pressa.',
+        ],
+      },
+      {
+        name: 'Tecelão Junco',
+        x: 0,
+        z: 4,
+        lines: [
+          'Junco: Passarela solta mata mais que Casca Oca. Eu amarro cada tábua três vezes.',
+          'Junco: A Urze do Carvalho compra minha fibra. Se vir a tecelã, diga que o junco deste ano veio forte.',
+        ],
+      },
+      {
+        name: 'Curandeira Lentilha',
+        x: 9,
+        z: -2,
+        lines: [
+          'Lentilha: Febre do brejo se cura com lodo quente e paciência. Corrupção, só com o que você carrega aí.',
+          'Lentilha: Beba água só das lanternas de musgo. O resto deste pântano é chá de podridão.',
         ],
       },
     ],
@@ -203,6 +248,24 @@ export const SETTLEMENTS: SettlementDef[] = [
           'Fuligem: Dizem que nos Picos existe uma chama que queima azul e nunca apaga. Queria ver isso antes do fim.',
         ],
       },
+      {
+        name: 'Serrador Nó',
+        x: 5,
+        z: 6,
+        lines: [
+          'Nó: A serraria come um tronco por dia. Madeira corrompida a gente corta primeiro e queima depois — nessa ordem.',
+          'Nó: Ouça a lâmina: quando ela canta limpo, a tora é boa. Quando engasga… afaste-se.',
+        ],
+      },
+      {
+        name: 'Guarda-Brasas Cinza',
+        x: -4,
+        z: -2,
+        lines: [
+          'Cinza: Meu trabalho é simples: nenhum braseiro apaga no meu turno. Nenhum. Nunca.',
+          'Cinza: O Baru fala dos fornos, mas são os braseiros que seguram a noite. Pode agradecer depois.',
+        ],
+      },
     ],
     merchant: { x: 3, z: -10 },
     quest: {
@@ -261,11 +324,29 @@ export const SETTLEMENTS: SettlementDef[] = [
       },
       {
         name: 'Batedora Neve',
-        x: 8,
-        z: 7,
+        x: 11,
+        z: 4,
         lines: [
           'Neve: Eu marco a trilha até a borda do Coração. Depois dos últimos cairns, nem eu sigo.',
           'Neve: Lá embaixo as árvores têm olhos, Druida. Vá com todas as Formas que conseguir despertar.',
+        ],
+      },
+      {
+        name: 'Escavador Sílex',
+        x: -8,
+        z: -3,
+        lines: [
+          'Sílex: Cavo abrigo no gelo desde menino. O truque é escutar: gelo bom range, gelo ruim silencia.',
+          'Sílex: Achei uma parede azul lisa demais pra ser natural, lá na encosta. Não cavei mais fundo. Nem vou.',
+        ],
+      },
+      {
+        name: 'Guia Bruma',
+        x: 3,
+        z: 11,
+        lines: [
+          'Bruma: Eu levo caravanas até Cinzafolha quando o tempo abre. O tempo não abre há semanas.',
+          'Bruma: Se a nevasca te pegar, procure os cairns. Cada pilha de pedra é alguém que chegou vivo.',
         ],
       },
     ],
