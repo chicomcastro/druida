@@ -93,4 +93,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0087](0087-armadura-anatomica.md) | Armadura anatômica em 4 peças (E1) | Aceito |
 | [0088](0088-modificadores-e-familias.md) | Modificadores de raridade + famílias de arma (E1) | Aceito |
 | [0089](0089-consumiveis.md) | Consumíveis: poções de efeito instantâneo (E1) | Aceito |
+| [0090](0090-ui-mcd-icones-paperdoll.md) | UI MCD 2.0: ícones, paperdoll e grade 5×10 (E2) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

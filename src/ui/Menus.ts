@@ -2,6 +2,7 @@ import { C } from '../core/ecs/components.js';
 import { FORMS } from '../gameplay/forms.js';
 import { ENCHANTMENTS, salvageValue } from '../gameplay/loot.js';
 import { modText as MODTEXT } from '../gameplay/modifiers.js';
+import { itemIconURL } from './itemIcons.js';
 import { applyEquipment } from '../gameplay/equip.js';
 import { saveToStorage, hasSave } from '../gameplay/save.js';
 import { BOONS, chooseBoon } from '../gameplay/boons.js';
@@ -40,14 +41,26 @@ const css = `
 /* Grade de slots RPG (ADR 0072): quadrados com ícone, raridade na borda,
    tooltip de comparação e preço no mercador. */
 .eqrow{display:flex;gap:8px;margin:6px 0 26px}
+/* Paperdoll anatômico (ADR 0090): peças em torno da silhueta do avatar. */
+.paperdoll{display:grid;grid-template-columns:repeat(3,54px);grid-auto-rows:54px;gap:10px 12px;justify-content:center;margin:10px 0 30px}
+.paperdoll .pd-weapon{grid-column:1;grid-row:2}
+.paperdoll .pd-head{grid-column:2;grid-row:1}
+.paperdoll .pd-body{grid-column:2;grid-row:2}
+.paperdoll .pd-legs{grid-column:2;grid-row:3}
+.paperdoll .pd-boots{grid-column:2;grid-row:4}
+.paperdoll .pd-a0{grid-column:3;grid-row:1}
+.paperdoll .pd-a1{grid-column:3;grid-row:2}
+.paperdoll .pd-a2{grid-column:3;grid-row:3}
 .gslot{width:54px;height:54px;border-radius:10px;border:2px solid rgba(255,255,255,.16);background:linear-gradient(160deg,rgba(20,32,18,.92),rgba(8,14,8,.92));display:flex;align-items:center;justify-content:center;font-size:24px;position:relative;cursor:pointer;transition:transform .1s,border-color .1s,box-shadow .1s;box-shadow:inset 0 2px 6px rgba(0,0,0,.5)}
 .gslot:hover{transform:translateY(-2px);border-color:#9fe06a;box-shadow:0 4px 12px rgba(0,0,0,.4)}
 .gslot.empty{opacity:.4;cursor:default}
 .gslot.empty:hover{transform:none;border-color:rgba(255,255,255,.16);box-shadow:inset 0 2px 6px rgba(0,0,0,.5)}
 .gslot.sel{border-color:#ffd56a;box-shadow:0 0 14px rgba(255,213,106,.3)}
+.gslot .ic{width:44px;height:44px;image-rendering:pixelated;image-rendering:crisp-edges;border-radius:6px}
 .gslot .tag{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-size:8.5px;white-space:nowrap;opacity:.6;text-transform:uppercase;letter-spacing:.06em}
 .gslot .price{position:absolute;bottom:1px;right:3px;font-size:9.5px;color:#ffd56a;font-weight:700;text-shadow:0 1px 2px #000}
-.ggrid{display:grid;grid-template-columns:repeat(6,54px);gap:7px;max-height:252px;overflow:auto;padding:2px}
+.ggrid{display:grid;grid-template-columns:repeat(5,54px);gap:7px;max-height:340px;overflow:auto;padding:2px}
+@media (max-width:900px){.ggrid{grid-template-columns:repeat(5,46px)}.gslot{width:46px;height:46px}.gslot .ic{width:38px;height:38px}}
 #tip{position:fixed;z-index:60;pointer-events:none;display:none;max-width:240px;background:linear-gradient(165deg,#152315,#0a130c);border:1px solid rgba(159,224,106,.4);border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.45;box-shadow:0 12px 32px rgba(0,0,0,.6);color:#eaf3e6;font-family:system-ui,sans-serif}
 #tip b{font-size:13px}
 #tip .up{color:#8affa0}#tip .down{color:#ff8a8a}
@@ -249,34 +262,37 @@ export class Menus {
     const forms = this.game.world.get(id, C.Form).list.map((f) => FORMS[f].name).join(', ');
 
     const ar = loadout.armor ?? {};
+    // Paperdoll anatômico (ADR 0090): posição no grid via classe pd-*.
     const EQ = [
-      { key: 'weapon', label: 'Arma', item: loadout.weapon },
-      { key: 'armor:head', label: 'Elmo', item: ar.head },
-      { key: 'armor:body', label: 'Peito', item: ar.body },
-      { key: 'armor:legs', label: 'Calças', item: ar.legs },
-      { key: 'armor:boots', label: 'Botas', item: ar.boots },
-      { key: 'artifact0', label: 'Dom 1', item: loadout.artifacts[0] },
-      { key: 'artifact1', label: 'Dom 2', item: loadout.artifacts[1] },
-      { key: 'artifact2', label: 'Dom 3', item: loadout.artifacts[2] },
+      { key: 'weapon', label: 'Arma', item: loadout.weapon, pd: 'pd-weapon' },
+      { key: 'armor:head', label: 'Elmo', item: ar.head, pd: 'pd-head' },
+      { key: 'armor:body', label: 'Peito', item: ar.body, pd: 'pd-body' },
+      { key: 'armor:legs', label: 'Calças', item: ar.legs, pd: 'pd-legs' },
+      { key: 'armor:boots', label: 'Botas', item: ar.boots, pd: 'pd-boots' },
+      { key: 'artifact0', label: 'Dom 1', item: loadout.artifacts[0], pd: 'pd-a0' },
+      { key: 'artifact1', label: 'Dom 2', item: loadout.artifacts[1], pd: 'pd-a1' },
+      { key: 'artifact2', label: 'Dom 3', item: loadout.artifacts[2], pd: 'pd-a2' },
     ];
     const sel = EQ.find((e) => e.key === this._selSlot) ?? EQ[0];
+    // Grade fixa 5×10 (ADR 0090): itens preenchem, resto vazio até 50.
+    const CAP = Math.max(50, Math.ceil(inv.items.length / 5) * 5);
+    let bag = '';
+    for (let i = 0; i < CAP; i++) bag += this._gslot(inv.items[i] ?? null, inv.items[i] ? { data: `data-i="${i}"` } : {});
     this.inv.innerHTML = `<div class="panel">
       <span class="close" id="iv-close">✕ (B)</span>
       <h2>Mochila do Druida</h2>
       <p class="sub">Pontos de encanto: <b>${loadout.enchantPoints}</b> · Essência: <b>${inv.essence}</b> ✦ · Formas: ${forms}</p>
       <div class="inv">
         <div>
-          <div class="lbl" style="margin-bottom:4px">Equipado — clique para encantar</div>
-          <div class="eqrow">
-            ${EQ.map((e) => this._gslot(e.item, { tag: e.label, sel: e.key === this._selSlot, data: `data-slot="${e.key}"` })).join('')}
+          <div class="lbl" style="margin-bottom:4px">Equipado — clique para ver/encantar</div>
+          <div class="paperdoll">
+            ${EQ.map((e) => this._gslot(e.item, { tag: e.label, sel: e.key === this._selSlot, data: `data-slot="${e.key}"`, extra: e.pd })).join('')}
           </div>
           <div id="iv-detail">${this._detailHtml(sel.label, sel.item)}</div>
         </div>
         <div>
-          <div class="lbl" style="margin-bottom:4px">Mochila — clique equipa · direito desmonta (+✦)</div>
-          <div class="ggrid" id="iv-items">
-            ${inv.items.length ? inv.items.map((it, i) => this._gslot(it, { data: `data-i="${i}"` })).join('') : '<div class="sub" style="grid-column:1/-1">Vazia. A floresta provê a quem caça.</div>'}
-          </div>
+          <div class="lbl" style="margin-bottom:4px">Mochila (5×10) — clique equipa/usa · direito desmonta (+✦)</div>
+          <div class="ggrid" id="iv-items">${bag}</div>
         </div>
       </div>
     </div>`;
@@ -299,12 +315,14 @@ export class Menus {
   }
 
   /** Slot quadrado com ícone e raridade na borda (grade RPG — ADR 0072). */
-  _gslot(item, { tag = '', sel = false, data = '', price = null }: any = {}) {
+  _gslot(item, { tag = '', sel = false, data = '', price = null, extra = '' }: any = {}) {
     const ICON = { weapon: '⚔️', armor: '🛡️', artifact: '🌿', consumable: '🧪' };
-    const icon = item ? (ICON[item.type] ?? '🌿') : '';
+    // Ícone ilustrado (ADR 0090); emoji como fallback headless/sem canvas.
+    const url = item ? itemIconURL(item) : '';
+    const glyph = url ? `<img class="ic" src="${url}" alt="">` : (item ? (ICON[item.type] ?? '🌿') : '');
     const border = item ? `style="border-color:${RCOLOR[item.rarity]}"` : '';
-    const cls = `gslot${item ? '' : ' empty'}${sel ? ' sel' : ''}`;
-    return `<div class="${cls}" ${border} ${data}>${icon}
+    const cls = `gslot${item ? '' : ' empty'}${sel ? ' sel' : ''}${extra ? ' ' + extra : ''}`;
+    return `<div class="${cls}" ${border} ${data}>${glyph}
       ${price != null ? `<span class="price">${price}✦</span>` : ''}
       ${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
   }
