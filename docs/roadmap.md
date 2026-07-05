@@ -145,5 +145,5 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E5 Vila 1 viva | ✅ entregue (interiores + rixa das famílias) | Gate D |
 | E6 Side quests | ✅ entregue (motor de triggers + 3 arcos) | — |
 | E7 Vilas 2–4 | ✅ entregue (interiores nas 4 vilas + mercado geral) | — |
-| E8 Mundo vivo | 🚧 E8.1 fauna ok (falta hazards/inimigos/bosses) | Gate E |
+| E8 Mundo vivo | 🚧 E8.1 fauna + E8.2 hazards ok (falta inimigos/bosses) | Gate E |
 | E9 Economia/1ª hora | ⏳ | Gate F |
