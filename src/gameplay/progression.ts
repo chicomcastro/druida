@@ -1,5 +1,6 @@
 import { C } from '../core/ecs/components.js';
 import { BALANCE } from '../data/balance.js';
+import { ensureSkillState } from './skills.js';
 
 /**
  * Progressão de grupo (party). XP é compartilhado; subir de nível concede
@@ -19,6 +20,8 @@ export function grantXp(game, amount) {
     p.xp -= xpForLevel(p.level);
     p.level++;
     p.enchantPoints += BALANCE.progression.enchantPointsPerLevel;
+    ensureSkillState(game);
+    p.skillPoints++; // 1 ponto de talento por nível (ADR 0093)
     leveled = true;
     // Distribui ponto de encanto a cada jogador.
     for (const [, loadout] of game.world.query(C.Loadout)) {

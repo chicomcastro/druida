@@ -47,6 +47,7 @@ import { generateItem } from '../gameplay/loot.js';
 import { applyEquipment, equippedItems, armorPieces } from '../gameplay/equip.js';
 import { sumMod } from '../gameplay/modifiers.js';
 import { comboMul } from '../gameplay/combo.js';
+import { skillBonus } from '../gameplay/skills.js';
 import { applyDamage } from '../gameplay/combat.js';
 import { bindGameEvents } from './gameEvents.js';
 import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, scaleEnemy, registerEliteEffects } from '../gameplay/spawn.js';
@@ -223,6 +224,7 @@ export class Game {
     mul *= 1 + sumMod(equippedItems(eq), 'might') / 100; // afixo Potência (ADR 0088)
     const pc = this.world.get(id, C.PlayerControlled);
     if (pc?.combo) mul *= comboMul(pc.combo); // bônus de combo (ADR 0092)
+    mul *= 1 + skillBonus(this, id, 'dmg') / 100; // talentos de dano (ADR 0093)
     return mul;
   }
 

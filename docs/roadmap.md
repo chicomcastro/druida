@@ -138,11 +138,11 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 
 | Épico | Estado | Gate |
 |---|---|---|
-| E1 Itens RPG | 🔜 próximo | — |
-| E2 UI MCD 2.0 | ⏳ | Gate A |
-| E3 Combate/Combo | ⏳ | Gate B |
-| E4 Skill Tree | ⏳ | Gate C |
-| E5 Vila 1 viva | ⏳ | Gate D |
+| E1 Itens RPG | ✅ entregue | — |
+| E2 UI MCD 2.0 | ✅ entregue | Gate A |
+| E3 Combate/Combo | ✅ entregue | Gate B |
+| E4 Skill Tree | ✅ entregue | Gate C |
+| E5 Vila 1 viva | 🚧 próximo | Gate D |
 | E6 Side quests | ⏳ | — |
 | E7 Vilas 2–4 | ⏳ | — |
 | E8 Mundo vivo | ⏳ | Gate E |
