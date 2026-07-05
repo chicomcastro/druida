@@ -2,6 +2,7 @@ import { makeRng, weightedPick } from '../utils/math.js';
 import { BALANCE } from '../data/balance.js';
 import type { Item, ItemType, Rarity, RarityDef, EnchantDef, WeaponStyle, ArmorSlot, ArmorSet, WeaponFamily } from '../types.js';
 import { MODIFIERS, rollModifiers } from './modifiers.js';
+import { generateConsumable } from './consumables.js';
 
 /**
  * Sistema de loot/itens inspirado no MC Dungeons: raridades, armas de
@@ -166,6 +167,10 @@ export function rollDrops(lootTable, level: number, rng = Math.random): Item[] {
   // Chance base de dropar um item.
   if (rng() < (lootTable?.dropChance ?? BALANCE.loot.defaultDropChance)) {
     drops.push(generateItem(level));
+  }
+  // Chance menor de dropar uma poção de cura (ADR 0089).
+  if (rng() < (lootTable?.potionChance ?? 0.1)) {
+    drops.push(generateConsumable('heal_s', level));
   }
   return drops;
 }

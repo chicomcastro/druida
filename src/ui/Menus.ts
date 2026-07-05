@@ -385,6 +385,11 @@ export class Menus {
     const inv = this.game.world.get(id, C.Inventory);
     const item = inv.items[i];
     if (!item) return;
+    // Consumível: usa (se surtir efeito) em vez de equipar.
+    if (item.type === 'consumable') {
+      if (this.game.useConsumable(id, item)) { inv.items.splice(i, 1); this.refreshInventory(); }
+      return;
+    }
     inv.items.splice(i, 1);
     this.game.equip(id, item);
     this.game.emit('itemEquipped', { id, item });
