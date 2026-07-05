@@ -55,6 +55,14 @@ const css = `
 #hud-victory h1{font-size:52px;margin:0;color:#9fe06a;text-shadow:0 3px 18px rgba(159,224,106,.5);font-family:'Cinzel',Georgia,serif}
 #hud-victory p{opacity:.85;max-width:520px}
 .dmgnum{position:absolute;font-weight:800;font-size:15px;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.6);pointer-events:none;transform:translate(-50%,-50%);transition:none}
+/* Barra de combo (ADR 0092): enche no tempo de execução; zona verde = sweet
+   spot (60–90%); acertar encadeia e aumenta o DPS. */
+#hud-combo{position:absolute;top:96px;left:50%;transform:translateX(-50%);width:260px;height:16px;display:none;z-index:6;text-align:center}
+#hud-combo .track{position:relative;height:12px;border-radius:7px;background:rgba(8,14,8,.7);border:1px solid rgba(255,255,255,.18);overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.5)}
+#hud-combo .zone{position:absolute;top:0;bottom:0;left:60%;width:30%;background:rgba(122,224,120,.35);border-left:1px solid rgba(160,255,150,.6);border-right:1px solid rgba(160,255,150,.6)}
+#hud-combo .fill{position:absolute;top:0;bottom:0;left:0;width:0;background:linear-gradient(90deg,#ffd56a,#ff9a3a)}
+#hud-combo .cnt{margin-top:2px;font-size:12px;font-weight:800;color:#ffd56a;text-shadow:0 1px 3px #000}
+#hud-combo.flash .track{box-shadow:0 0 14px rgba(160,255,150,.8)}
 /* Hotbar 1–9 (ADR 0091): itens rápidos (poções) na base central. */
 #hud-hotbar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:6}
 #hud-hotbar .hb{width:44px;height:44px;border-radius:9px;border:2px solid rgba(255,255,255,.16);background:linear-gradient(160deg,rgba(20,32,18,.9),rgba(8,14,8,.9));position:relative;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4)}
@@ -94,6 +102,7 @@ export class Hud {
   dialogueEl: any; victoryEl: any; toastEl: any; saveEl: any;
   panels: Map<number, any>;
   hotbarEl: any; _hotbarKey: string;
+  comboEl: any; comboFill: any; comboCnt: any; _comboFlash: any;
   _dialogueQueue: string[];
   _dlgT: any; _toastT: any; _saveT: any;
   constructor(game) {
@@ -114,6 +123,7 @@ export class Hud {
       <div id="hud-toast"></div>
       <div id="hud-save">💾 Salvo</div>
       <div id="hud-hotbar"></div>
+      <div id="hud-combo"><div class="track"><div class="zone"></div><div class="fill"></div></div><div class="cnt"></div></div>
       <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
       <div id="hud-hint">WASD andar · J atacar · Shift esquivar · E falar<br>5–9 formas · U/I/O dons · Q poção · B mochila · M mapa · T voltar ao Carvalho</div>`;
     document.body.appendChild(this.root);
@@ -136,6 +146,10 @@ export class Hud {
     this.saveEl = this.root.querySelector('#hud-save');
     this.hotbarEl = this.root.querySelector('#hud-hotbar');
     this._hotbarKey = '';
+    this.comboEl = this.root.querySelector('#hud-combo');
+    this.comboFill = this.comboEl.querySelector('.fill');
+    this.comboCnt = this.comboEl.querySelector('.cnt');
+    game.on('combo', () => { this.comboEl.classList.add('flash'); clearTimeout(this._comboFlash); this._comboFlash = setTimeout(() => this.comboEl.classList.remove('flash'), 140); });
     this.panels = new Map();
 
     game.on('biomeChanged', (e) => this.toast(e.def.name));
@@ -199,6 +213,19 @@ export class Hud {
     }).join('');
   }
 
+  /** Barra de combo (ADR 0092): visível só durante a janela do P1. */
+  _updateCombo() {
+    const { game } = this;
+    let pc = null;
+    for (const [, p] of game.world.query(C.PlayerControlled)) { if (p.index === 0) { pc = p; break; } }
+    const active = pc && pc.attackTimer > 0 && pc.castTotal > 0;
+    if (!active) { if (this.comboEl.style.display !== 'none') this.comboEl.style.display = 'none'; return; }
+    this.comboEl.style.display = 'block';
+    const p = 1 - pc.attackTimer / pc.castTotal;
+    this.comboFill.style.width = Math.max(0, Math.min(1, p)) * 100 + '%';
+    this.comboCnt.textContent = pc.combo > 0 ? `Combo ×${pc.combo}` : '';
+  }
+
   update() {
     const { game } = this;
     const seen = new Set();
@@ -245,6 +272,7 @@ export class Hud {
     }
 
     this._updateHotbar();
+    this._updateCombo();
 
     this.biomeEl.textContent = `${game.currentBiomeName()} ${game.dayNight?.icon?.() ?? ''}`;
     this.lvlEl.textContent = `Nível ${game.progress.level} · ${game.partyEssence()} essência`;

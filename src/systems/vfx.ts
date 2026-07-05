@@ -40,6 +40,8 @@ export class VfxManager {
     game.on('vfxCone', (e) => this.ring(e.x, e.z, 2.5, e.color, 0.25));
     game.on('formSwap', (e) => this.ring(e.x, e.z, 1.5, 0x9fe06a, 0.4));
     game.on('dodge', (e) => this.ring(e.x, e.z, 1.0, 0xffffff, 0.25));
+    // Telegraph de inimigo (ADR 0092): anel de aviso vermelho no windup.
+    game.on('enemyTelegraph', (e) => this.marker(e.x, e.z, 1.4, e.dur ?? 0.35, 0xff5a4a));
     game.on('kill', (e) => {
       const c = e.bossName ? 0xb06bd0 : 0xff6a4a;
       this.burst(e.x, e.z, c, e.bossName ? 26 : 14);
@@ -186,9 +188,9 @@ export class VfxManager {
     }
   }
 
-  marker(x, z, radius, delay) {
+  marker(x, z, radius, delay, color = 0xff5a2a) {
     const geo = new THREE.RingGeometry(radius * 0.9, radius, 28);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xff5a2a, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
     const m = new THREE.Mesh(geo, mat);
     m.rotation.x = -Math.PI / 2;
     m.position.set(x, 0.06, z);

@@ -46,6 +46,7 @@ import { ABILITIES } from '../gameplay/abilities/index.js';
 import { generateItem } from '../gameplay/loot.js';
 import { applyEquipment, equippedItems, armorPieces } from '../gameplay/equip.js';
 import { sumMod } from '../gameplay/modifiers.js';
+import { comboMul } from '../gameplay/combo.js';
 import { applyDamage } from '../gameplay/combat.js';
 import { bindGameEvents } from './gameEvents.js';
 import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, scaleEnemy, registerEliteEffects } from '../gameplay/spawn.js';
@@ -220,6 +221,8 @@ export class Game {
     const fero = eq?.weapon?.enchants?.find((e) => e.id === 'ferocidade');
     if (fero) mul += 0.25 * fero.level;
     mul *= 1 + sumMod(equippedItems(eq), 'might') / 100; // afixo Potência (ADR 0088)
+    const pc = this.world.get(id, C.PlayerControlled);
+    if (pc?.combo) mul *= comboMul(pc.combo); // bônus de combo (ADR 0092)
     return mul;
   }
 
