@@ -234,7 +234,7 @@ Feedback: portas menores que o avatar encolhem as construções; portas sem
 caminho; vilas dos outros biomas precisam de estrutura e conteúdo.
 
 - [x] 📐 M19.1 Proporção herói/porta: portas ≥2.1u e pé-direito 3u em TODAS as construções (casas, cabanas, tendas, palafitas) — ADR 0082
-- [ ] 🛣️ M19.2 Toda porta liga numa rua: malha conectada + espaçamento revisado nas 4 vilas
+- [x] 🛣️ M19.2 Toda porta liga numa rua: espigões automáticos no hub, rotações corrigidas (palafitas/cabanas), rede de píer no Vau — ADR 0083
 - [ ] 🏗️ M19.3 Vilas com estrutura e conteúdo: +construções, assinatura por vila (torre de vigia, píer, muro de gelo) e props de rua (barris, lenha, varais)
 
 ---
