@@ -50,6 +50,7 @@ import { applyDamage } from '../gameplay/combat.js';
 import { bindGameEvents } from './gameEvents.js';
 import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, scaleEnemy, registerEliteEffects } from '../gameplay/spawn.js';
 import { partyEssence as _partyEssence, spendEssence as _spendEssence, giveItem as _giveItem, rerollShop as _rerollShop, setActiveShop as _setActiveShop } from '../gameplay/economy.js';
+import { useConsumable as _useConsumable } from '../gameplay/consumables.js';
 import { QuestManager } from '../gameplay/quests.js';
 import { registerBoonHooks } from '../gameplay/boons.js';
 import { Telemetry } from '../gameplay/telemetry.js';
@@ -300,6 +301,7 @@ export class Game {
   giveItem(item) { return _giveItem(this, item); }
   rerollShop() { return _rerollShop(this); }
   setActiveShop(key) { return _setActiveShop(this, key); }
+  useConsumable(id, item) { return _useConsumable(this, id, item); }
 
   // --- Loop ---------------------------------------------------------------
   gatherInput() {

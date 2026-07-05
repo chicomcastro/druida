@@ -1,5 +1,6 @@
 import { C } from '../core/ecs/components.js';
 import { generateItem } from './loot.js';
+import { generateConsumable } from './consumables.js';
 
 /**
  * Economia do grupo: essência compartilhada e estoque do mercador (extraído de
@@ -44,10 +45,13 @@ export function rerollShop(game) {
   const lvl = game.regionLevel();
   const price = { common: 12, rare: 30, unique: 70 };
   game.shopStock = [];
-  for (let i = 0; i < 4; i++) {
+  // 3 equipamentos + 1 poção (ADR 0089): sempre há cura à venda.
+  for (let i = 0; i < 3; i++) {
     const it = generateItem(lvl);
     game.shopStock.push({ item: it, price: Math.round((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
   }
+  const potion = generateConsumable('heal_s', lvl);
+  game.shopStock.push({ item: potion, price: Math.round(8 * (1 + (lvl - 1) * 0.1)) });
   if (game._shopStocks) game._shopStocks[game.activeShopKey ?? 'hub'] = game.shopStock;
   return game.shopStock;
 }
