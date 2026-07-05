@@ -676,6 +676,13 @@ export class SettlementManager {
       w.collider(hut.position.x, hut.position.z, 2.9);
       w.fp(hut.position.x, hut.position.z, 5, 5, `palafita ${x},${z}`);
     }
+    // Portas entráveis (ADR 0097, E7): cada palafita vira um serviço.
+    const PAL_THEMES = ['market', 'tavern', 'leader', 'home', 'home'];
+    huts.forEach(([x, z, ry], hi) => {
+      const px = alignAxis(x, 5), pz = alignAxis(z, 5);
+      const dp = this._spun(px, pz, ry, 0, 3.0); // à frente da escada
+      this._houseDoor(w, dp.x, dp.z, PAL_THEMES[hi] ?? 'home');
+    });
     // Passarelas de tábua: da BASE DA ESCADA de cada casa até o centro, em
     // L ortogonal (ADR 0083) — a rede de píer fica toda interligada.
     for (const [x, z, len, ry] of [
@@ -821,6 +828,14 @@ export class SettlementManager {
       this._smokeAt(w, c.x, 5.2, c.z, 0xa8a098);
     }
     this._flagAt(w, 1.8, -16.2, 0xc8a06a); // estandarte no portão sul
+    // Portas entráveis (ADR 0097, E7): as cabanas viram serviços da vila.
+    const LEN_THEMES = ['market', 'tavern', 'leader'];
+    cabins.forEach(([x, z, ry], ci) => {
+      const swap = Math.abs(Math.round(ry / (Math.PI / 2))) % 2 === 1;
+      const px = alignAxis(x, swap ? 4 : 6), pz = alignAxis(z, swap ? 6 : 4);
+      const dp = this._spun(px, pz, ry, -1.0, 2.6); // à frente da porta
+      this._houseDoor(w, dp.x, dp.z, LEN_THEMES[ci] ?? 'home');
+    });
     // Serraria: cavaletes com tronco e lâmina circular.
     const mill = new THREE.Group();
     for (const px of [-1.1, 1.1]) {
@@ -964,6 +979,13 @@ export class SettlementManager {
     w.fp(3.5, 12.5, 4.2, 2.2, 'muro-gelo-leste');
     w.fp(-5, -1, 1.9, 1.9, 'lenha');
     w.fp(3, -6, 1, 1, 'barril');
+    // Portas entráveis (ADR 0097, E7): as tendas viram serviços do abrigo.
+    const DEG_THEMES = ['market', 'tavern', 'leader', 'home', 'home'];
+    tents.forEach(([x, z], ti) => {
+      const a = snap90(Math.atan2(-x, -z)); // entrada voltada ao centro
+      const dx = x + Math.sin(a) * 2.9, dz = z + Math.cos(a) * 2.9;
+      this._houseDoor(w, dx, dz, DEG_THEMES[ti] ?? 'home');
+    });
     // Cairns: pilhas de pedra que marcam a trilha antiga ao Coração.
     const cairns = [[0, -13], [-11, -7], [12, 2], [-9, 10], [7, 13]]; // (7,13): fora do muro de gelo
     for (const [x, z] of cairns) {

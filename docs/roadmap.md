@@ -144,6 +144,6 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E4 Skill Tree | ✅ entregue | Gate C |
 | E5 Vila 1 viva | ✅ entregue (interiores + rixa das famílias) | Gate D |
 | E6 Side quests | ✅ entregue (motor de triggers + 3 arcos) | — |
-| E7 Vilas 2–4 | ⏳ | — |
+| E7 Vilas 2–4 | ✅ entregue (interiores nas 4 vilas + mercado geral) | — |
 | E8 Mundo vivo | ⏳ | Gate E |
 | E9 Economia/1ª hora | ⏳ | Gate F |
