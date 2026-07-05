@@ -33,7 +33,7 @@ export function bindGameEvents(game) {
     const loadout = game.world.get(e.id, C.Loadout);
     let equipped = false;
     if (e.item.type === 'weapon' && !loadout.weapon) { game.equip(e.id, e.item); equipped = true; }
-    else if (e.item.type === 'armor' && !loadout.armor) { game.equip(e.id, e.item); equipped = true; }
+    else if (e.item.type === 'armor' && !loadout.armor?.[e.item.slot ?? 'body']) { game.equip(e.id, e.item); equipped = true; }
     else if (e.item.type === 'artifact') {
       const slot = loadout.artifacts.findIndex((a) => !a);
       if (slot >= 0) { game.equip(e.id, e.item, slot); equipped = true; }
@@ -60,9 +60,11 @@ export function bindGameEvents(game) {
   });
 
   game.on('formSwap', (e) => {
-    // Encantamento Metamorfo: onda de dano ao trocar de forma.
+    // Encantamento Metamorfo: onda de dano ao trocar de forma (qualquer peça).
     const loadout = game.world.get(e.id, C.Loadout);
-    if (loadout?.armor?.enchants?.some((x) => x.id === 'metamorfo' && x.level > 0)) {
+    const armorList = loadout?.armor?.enchants ? [loadout.armor] // compat item único
+      : Object.values(loadout?.armor ?? {}).filter(Boolean);
+    if (armorList.some((p: any) => p?.enchants?.some((x) => x.id === 'metamorfo' && x.level > 0))) {
       game.aoeDamageAt(e.x, e.z, 3, 14, e.id);
       game.emit('vfxRing', { x: e.x, z: e.z, radius: 3, color: 0xb6ff8a });
     }

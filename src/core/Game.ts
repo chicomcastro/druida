@@ -44,7 +44,8 @@ import { BIOMES } from '../data/biomes.js';
 import { createPlayer } from '../entities/factories.js';
 import { ABILITIES } from '../gameplay/abilities/index.js';
 import { generateItem } from '../gameplay/loot.js';
-import { applyEquipment } from '../gameplay/equip.js';
+import { applyEquipment, equippedItems, armorPieces } from '../gameplay/equip.js';
+import { sumMod } from '../gameplay/modifiers.js';
 import { applyDamage } from '../gameplay/combat.js';
 import { bindGameEvents } from './gameEvents.js';
 import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, scaleEnemy, registerEliteEffects } from '../gameplay/spawn.js';
@@ -195,7 +196,11 @@ export class Game {
     const loadout = this.world.get(id, C.Loadout);
     const eq = this.world.get(id, C.Equipment);
     if (item.type === 'weapon') { loadout.weapon = item; eq.weapon = item; }
-    else if (item.type === 'armor') { loadout.armor = item; eq.armor = item; }
+    else if (item.type === 'armor') {
+      // Roteia pela peça anatômica (ADR 0087); tolera armadura legada sem slot.
+      const s = item.slot ?? 'body';
+      loadout.armor[s] = item; eq.armor[s] = item;
+    }
     else if (item.type === 'artifact') {
       const s = slot ?? loadout.artifacts.findIndex((a) => !a);
       const idx = s < 0 ? 2 : s;
@@ -213,6 +218,7 @@ export class Game {
     const eq = this.world.get(id, C.Equipment);
     const fero = eq?.weapon?.enchants?.find((e) => e.id === 'ferocidade');
     if (fero) mul += 0.25 * fero.level;
+    mul *= 1 + sumMod(equippedItems(eq), 'might') / 100; // afixo Potência (ADR 0088)
     return mul;
   }
 
@@ -388,7 +394,11 @@ function idleRegenSystem(game, dt) {
   for (const [id, vel, hp, eq] of game.world.query(C.Velocity, C.Health, C.Equipment)) {
     if (hp.dead) continue;
     const moving = Math.hypot(vel.vx, vel.vz) > 0.5;
-    const foto = eq.armor?.enchants?.find((e) => e.id === 'fotossintese' && e.level > 0);
+    let foto = null;
+    for (const p of armorPieces(eq)) {
+      const e = p.enchants?.find((x) => x.id === 'fotossintese' && x.level > 0);
+      if (e && (!foto || e.level > foto.level)) foto = e;
+    }
     if (!moving && foto) hp.hp = Math.min(hp.max, hp.hp + (4 + foto.level * 3) * dt);
   }
 }

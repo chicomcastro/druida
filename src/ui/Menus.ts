@@ -1,6 +1,7 @@
 import { C } from '../core/ecs/components.js';
 import { FORMS } from '../gameplay/forms.js';
 import { ENCHANTMENTS, salvageValue } from '../gameplay/loot.js';
+import { modText as MODTEXT } from '../gameplay/modifiers.js';
 import { applyEquipment } from '../gameplay/equip.js';
 import { saveToStorage, hasSave } from '../gameplay/save.js';
 import { BOONS, chooseBoon } from '../gameplay/boons.js';
@@ -247,9 +248,13 @@ export class Menus {
     const inv = this.game.world.get(id, C.Inventory);
     const forms = this.game.world.get(id, C.Form).list.map((f) => FORMS[f].name).join(', ');
 
+    const ar = loadout.armor ?? {};
     const EQ = [
       { key: 'weapon', label: 'Arma', item: loadout.weapon },
-      { key: 'armor', label: 'Armadura', item: loadout.armor },
+      { key: 'armor:head', label: 'Elmo', item: ar.head },
+      { key: 'armor:body', label: 'Peito', item: ar.body },
+      { key: 'armor:legs', label: 'Calças', item: ar.legs },
+      { key: 'armor:boots', label: 'Botas', item: ar.boots },
       { key: 'artifact0', label: 'Dom 1', item: loadout.artifacts[0] },
       { key: 'artifact1', label: 'Dom 2', item: loadout.artifacts[1] },
       { key: 'artifact2', label: 'Dom 3', item: loadout.artifacts[2] },
@@ -295,7 +300,8 @@ export class Menus {
 
   /** Slot quadrado com ícone e raridade na borda (grade RPG — ADR 0072). */
   _gslot(item, { tag = '', sel = false, data = '', price = null }: any = {}) {
-    const icon = item ? (item.type === 'weapon' ? '⚔️' : item.type === 'armor' ? '🛡️' : '🌿') : '';
+    const ICON = { weapon: '⚔️', armor: '🛡️', artifact: '🌿', consumable: '🧪' };
+    const icon = item ? (ICON[item.type] ?? '🌿') : '';
     const border = item ? `style="border-color:${RCOLOR[item.rarity]}"` : '';
     const cls = `gslot${item ? '' : ' empty'}${sel ? ' sel' : ''}`;
     return `<div class="${cls}" ${border} ${data}>${icon}
@@ -319,9 +325,12 @@ export class Menus {
   }
 
   _statText(it) {
-    return it.type === 'weapon' ? `dano ${it.damage} · ${it.element}`
+    const base = it.type === 'weapon' ? `dano ${it.damage} · ${it.element}`
       : it.type === 'armor' ? `armadura ${(it.armor * 100) | 0}%`
+      : it.type === 'consumable' ? (it.effect === 'heal' ? `cura ${it.magnitude}` : `${it.effect} ${it.magnitude}`)
       : 'concede habilidade';
+    const mods = (it.mods ?? []).map((m) => MODTEXT(m)).filter(Boolean);
+    return mods.length ? `${base} · ${mods.join(' · ')}` : base;
   }
 
   /** Tooltip com comparação contra o equipado (mochila/mercador). */
@@ -334,7 +343,8 @@ export class Menus {
           const d = item.damage - loadout.weapon.damage;
           cmp = `<div class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d)} dano vs equipada</div>`;
         } else if (item.type === 'armor' && loadout.armor) {
-          const d = Math.round((item.armor - loadout.armor.armor) * 100);
+          const cur = loadout.armor[item.slot];
+          const d = Math.round((item.armor - (cur?.armor ?? 0)) * 100);
           cmp = `<div class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d)}% armadura vs equipada</div>`;
         }
       }
@@ -359,7 +369,9 @@ export class Menus {
 
   _invest(id, slotKey, ei) {
     const loadout = this.game.world.get(id, C.Loadout);
-    const item = slotKey === 'weapon' ? loadout.weapon : slotKey === 'armor' ? loadout.armor : loadout.artifacts[+slotKey.replace('artifact', '')];
+    const item = slotKey === 'weapon' ? loadout.weapon
+      : slotKey.startsWith('armor:') ? loadout.armor[slotKey.split(':')[1]]
+      : loadout.artifacts[+slotKey.replace('artifact', '')];
     const ench = item?.enchants?.[ei];
     if (!ench || loadout.enchantPoints <= 0 || ench.level >= ench.max) return;
     ench.level++;

@@ -56,7 +56,8 @@ export function playerControlSystem(game, dt) {
     const rooted = st.root > 0 || st.stun > 0;
     const slow = st.freeze > 0 ? 0.5 : 1;
     const n = normalize(intent.moveX, intent.moveZ);
-    const speed = vel.speed * (formDef.speedMul ?? 1) * slow * speedBoonMul(game); // Asas do Vento (ADR 0050)
+    const eqMove = world.get(id, C.Equipment)?.speedMul ?? 1; // afixo Ligeireza (ADR 0088)
+    const speed = vel.speed * (formDef.speedMul ?? 1) * slow * speedBoonMul(game) * eqMove; // Asas do Vento (ADR 0050)
 
     if (pc.dodgeTimer > 0) {
       // Durante o dodge mantém a velocidade do impulso (definida abaixo).

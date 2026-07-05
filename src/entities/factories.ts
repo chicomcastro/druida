@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { C, Factions, Transform, Velocity, Health, Sap, Collider, Faction, Intent, StatusEffects, Cooldowns } from '../core/ecs/components.js';
 import { buildMesh, buildOrb } from './meshes.js';
 import { BALANCE } from '../data/balance.js';
+import { emptyArmor } from '../gameplay/loot.js';
 
 const PLAYER_COLORS = [0xffe08a, 0x8ad0ff, 0xff9a8a, 0xb6ff8a];
 
@@ -45,12 +46,12 @@ export function createPlayer(world, renderer, { index = 0, x = 0, z = 0 } = {}) 
   world.add(id, C.Form, { current: 'humanoid', list: ['humanoid'], swapFlash: 0 });
   world.add(id, C.Loadout, {
     weapon: null,
-    armor: null,
+    armor: emptyArmor(),
     artifacts: [null, null, null],
     enchantPoints: 0,
   });
-  world.add(id, C.Equipment, { weapon: null, armor: null, artifacts: [null, null, null] });
-  world.add(id, C.Inventory, { items: [], essence: 0 });
+  world.add(id, C.Equipment, { weapon: null, armor: emptyArmor(), artifacts: [null, null, null] });
+  world.add(id, C.Inventory, { items: [], essence: 0, hotbar: [null, null, null, null, null, null, null, null, null] });
   return id;
 }
 
