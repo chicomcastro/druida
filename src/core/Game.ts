@@ -30,6 +30,7 @@ import { PoiManager } from '../world/PoiManager.js';
 import { EventManager } from '../world/EventManager.js';
 import { DungeonManager } from '../world/DungeonManager.js';
 import { InteriorManager } from '../world/InteriorManager.js';
+import { FaunaManager } from '../world/FaunaManager.js';
 import { buildLandmarks } from '../world/landmarks.js';
 import { StoryManager } from '../gameplay/story.js';
 import { Hud } from '../ui/Hud.js';
@@ -67,7 +68,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
-  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; sideQuests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; interiors: any; story: any; loop: any;
+  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; sideQuests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; interiors: any; fauna: any; story: any; loop: any;
   inDungeon: boolean;
   meal: any; // bônus temporário da refeição da taverna (ADR 0094)
   // Estado.
@@ -126,6 +127,7 @@ export class Game {
     this.events = new EventManager(this);
     this.dungeon = new DungeonManager(this);
     this.interiors = new InteriorManager(this); // interiores das casas (ADR 0094)
+    this.fauna = new FaunaManager(this); // fauna ambiente por bioma (ADR 0098)
     this.story = new StoryManager(this);
     this.purity = new PurityManager(this); // mundo cura conforme a campanha (ADR 0044)
     this.quests = new QuestManager(this); // missões locais das vilas (ADR 0047)
@@ -166,6 +168,7 @@ export class Game {
       (g, dt) => g.events.update(dt),
       (g, dt) => g.dungeon.update(dt),
       (g, dt) => g.interiors.update(dt),
+      (g, dt) => g.fauna.update(dt),
       (g, dt) => g.vfx.update(dt),
       idleRegenSystem,
     ];
