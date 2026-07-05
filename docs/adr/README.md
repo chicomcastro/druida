@@ -105,4 +105,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0099](0099-hazards-overworld.md) | Mundo vivo: perigos ambientais por bioma (E8.2) | Aceito |
 | [0100](0100-novos-inimigos.md) | Mundo vivo: novos inimigos (E8.3) | Aceito |
 | [0101](0101-bosses-de-bioma.md) | Mundo vivo: chefes de bioma (E8.4) | Aceito |
+| [0102](0102-telemetria-primeira-hora.md) | Economia & primeira hora: telemetria do funil (E9) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
