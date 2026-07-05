@@ -235,7 +235,7 @@ iguais; vilas pequenas (mais casas, ruas, praça, NPCs); modelos fora das
 arestas do chão.
 
 - [x] 🎨 M18.1 Arestas no grid: pegadas inteiras + snap por paridade (casas 5×4, cabanas 4×3, tendas, palafitas, banca, menires, santuários) — ADR 0079
-- [ ] 🏘️ M18.2 Vilas maiores: mais casas variadas, ruas de laje, praça do mercador com postes, mais moradores com falas
+- [x] 🏘️ M18.2 Vilas maiores: 9 casas variadas (sobrado/anexos), tendas 5-3-1, cabanas 6×4, ruas de laje, praça com postes, +9 moradores — ADR 0080
 - [ ] 🧙 M18.3 Personagens com trama visível e variedade (tons, capuz/cabelo, acessórios) + mercadorias texturizadas
 
 ---
