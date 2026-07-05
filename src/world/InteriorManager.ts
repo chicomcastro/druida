@@ -3,6 +3,16 @@ import { C, Transform, Collider, Velocity } from '../core/ecs/components.js';
 import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
 import { healEntity } from '../gameplay/combat.js';
 import { interiorTheme, TAVERN } from '../data/interiors.js';
+import { biomeAt } from './WorldManager.js';
+import { BIOMES } from '../data/biomes.js';
+
+/** Clima "interior": fundo escuro que sela a sala do mundo aberto. Névoa a
+ * distância grande (a câmera ortográfica fica longe — valores curtos apagam
+ * tudo, como nas masmorras ~40/90). */
+const INDOOR_MOOD = {
+  background: 0x140f0a, fogNear: 55, fogFar: 120,
+  light: { sun: 0xffd6a8, sunIntensity: 0.9, hemi: 0x7a6248, hemiGround: 0x120c06, hemiIntensity: 0.6 },
+};
 
 /**
  * Interiores das casas (ADR 0094, E5). Entrar por uma porta temática
@@ -22,6 +32,7 @@ export class InteriorManager {
   _floorMat: any;
   _wallMats: any[];
   _lampMat: any;
+  _props: any; // móveis temáticos, reconstruídos por visita (ADR 0104)
 
   constructor(game) {
     this.game = game;
@@ -49,8 +60,8 @@ export class InteriorManager {
     ];
     for (const [lx, lz, sw, sd] of walls) {
       const mat = new THREE.MeshStandardMaterial({ color: 0x4a3628, roughness: 1 });
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(sw, 4, sd), mat);
-      wall.position.set(ROOM.x + lx, 2, ROOM.z + lz);
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(sw, 5, sd), mat);
+      wall.position.set(ROOM.x + lx, 2.5, ROOM.z + lz);
       wall.castShadow = true;
       this.game.renderer.add(wall);
       this._wallMats.push(mat);
@@ -106,8 +117,55 @@ export class InteriorManager {
     };
     this._teleport(ROOM.x, ROOM.z - ROOM_R + 3);
     this.active.npcId = this._spawnNpc(theme);
+    this.active.props = this._buildProps(theme); // móveis temáticos (ADR 0104)
+    this.game.renderer.setBiomeMood?.(INDOOR_MOOD); // sela a sala (fundo escuro)
     this.game.emit('objective', { text: `${theme.name} — ${label ?? theme.role}` });
     this.game.emit('interiorEntered', { themeId: theme.id });
+  }
+
+  /**
+   * Móveis temáticos (ADR 0104): balcão/prateleiras nas lojas, mesas/barris/
+   * lareira na taverna, tapete/trono/estante nos salões. Grupo próprio,
+   * removido na saída. Coordenadas relativas à sala (ROOM).
+   */
+  _buildProps(theme) {
+    const g = new THREE.Group();
+    const mat = (c, emissive = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, emissive, emissiveIntensity: emissive ? 1 : 0 });
+    const box = (w, h, d, x, y, z, c, em = 0) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c, em));
+      m.position.set(ROOM.x + x, y, ROOM.z + z); m.castShadow = true; g.add(m); return m;
+    };
+    const wood = 0x5a4028, wood2 = 0x6b4a33, stone = 0x6a6a72, acc = theme.accent;
+    const nz = -ROOM_R + 6; // linha do NPC
+    if (theme.service === 'shop') {
+      // Balcão à frente do NPC + prateleiras na parede do fundo + engradados.
+      box(4.2, 0.9, 0.9, 0, 0.45, nz + 1.6, wood2);
+      box(4.4, 0.15, 1.05, 0, 0.95, nz + 1.6, wood);
+      for (const sx of [-2.4, 2.4]) box(0.4, 2.4, 3.5, sx, 1.2, nz + 0.4, wood); // prateleiras laterais
+      for (const [sx, sy] of [[-2.4, 1.6], [-2.4, 2.2], [2.4, 1.6], [2.4, 2.2]]) box(0.5, 0.4, 0.5, sx, sy, nz + 0.4, acc, acc);
+      box(0.8, 0.8, 0.8, -3.0, 0.4, nz + 3.5, wood); box(0.8, 0.8, 0.8, 3.0, 0.4, nz + 3.5, wood2); // engradados
+      if (theme.id === 'weapons') { box(1.2, 1.6, 1.2, 3.2, 0.8, nz, stone); box(1.4, 0.3, 1.4, 3.2, 1.75, nz, 0x2a2a2a); } // bigorna/forja
+    } else if (theme.service === 'rest') {
+      // Mesas + banquetas + barris + lareira acesa no canto.
+      for (const [tx, tz] of [[-3, nz + 3], [3, nz + 3.5]]) {
+        box(1.8, 0.2, 1.8, tx, 1.0, tz, wood2); box(0.3, 1.0, 0.3, tx, 0.5, tz, wood);
+        for (const [ox, oz] of [[-1.2, 0], [1.2, 0], [0, -1.2], [0, 1.2]]) box(0.5, 0.55, 0.5, tx + ox, 0.28, tz + oz, wood);
+      }
+      box(0.8, 1.0, 0.8, -3.2, 0.5, nz - 0.5, wood2); box(0.8, 1.0, 0.8, 3.4, 0.5, nz - 0.6, wood); // barris
+      // Lareira no canto (brasa emissiva + luz).
+      box(2.0, 0.4, 1.2, ROOM_R - 2.2 - ROOM.x, 0.2, -ROOM_R + 1.6, stone);
+      box(1.0, 0.6, 0.7, ROOM_R - 2.2 - ROOM.x, 0.5, -ROOM_R + 1.6, 0xff8a3a, 0xff7a2a);
+      this.game.lightPool?.register(ROOM.x + ROOM_R - 2.2, 0.8, ROOM.z - ROOM_R + 1.6, 0xff7a2a, 22, 0.6);
+    } else {
+      // Salão/liderança: tapete, cadeira alta atrás do NPC, estante e estandarte.
+      box(3.2, 0.06, 3.6, 0, 0.12, nz + 1.6, acc);        // tapete na cor do tema
+      box(1.0, 1.8, 0.5, 0, 0.9, nz - 0.9, wood2);        // encosto da cadeira
+      box(1.1, 0.3, 1.0, 0, 0.55, nz - 0.7, wood);        // assento
+      box(2.4, 2.2, 0.5, -ROOM_R + 1.4 - ROOM.x * 0, 1.1, nz + 0.5, wood); // estante lateral (parede)
+      box(0.9, 1.8, 0.08, 0, 3.3, -ROOM_R + 0.5, acc, acc); // estandarte na parede do fundo
+    }
+    this.game.renderer.add(g);
+    return g;
   }
 
   _spawnNpc(theme) {
@@ -159,9 +217,13 @@ export class InteriorManager {
     const a = this.active;
     if (!a) return;
     if (a.npcId != null && this.game.world.entities.has(a.npcId)) this.game.world.destroyEntity(a.npcId);
+    if (a.props) this.game.renderer.remove?.(a.props); // remove os móveis (ADR 0104)
     this._teleport(a.returnPos.x, a.returnPos.z);
     this.game.inDungeon = false;
     this.active = null;
+    // Restaura o clima do bioma de retorno (a sala havia escurecido a cena).
+    const biome = biomeAt(a.returnPos.x, a.returnPos.z);
+    this.game.renderer.setBiomeMood?.(this.game.purity?.effectiveDef?.(biome) ?? BIOMES[biome]);
     this.game.emit('objective', { text: this.game.story?.objective?.() ?? '' });
   }
 

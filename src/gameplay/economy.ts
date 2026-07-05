@@ -47,13 +47,13 @@ export function rerollShop(game) {
   // Lojas de interior (ADR 0094): armeiro só vende armas, armaduraria só peças.
   const bias = game._interiorBias?.[game.activeShopKey] ?? null;
   game.shopStock = [];
-  // 3 equipamentos + 1 poção (ADR 0089): sempre há cura à venda.
-  for (let i = 0; i < 3; i++) {
+  // Estoque maior (ADR 0104): 5 equipamentos + 2 poções (cura pequena e grande).
+  for (let i = 0; i < 5; i++) {
     const it = generateItem(lvl, bias);
     game.shopStock.push({ item: it, price: Math.round((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
   }
-  const potion = generateConsumable('heal_s', lvl);
-  game.shopStock.push({ item: potion, price: Math.round(8 * (1 + (lvl - 1) * 0.1)) });
+  game.shopStock.push({ item: generateConsumable('heal_s', lvl), price: Math.round(8 * (1 + (lvl - 1) * 0.1)) });
+  game.shopStock.push({ item: generateConsumable('heal_l', lvl), price: Math.round(18 * (1 + (lvl - 1) * 0.1)) });
   if (game._shopStocks) game._shopStocks[game.activeShopKey ?? 'hub'] = game.shopStock;
   return game.shopStock;
 }
