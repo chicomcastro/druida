@@ -16,13 +16,17 @@ export const COMBO = {
   missPenalty: 0.3, // s extra de recuperação ao errar
 };
 
-/** Avalia um input no progresso `p` (0..1) da barra. */
-export function evalCombo(p: number): { ok: boolean; quality: number } {
-  const ok = p >= COMBO.earlyEnd && p <= COMBO.lateEnd;
+/**
+ * Avalia um input no progresso `p` (0..1) da barra. `widen` (fração, dos
+ * talentos de ritmo — ADR 0093) alarga a janela simetricamente.
+ */
+export function evalCombo(p: number, widen = 0): { ok: boolean; quality: number } {
+  const early = COMBO.earlyEnd - widen, late = COMBO.lateEnd + widen;
+  const ok = p >= early && p <= late;
   if (!ok) return { ok: false, quality: 0 };
   // Qualidade 1.0 no sweet spot, caindo linearmente até as bordas da janela.
-  const half = p <= COMBO.sweet ? COMBO.sweet - COMBO.earlyEnd : COMBO.lateEnd - COMBO.sweet;
-  const quality = 1 - Math.abs(p - COMBO.sweet) / half;
+  const half = p <= COMBO.sweet ? COMBO.sweet - early : late - COMBO.sweet;
+  const quality = half > 0 ? 1 - Math.abs(p - COMBO.sweet) / half : 1;
   return { ok: true, quality: Math.max(0, quality) };
 }
 

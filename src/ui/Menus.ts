@@ -7,6 +7,7 @@ import { applyEquipment } from '../gameplay/equip.js';
 import { saveToStorage, hasSave } from '../gameplay/save.js';
 import { BOONS, chooseBoon } from '../gameplay/boons.js';
 import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
+import { SKILL_TREES, canLearn, learn, respec, nodeText, ensureSkillState } from '../gameplay/skills.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -61,6 +62,25 @@ const css = `
 .gslot .price{position:absolute;bottom:1px;right:3px;font-size:9.5px;color:#ffd56a;font-weight:700;text-shadow:0 1px 2px #000}
 .ggrid{display:grid;grid-template-columns:repeat(5,54px);gap:7px;max-height:340px;overflow:auto;padding:2px}
 @media (max-width:900px){.ggrid{grid-template-columns:repeat(5,46px)}.gslot{width:46px;height:46px}.gslot .ic{width:38px;height:38px}}
+.sk-tracks{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;max-height:64vh;overflow:auto;padding:2px 4px}
+@media (max-width:760px){.sk-tracks{grid-template-columns:1fr}}
+.sk-track{border:1px solid rgba(159,224,106,.18);border-radius:11px;padding:10px 12px;background:rgba(10,18,10,.4)}
+.sk-track h3{margin:0 0 8px;font-size:14px;color:#9fe06a;display:flex;justify-content:space-between;align-items:baseline;font-family:'Cinzel',Georgia,serif}
+.sk-track h3 .prof{font-size:10px;opacity:.6;font-weight:400;letter-spacing:.05em;font-family:system-ui,sans-serif}
+.sk-node{display:flex;align-items:center;gap:9px;padding:6px 0;border-top:1px solid rgba(255,255,255,.05)}
+.sk-node:first-of-type{border-top:0}
+.sk-node.locked{opacity:.42}
+.sk-node .ico{font-size:20px;width:26px;text-align:center;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.sk-node .body{flex:1;min-width:0}
+.sk-node .nm{font-size:12.5px;font-weight:600}
+.sk-node .ds{font-size:10.5px;opacity:.62;line-height:1.35}
+.sk-node .lv{font-size:10px;opacity:.7;margin-left:2px}
+.sk-node .buy{flex:none;width:30px;height:30px;border-radius:8px;border:1px solid rgba(159,224,106,.3);background:linear-gradient(160deg,#1d2c18,#141f10);color:#9fe06a;font-size:16px;font-weight:700;cursor:pointer;line-height:1}
+.sk-node .buy:hover:not(:disabled){border-color:#9fe06a;box-shadow:0 0 10px rgba(159,224,106,.2)}
+.sk-node .buy:disabled{opacity:.3;cursor:not-allowed}
+.sk-node .pips{display:flex;gap:2px;margin-top:3px}
+.sk-node .pips i{width:9px;height:5px;border-radius:2px;background:rgba(255,255,255,.14)}
+.sk-node .pips i.on{background:#9fe06a;box-shadow:0 0 5px rgba(159,224,106,.5)}
 #tip{position:fixed;z-index:60;pointer-events:none;display:none;max-width:240px;background:linear-gradient(165deg,#152315,#0a130c);border:1px solid rgba(159,224,106,.4);border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.45;box-shadow:0 12px 32px rgba(0,0,0,.6);color:#eaf3e6;font-family:system-ui,sans-serif}
 #tip b{font-size:13px}
 #tip .up{color:#8affa0}#tip .down{color:#ff8a8a}
@@ -68,10 +88,17 @@ const css = `
 
 const RCOLOR = { common: '#d6d6d6', rare: '#5aa0ff', unique: '#ffc83a' };
 
+// Rótulos das trilhas de talento (ADR 0093).
+const SK_TRACK_NAME = { axe: 'Machado', scythe: 'Foice', claws: 'Garras', staff: 'Cajado', wolf: 'Lobo', bear: 'Urso', raven: 'Corvo', frog: 'Sapo' };
+const SK_TRACK_ICON = { axe: '🪓', scythe: '🌾', claws: '🐾', staff: '🪄', wolf: '🐺', bear: '🐻', raven: '🦅', frog: '🐸' };
+const SK_ICON = { dmg: '⚔️', atkSpeed: '⚡', combo: '🎯', range: '↔️', formDur: '⏳', dr: '🛡️' };
+const ALL_NODE_NAME: Record<string, string> = {};
+for (const nodes of Object.values(SKILL_TREES)) for (const n of nodes) ALL_NODE_NAME[n.id] = n.name;
+
 export class Menus {
   game: any;
   main: any; pause: any; inv: any;
-  shop: any; stash: any; controls: any; tip: any;
+  shop: any; stash: any; controls: any; skills: any; tip: any;
   _rebinding: string | null;
   _selSlot: string;
   constructor(game) {
@@ -88,11 +115,12 @@ export class Menus {
     this.shop = this._make('menu-shop');
     this.stash = this._make('menu-stash');
     this.controls = this._make('menu-controls');
+    this.skills = this._make('menu-skills');
     this._rebinding = null;
     this._selSlot = 'weapon'; // slot equipado selecionado p/ encantar
     this.tip = document.createElement('div');
     this.tip.id = 'tip';
-    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls, this.tip);
+    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls, this.skills, this.tip);
 
     addEventListener('keydown', (e) => {
       if (game.menuMain) return; // bloqueia até iniciar
@@ -117,6 +145,11 @@ export class Menus {
         if (['Escape', 'KeyE', 'KeyF'].includes(e.code)) this.closeStash();
         return;
       }
+      // Talentos (ADR 0093): K abre/fecha; Esc fecha.
+      if (this.skills.classList.contains('show')) {
+        if (['Escape', 'KeyK'].includes(e.code)) this.toggleSkills();
+        return;
+      }
       const mapOpen = this.game.worldMap?.wrap.style.display === 'flex';
       if (e.code === 'KeyM' && !this.pause.classList.contains('show') && !this.inv.classList.contains('show')) {
         this.game.worldMap.toggle();
@@ -124,6 +157,7 @@ export class Menus {
         this.game.worldMap.toggle();
       } else if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();
       else if ((e.code === 'KeyB' || e.code === 'Tab') && !mapOpen) { e.preventDefault(); this.toggleInventory(); }
+      else if (e.code === 'KeyK' && !mapOpen && !this.pause.classList.contains('show') && !this.inv.classList.contains('show')) { e.preventDefault(); this.toggleSkills(); }
       else if (e.code === 'KeyT' && !this.game.paused) this.game.recallToHub();
       // Cinto de poções (ADR 0091): Q usa a 1ª poção, Digit4 a 2ª (1-3=dons,
       // 5-9=formas já ocupam a fileira numérica).
@@ -176,8 +210,10 @@ export class Menus {
       <button class="btn" id="p-fx" style="text-align:center">✨ Efeitos visuais: ${this.game.renderer.post ? 'altos' : 'baixos'}</button>
       <button class="btn" id="p-telemetry" style="text-align:center">📊 Telemetria local: ${this.game.telemetry?.enabled ? 'ligada' : 'desligada'}</button>
       <button class="btn" id="p-export" style="text-align:center">📋 Copiar dados de jogo</button>
+      <button class="btn" id="p-skills" style="text-align:center">🌟 Talentos (K)</button>
       <button class="btn" id="p-controls" style="text-align:center">🎮 Controles</button>
     </div>`;
+    this.pause.querySelector('#p-skills').onclick = () => { this.togglePause(); this.toggleSkills(); };
     this.pause.querySelector('#p-resume').onclick = () => this.togglePause();
     this.pause.querySelector('#p-save').onclick = async (ev) => {
       ev.target.textContent = 'Salvando…';
@@ -246,6 +282,64 @@ export class Menus {
     this.controls.classList.remove('show');
     this._rebinding = null;
     this.game.paused = false;
+  }
+
+  // --- Talentos / Especialização (ADR 0093) --------------------------------
+  toggleSkills() {
+    if (this.pause.classList.contains('show') || this.inv.classList.contains('show')) return;
+    const showing = this.skills.classList.toggle('show');
+    this.game.paused = showing;
+    if (showing) this.refreshSkills();
+  }
+
+  refreshSkills() {
+    ensureSkillState(this.game);
+    const pr = this.game.progress;
+    const id = this._playerId();
+    // Trilha ativa (arma equipada + forma atual) recebe destaque.
+    const eq = id != null ? this.game.world.get(id, C.Equipment) : null;
+    const form = id != null ? this.game.world.get(id, C.Form) : null;
+    const activeFam = eq?.weapon?.family;
+    const activeForm = form && form.current !== 'humanoid' ? form.current : null;
+
+    const tracks = Object.entries(SKILL_TREES).map(([track, nodes]) => {
+      const active = track === activeFam || track === activeForm;
+      const prof = pr.proficiency?.[track] ?? 0;
+      const rows = nodes.map((node) => {
+        const lv = pr.skills?.[node.id] ?? 0;
+        const learnable = canLearn(this.game, node.id);
+        const reqLocked = node.req && (pr.skills?.[node.req] ?? 0) < 1;
+        const pips = Array.from({ length: node.max }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('');
+        return `<div class="sk-node${reqLocked ? ' locked' : ''}">
+          <span class="ico">${SK_ICON[node.effect] ?? '✦'}</span>
+          <div class="body">
+            <div class="nm">${node.name} <span class="lv">${lv}/${node.max}</span></div>
+            <div class="ds">${nodeText(node, lv)}${reqLocked ? ` · requer ${ALL_NODE_NAME[node.req]}` : ''}</div>
+            <div class="pips">${pips}</div>
+          </div>
+          <button class="buy" data-node="${node.id}" ${learnable ? '' : 'disabled'} title="Investir 1 ponto">+</button>
+        </div>`;
+      }).join('');
+      return `<div class="sk-track" style="${active ? 'border-color:#ffd56a55;box-shadow:0 0 14px rgba(255,213,106,.12)' : ''}">
+        <h3>${SK_TRACK_ICON[track] ?? '✦'} ${SK_TRACK_NAME[track] ?? track}${active ? ' ·' : ''}
+          <span class="prof">uso ${prof}</span></h3>
+        ${rows}
+      </div>`;
+    }).join('');
+
+    this.skills.innerHTML = `<div class="panel" style="min-width:min(760px,92vw)">
+      <span class="close" id="sk-close">✕ (K)</span>
+      <h2>🌟 Talentos</h2>
+      <p class="sub">Pontos disponíveis: <b>${pr.skillPoints ?? 0}</b> · trilhas destacadas seguem sua arma/forma ativa. Especialize usando cada arma e forma.</p>
+      <div class="sk-tracks">${tracks}</div>
+      <button class="btn" id="sk-respec" style="text-align:center;margin-top:14px">↺ Redistribuir tudo (grátis)</button>
+    </div>`;
+
+    this.skills.querySelector('#sk-close').onclick = () => this.toggleSkills();
+    this.skills.querySelector('#sk-respec').onclick = () => { respec(this.game); this.refreshSkills(); };
+    this.skills.querySelectorAll('.buy[data-node]').forEach((el: any) => {
+      el.onclick = () => { if (learn(this.game, el.dataset.node)) this.refreshSkills(); };
+    });
   }
 
   // --- Inventário / Equipamento / Encantamento -----------------------------

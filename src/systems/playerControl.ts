@@ -3,7 +3,9 @@ import { speedBoonMul, iframeBoonMul } from '../gameplay/boons.js';
 import { normalize, angleTo } from '../utils/math.js';
 import { FORMS } from '../gameplay/forms.js';
 import { castAbility } from '../gameplay/abilities/index.js';
-import { COMBO, evalCombo } from '../gameplay/combo.js';
+import { evalCombo } from '../gameplay/combo.js';
+import { COMBO } from '../gameplay/combo.js';
+import { skillBonus, gainProficiency } from '../gameplay/skills.js';
 
 /**
  * Traduz o Intent (preenchido a partir do input) em movimento, mira, ataque,
@@ -91,7 +93,14 @@ export function playerControlSystem(game, dt) {
     const pressed = intent.attack && !pc._atkHeld;
     pc._atkHeld = intent.attack;
     if (st.stun <= 0 && pressed) {
-      const total = formDef.attackCooldown;
+      // Talentos (ADR 0093): velocidade de ataque encurta a janela; foco de
+      // arma/forma amplia a janela do sweet spot; proficiência acumula.
+      const spd = skillBonus(game, id, 'atkSpeed') / 100;
+      const total = formDef.attackCooldown * (1 - Math.min(0.4, spd));
+      const widen = skillBonus(game, id, 'combo') / 100;
+      const eq = world.get(id, C.Equipment);
+      const track = form.current !== 'humanoid' ? form.current : eq?.weapon?.family;
+      if (track) gainProficiency(game, track);
       if (pc.attackTimer <= 0) {
         // Primeiro golpe da sequência: abre a janela de combo.
         pc.attackTimer = total; pc.castTotal = total;
@@ -99,7 +108,7 @@ export function playerControlSystem(game, dt) {
       } else {
         // Cast em andamento: avalia o timing do encadeamento.
         const p = 1 - pc.attackTimer / (pc.castTotal || total);
-        const r = evalCombo(p);
+        const r = evalCombo(p, widen);
         if (r.ok) {
           pc.combo = Math.min((pc.combo ?? 0) + 1, COMBO.cap);
           pc.comboExpire = total * COMBO.graceMul;
