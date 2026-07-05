@@ -90,3 +90,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0083](0083-portas-ligadas-as-ruas.md) | Toda porta liga numa rua (M19.2) | Aceito |
 | [0084](0084-vilas-com-conteudo.md) | Vilas com conteúdo: assinaturas e props de rua (M19.3) | Aceito |
 | [0085](0085-validador-de-pegadas.md) | Validador de sobreposição de pegadas (M20.1) | Aceito |
+| [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

@@ -240,15 +240,16 @@ export class SettlementManager {
     const step = mesh(new THREE.BoxGeometry(1.25, 0.14, 0.55), 0x7d7c80, { shadow: false });
     step.position.set(-0.7, 0.07, d / 2 + 0.42);
     g.add(door, lintel, step);
-    // Janela acesa (vida dentro da casa; entra no boost noturno).
-    const pane = mesh(new THREE.BoxGeometry(0.6, 0.55, 0.08), 0xffd890, {
-      emissive: 0xffb85a, emissiveIntensity: 0.55, shadow: false,
-    });
-    pane.position.set(0.8, 0.35 + h * 0.62, d / 2 + 0.05);
-    const frame = mesh(new THREE.BoxGeometry(0.76, 0.7, 0.06), beam, { shadow: false });
-    frame.position.set(0.8, 0.35 + h * 0.62, d / 2 + 0.02);
-    g.add(frame, pane);
-    this._flames.push({ mesh: pane, base: 0.55, amp: 0.12, speed: 1.3, seed: x + z });
+    // Janelas GRANDES à altura do olho (ADR 0086): frontal ao lado da
+    // porta + lateral na empena (quando não há anexo ocupando a parede).
+    const winY = 0.35 + 1.5;
+    const winW = bw >= 6 ? 0.95 : 0.75;
+    const p1 = this._window(g, bw / 2 - 0.95, winY, d / 2 + 0.06, beam, { w: winW, h: winW });
+    this._flames.push({ mesh: p1, base: 0.55, amp: 0.12, speed: 1.3, seed: x + z });
+    if (!opts.annex) {
+      const p2 = this._window(g, bw / 2 + 0.06, winY, -0.5, beam, { w: 0.8, h: 0.8, rotY: Math.PI / 2 });
+      this._flames.push({ mesh: p2, base: 0.5, amp: 0.1, speed: 1.7, seed: x * 2 + z });
+    }
     if (opts.chimney) {
       const chim = mesh(new THREE.BoxGeometry(0.5, rise + 0.9, 0.5), 0x6f6f76, { tex: 'stone', trx: 1, try: 2 });
       chim.position.set(bw / 2 - 0.55, top + (rise + 0.9) / 2, -d / 4);
@@ -260,12 +261,8 @@ export class SettlementManager {
       const band = mesh(new THREE.BoxGeometry(bw + 0.06, 0.18, d + 0.06), beam, { shadow: false });
       band.position.y = 0.35 + h * 0.52;
       g.add(band);
-      for (const px of [-0.9, 0.9]) {
-        const p2 = mesh(new THREE.BoxGeometry(0.6, 0.55, 0.08), 0xffd890, {
-          emissive: 0xffb85a, emissiveIntensity: 0.55, shadow: false,
-        });
-        p2.position.set(px, 0.35 + h * 0.8, d / 2 + 0.05);
-        g.add(p2);
+      for (const px of [-1.1, 1.1]) {
+        const p2 = this._window(g, px, 0.35 + h * 0.78, d / 2 + 0.06, beam, { w: 0.75, h: 0.75 });
         this._flames.push({ mesh: p2, base: 0.55, amp: 0.1, speed: 1.5, seed: x * 2 + z + px });
       }
     }
@@ -285,11 +282,7 @@ export class SettlementManager {
         layer.position.set(ax, sy2, az);
         g.add(layer);
       }
-      const apane = mesh(new THREE.BoxGeometry(0.6, 0.5, 0.08), 0xffd890, {
-        emissive: 0xffb85a, emissiveIntensity: 0.5, shadow: false,
-      });
-      apane.position.set(ax, 0.35 + ah * 0.55, az + ad / 2 + 0.05);
-      g.add(apane);
+      const apane = this._window(g, ax, 0.35 + 1.35, az + ad / 2 + 0.06, beam, { w: 0.75, h: 0.75 });
       this._flames.push({ mesh: apane, base: 0.5, amp: 0.1, speed: 1.1, seed: x * 3 + z });
       g.userData.annex = { x: ax, z: az };
     }
@@ -618,11 +611,7 @@ export class SettlementManager {
         post.position.set(cx, 2.9, cz);
         hut.add(post);
       }
-      const pane = mesh(new THREE.BoxGeometry(0.55, 0.55, 0.08), 0xd8ffe8, {
-        emissive: 0x6affc8, emissiveIntensity: 0.5, shadow: false,
-      });
-      pane.position.set(0.85, 3.15, 1.54);
-      hut.add(pane);
+      const pane = this._window(hut, 0.9, 2.95, 1.56, 0x4a3626, { w: 0.8, h: 0.8, glow: 0x6affc8 });
       this._flames.push({ mesh: pane, base: 0.5, amp: 0.12, speed: 1.1, seed: x * 2 + z });
       // Telhado piramidal em degraus (ADR 0077): camadas de palha no grid.
       const roof = new THREE.Group();
@@ -785,12 +774,8 @@ export class SettlementManager {
       // Porta ALTA (2.4u), janelas acesas e chaminé de pedra.
       const door = mesh(new THREE.BoxGeometry(1.15, 2.4, 0.14), 0x2e2118, { tex: 'planks', trx: 1, try: 2 });
       door.position.set(-1.0, 1.2, 1.85);
-      for (const px of [0.9, 2.0]) {
-        const pane = mesh(new THREE.BoxGeometry(0.55, 0.55, 0.1), 0xffc878, {
-          emissive: 0xff9a3a, emissiveIntensity: 0.6, shadow: false,
-        });
-        pane.position.set(px, 1.9, 1.85);
-        cabin.add(pane);
+      for (const px of [0.7, 2.0]) {
+        const pane = this._window(cabin, px, 1.75, 1.9, 0x3a2d22, { w: 0.85, h: 0.85, glow: 0xff9a3a });
         this._flames.push({ mesh: pane, base: 0.6, amp: 0.16, speed: 1.7, seed: x - z + px });
       }
       cabin.add(door);
@@ -1009,6 +994,29 @@ export class SettlementManager {
       [-3, -5, -3, -2], [5, 8, 2, 8], [2, 8, 2, 2],
       [-9, -9, -3, -9], [-3, -9, -3, -5],
     ], 0x9aa8b4);
+  }
+
+  /**
+   * Janela com moldura e cruzeta (ADR 0086): peitoril à altura do olho,
+   * vidro aceso que entra no boost noturno. Devolve o pane para _flames.
+   */
+  _window(parent, x, y, z, beam, opts: any = {}) {
+    const ww = opts.w ?? 0.95, wh = opts.h ?? 0.95;
+    const g2 = new THREE.Group();
+    const frame = mesh(new THREE.BoxGeometry(ww + 0.2, wh + 0.2, 0.08), beam, { shadow: false });
+    const pane = mesh(new THREE.BoxGeometry(ww, wh, 0.09), 0xffd890, {
+      emissive: opts.glow ?? 0xffb85a, emissiveIntensity: 0.55, shadow: false,
+    });
+    pane.position.z = 0.015;
+    const munH = mesh(new THREE.BoxGeometry(ww, 0.09, 0.1), beam, { shadow: false });
+    munH.position.z = 0.035;
+    const munV = mesh(new THREE.BoxGeometry(0.09, wh, 0.1), beam, { shadow: false });
+    munV.position.z = 0.035;
+    g2.add(frame, pane, munH, munV);
+    g2.position.set(x, y, z);
+    if (opts.rotY) g2.rotation.y = opts.rotY;
+    parent.add(g2);
+    return pane;
   }
 
   // --- Props de rua (ADR 0084): vida cotidiana nas vilas ---------------------
