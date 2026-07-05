@@ -228,6 +228,17 @@ Feedback jogando no celular (prints) + refinamentos aprovados:
 
 ---
 
+## M20 — Playtest 7: layout sem colisões e janelas 🟡
+
+Feedback: torre colidindo com a banca, porta da tenda acima da base da
+pirâmide, colisões generalizadas (sem check), janelas pequenas/mal
+posicionadas.
+
+- [x] 🧪 M20.1 Validador de pegadas: AABB por estrutura + teste que falha em qualquer sobreposição; 5 colisões corrigidas; tenda com parede-base de 2.2u — ADR 0085
+- [ ] 🪟 M20.2 Janelas grandes com moldura, à altura do olho, frente + lateral
+
+---
+
 ## M19 — Playtest 6: proporção, conexão e conteúdo das vilas ✅
 
 Feedback: portas menores que o avatar encolhem as construções; portas sem

@@ -34,6 +34,7 @@ export class SettlementManager {
   _water: any[]; // superfícies de água com pulso
   _villagers: any[]; // moradores que passeiam (ADR 0055)
   _waterRef: any; // material da lagoa do Vau (pulsa no animate)
+  footprints: Record<string, any[]>; // pegadas por vila (validador ADR 0085)
 
   constructor(game) {
     this.game = game;
@@ -44,6 +45,7 @@ export class SettlementManager {
     this._flags = [];
     this._water = [];
     this._villagers = [];
+    this.footprints = {};
     this.list = SETTLEMENTS.map((def) => ({ ...def, visited: false }));
     const builders = {
       druida: (s, rng) => this._buildDruida(s, rng),
@@ -59,6 +61,10 @@ export class SettlementManager {
       game.renderer.add(g);
       for (const v of s.villagers) this._buildVillager(s, v);
       if (s.merchant) this._buildMerchant(s);
+    }
+    // Aviso em dev: nenhuma estrutura pode nascer dentro de outra (ADR 0085).
+    for (const o of this.overlaps()) {
+      console.warn(`[settlements] sobreposição em ${o.settlement}: ${o.a} × ${o.b}`);
     }
   }
 
@@ -343,6 +349,32 @@ export class SettlementManager {
   }
 
   /**
+   * Validador de sobreposição (ADR 0085): cada estrutura registra sua pegada
+   * (AABB em coords locais da vila). `overlaps()` devolve os pares que se
+   * intersectam — o teste de layout falha se houver qualquer um, e o console
+   * avisa em dev. Layout "no olho" deixa de ser possível.
+   */
+  _fp(s, cx, cz, wxs, dzs, label) {
+    this.footprints[s.id] = this.footprints[s.id] ?? [];
+    this.footprints[s.id].push({ x0: cx - wxs / 2, x1: cx + wxs / 2, z0: cz - dzs / 2, z1: cz + dzs / 2, label });
+  }
+
+  overlaps() {
+    const bad: any[] = [];
+    for (const [sid, fps] of Object.entries(this.footprints)) {
+      for (let i = 0; i < (fps as any[]).length; i++) {
+        for (let j = i + 1; j < (fps as any[]).length; j++) {
+          const a = fps[i], b = fps[j];
+          const ox = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+          const oz = Math.min(a.z1, b.z1) - Math.max(a.z0, b.z0);
+          if (ox > 0.05 && oz > 0.05) bad.push({ settlement: sid, a: a.label, b: b.label, ox, oz });
+        }
+      }
+    }
+    return bad;
+  }
+
+  /**
    * Morador como modelo voxel (mesmo sistema dos personagens/inimigos — ADR
    * 0043): túnica na paleta do tema, ancião com capa/cajado, e partes nomeadas
    * para o animador procedural (idle). Vira Renderable, então o renderSync
@@ -403,6 +435,7 @@ export class SettlementManager {
     const stall = buildMerchantStall(CANOPY[s.theme] ?? 0xd8862a);
     stall.position.set(wx, 0, wz);
     game.renderer.add(stall);
+    this._fp(s, wx - s.x, wz - s.z, 6, 4.5, 'banca do mercador');
     // Praça do mercador (ADR 0080): lanternas flanqueando a banca.
     const w2 = { add: (...o) => game.renderer.add(...o), world: (x, z) => ({ x, z }) };
     this._lantern(w2, wx - 3, wz + 2, 0xffd27a);
@@ -445,9 +478,13 @@ export class SettlementManager {
         chimney: i % 2 === 0, ...o,
       });
       w.collider(hg.position.x, hg.position.z, (o.w ?? 6) / 2 + 0.6);
+      const r90 = Math.abs(Math.round(ry / (Math.PI / 2))) % 2 === 1;
+      w.fp(hg.position.x, hg.position.z, r90 ? (o.d ?? 4) : (o.w ?? 6), r90 ? (o.w ?? 6) : (o.d ?? 4), `casa ${i}`);
       if (hg.userData.annex) {
         const a = this._spun(hg.position.x, hg.position.z, ry, hg.userData.annex.x, hg.userData.annex.z);
         w.collider(a.x, a.z, 2.1);
+        const a2 = this._spun(hg.position.x, hg.position.z, ry, (o.w ?? 6) / 2 + 1.5, -0.5);
+        w.fp(a2.x, a2.z, 3, 3, `anexo ${i}`); // só a parte fora da casa
       }
       const dpos = this._spun(hg.position.x, hg.position.z, ry, -0.7, (o.d ?? 4) / 2 + 0.8);
       const dx = Math.round(dpos.x), dz = Math.round(dpos.z);
@@ -473,6 +510,17 @@ export class SettlementManager {
       [0, -11, 0, -17],
       ...spurs,
     ]);
+    // Pegadas dos marcos fixos do hub (validador ADR 0085).
+    w.fp(0, -10, 3.4, 3.4, 'carvalho-mãe');
+    w.fp(0, 4, 2.4, 2.4, 'fogueira');
+    w.fp(-5.5, 7, 3.2, 1.8, 'jardim-oeste');
+    w.fp(5.5, 7, 3.2, 1.8, 'jardim-leste');
+    w.fp(-6.5, -8, 6, 4.5, 'banca do mercador');
+    w.fp(6, -8, 1.2, 1, 'baú');
+    w.fp(7.45, -5.2, 2, 1.2, 'barris');
+    w.fp(-10, -3, 1.9, 1.9, 'lenha');
+    w.fp(13, 8, 2.6, 0.5, 'varal-leste');
+    w.fp(-13, 9, 2.6, 0.5, 'varal-oeste');
     // Fogueira comunal (com fumaça subindo).
     this._fire(w, 0, 4, 0xff9a4a, 1.1);
     this._smokeAt(w, 0, 1.6, 4);
@@ -609,6 +657,7 @@ export class SettlementManager {
       hut.rotation.y = ry;
       w.add(hut);
       w.collider(hut.position.x, hut.position.z, 2.9);
+      w.fp(hut.position.x, hut.position.z, 5, 5, `palafita ${x},${z}`);
     }
     // Passarelas de tábua: da BASE DA ESCADA de cada casa até o centro, em
     // L ortogonal (ADR 0083) — a rede de píer fica toda interligada.
@@ -649,11 +698,13 @@ export class SettlementManager {
     }
     rack.position.set(12, 0, -9);
     w.add(rack);
+    w.fp(12, -9, 2.4, 0.8, 'varal de pesca');
     const boat = mesh(new THREE.BoxGeometry(2.6, 0.5, 1.0), 0x5a4028, { tex: 'planks', trx: 2, try: 1 });
     boat.position.set(-13, 0.25, 6);
     boat.rotation.y = Math.PI / 2;
     w.add(boat);
     w.collider(-13, 6, 1.2);
+    w.fp(-13, 6, 2.8, 1.2, 'barco');
     this._water.push({ mat: this._waterRef, base: 0.85, seed: 1.3, bob: boat });
     // Píer de pesca (ADR 0084): a assinatura do Vau — avança sobre a lagoa
     // rumo ao norte, com postes, lanterna na ponta e barco amarrado.
@@ -672,6 +723,7 @@ export class SettlementManager {
     boat2.position.set(3.2, 0.25, 10.5);
     boat2.rotation.y = Math.PI / 2;
     w.add(boat2);
+    w.fp(3.2, 10.5, 1.2, 2.8, 'barco do píer');
     this._water.push({ mat: this._waterRef, base: 0.85, seed: 2.6, bob: boat2 });
     // Barris de seiva na junção das passarelas (ADR 0084).
     this._barrel(w, 1.6, 1);
@@ -750,6 +802,7 @@ export class SettlementManager {
       cabin.rotation.y = ry;
       w.add(cabin);
       w.collider(cabin.position.x, cabin.position.z, 3.4);
+      w.fp(cabin.position.x, cabin.position.z, swap ? 4 : 6, swap ? 6 : 4, `cabana ${x},${z}`);
       // Chaminé acesa: a vila queima madeira dia e noite (worldbuilding).
       const c = this._spun(cabin.position.x, cabin.position.z, ry, 2.0, -0.8);
       this._smokeAt(w, c.x, 5.2, c.z, 0xa8a098);
@@ -771,6 +824,7 @@ export class SettlementManager {
     mill.rotation.y = Math.PI / 2;
     w.add(mill);
     w.collider(-10, 7, 1.8);
+    w.fp(-10, 7, 2.2, 3.8, 'serraria');
     // Pilhas de toras e tocos.
     for (const [x, z] of [[10, 9], [12, 6]]) {
       for (let i = 0; i < 3; i++) {
@@ -779,6 +833,7 @@ export class SettlementManager {
         w.add(log);
       }
       w.collider(x, z, 1.4);
+      w.fp(x, z, 2.8, 1.6, `pilha ${x},${z}`);
     }
     for (let i = 0; i < 6; i++) {
       const stump = mesh(new THREE.BoxGeometry(0.78, 0.5, 0.78), 0x5a4232, { tex: 'log' });
@@ -819,23 +874,28 @@ export class SettlementManager {
     beacon.position.y = 6.5;
     tower.add(beacon);
     this._flames.push({ mesh: beacon, base: 1.2, amp: 0.3, speed: 2.6, seed: 5 });
-    tower.position.set(5, 0, -12);
+    // (-6,-12): longe da banca do mercador — o validador pegou a colisão.
+    tower.position.set(-6, 0, -12);
     w.add(tower);
-    w.collider(5, -12, 1.9);
-    const tp = w.world(5, -12);
+    w.collider(-6, -12, 1.9);
+    w.fp(-6, -12, 3.8, 3.8, 'torre de vigia');
+    const tp = w.world(-6, -12);
     this.game.lightPool?.register(tp.x, 6.5, tp.z, 0xffb46a, 14, 0.3);
     // Barris e lenha ao longo das ruas (ADR 0084).
     this._barrel(w, -2, -6);
     this._barrel(w, -2.9, -6.2);
-    this._woodpile(w, 3, 7, Math.PI / 2);
-    this._woodpile(w, -5, -8);
+    this._woodpile(w, 4, 6, Math.PI / 2);
+    this._woodpile(w, -3, -8);
+    w.fp(-2.45, -6.1, 2, 1.2, 'barris');
+    w.fp(4, 6, 1.9, 1.9, 'lenha-norte');
+    w.fp(-3, -8, 1.9, 1.9, 'lenha-sul');
     // Ruas de laje: portão sul, portas das cabanas, torre e centro.
     this._streets(w, [
       [0, -14, 0, 7],
       [-4, -4, 0, -4], // porta da cabana oeste
       [4, -4, 0, -4],  // porta da cabana leste
       [1, 7, 0, 7],    // porta da cabana norte
-      [3, -12, 0, -12], // torre de vigia
+      [-4, -12, 0, -12], // torre de vigia
     ], 0x6a6156);
   }
 
@@ -843,20 +903,20 @@ export class SettlementManager {
   _buildDegelo(w, rng) {
     // Tendas de pele com capuz de neve.
     // 5a tenda ao sul (ADR 0084), guardando a trilha dos cairns.
-    const tents = [[-7, 3, 0], [6, -3, -Math.PI / 2], [-3, -8, 0], [8, 8, Math.PI / 2], [4, -12, 0]];
+    const tents = [[-7, 3, 0], [6, -3, -Math.PI / 2], [-3, -8, 0], [8, 8, Math.PI / 2], [-9, -12, 0]];
     for (const [x, z, ry] of tents) {
       // Tenda em blocos (M15.8): pirâmide 3-2-1 de pele, no vocabulário MC.
       const tent = new THREE.Group();
-      // Pirâmide 5-3-1 com camadas ALTAS (ADR 0082): ~4u de tenda — o
-      // montanhês entra em pé, com folga.
+      // Pirâmide 5-3-1 com PAREDE-BASE de 2.2u (ADR 0085): a porta cabe
+      // inteira dentro da camada de baixo — nada flutua acima da base.
       const tiers = [
-        { n: 5, size: 1.0, y: 0.65 },
-        { n: 3, size: 1.0, y: 1.95 },
-        { n: 1, size: 1.0, y: 3.2 },
+        { n: 5, size: 1.0, y: 1.1, h: 2.2 },
+        { n: 3, size: 1.0, y: 2.85, h: 1.3 },
+        { n: 1, size: 1.0, y: 4.0, h: 1.0 },
       ];
       for (const t of tiers) {
         for (let bx = 0; bx < t.n; bx++) for (let bz = 0; bz < t.n; bz++) {
-          const b = mesh(new THREE.BoxGeometry(t.size, 1.3, t.size), (bx + bz) % 2 ? 0x7a5a44 : 0x715340, { tex: 'cloth' });
+          const b = mesh(new THREE.BoxGeometry(t.size, t.h, t.size), (bx + bz) % 2 ? 0x7a5a44 : 0x715340, { tex: 'cloth' });
           b.position.set((bx - (t.n - 1) / 2) * t.size, t.y, (bz - (t.n - 1) / 2) * t.size);
           tent.add(b);
         }
@@ -864,27 +924,35 @@ export class SettlementManager {
       tent.position.set(x, 0, z);
       tent.rotation.y = ry;
       const snow = mesh(new THREE.BoxGeometry(1.0, 0.22, 1.0), 0xeaf4ff, { rough: 1, shadow: false, tex: 'snow' });
-      snow.position.set(x, 3.96, z);
+      snow.position.set(x, 4.6, z);
       snow.rotation.y = ry;
       w.add(tent, snow);
       // Entrada ALTA voltada ao centro (vão 2.2u): batentes retos + vão.
       const a = snap90(Math.atan2(-x, -z));
       for (const s of [-1, 1]) {
-        const flap = mesh(new THREE.BoxGeometry(0.55, 2.2, 0.1), 0x66493a, { shadow: false });
-        flap.position.set(x + Math.sin(a) * 2.55, 1.1, z + Math.cos(a) * 2.55);
+        const flap = mesh(new THREE.BoxGeometry(0.55, 2.05, 0.1), 0x66493a, { shadow: false });
+        flap.position.set(x + Math.sin(a) * 2.55, 1.02, z + Math.cos(a) * 2.55);
         flap.position.x += Math.cos(a) * s * 0.75;
         flap.position.z -= Math.sin(a) * s * 0.75;
         flap.rotation.y = a;
         w.add(flap);
       }
-      const gap = mesh(new THREE.BoxGeometry(0.95, 2.2, 0.12), 0x241a12);
-      gap.position.set(x + Math.sin(a) * 2.55, 1.1, z + Math.cos(a) * 2.55);
+      const gap = mesh(new THREE.BoxGeometry(0.95, 2.05, 0.12), 0x241a12);
+      gap.position.set(x + Math.sin(a) * 2.55, 1.02, z + Math.cos(a) * 2.55);
       gap.rotation.y = a;
       w.add(gap);
       w.collider(x, z, 2.9);
+      w.fp(x, z, 5, 5, `tenda ${x},${z}`);
     }
+    // Pegadas dos marcos do Degelo (validador ADR 0085).
+    w.fp(0, 0, 2.4, 2.4, 'chama azul');
+    w.fp(-4, 8, 1, 1, 'totem');
+    w.fp(-3.5, 12.5, 4.2, 2.2, 'muro-gelo-oeste');
+    w.fp(3.5, 12.5, 4.2, 2.2, 'muro-gelo-leste');
+    w.fp(-5, -1, 1.9, 1.9, 'lenha');
+    w.fp(3, -6, 1, 1, 'barril');
     // Cairns: pilhas de pedra que marcam a trilha antiga ao Coração.
-    const cairns = [[0, -13], [-11, -7], [12, 2], [-9, 10], [4, 13]];
+    const cairns = [[0, -13], [-11, -7], [12, 2], [-9, 10], [7, 13]]; // (7,13): fora do muro de gelo
     for (const [x, z] of cairns) {
       for (let i = 0; i < 3; i++) {
         const s = 1.3 - i * 0.34;
@@ -893,6 +961,7 @@ export class SettlementManager {
         w.add(rock);
       }
       w.collider(x, z, 0.9);
+      w.fp(x, z, 1.5, 1.5, `cairn ${x},${z}`);
     }
     // Cristais de gelo que emergem da encosta.
     for (const [x, z, s] of [[-12, 1, 1.0], [10, -8, 0.7], [2, 10, 0.8]]) {
@@ -938,7 +1007,7 @@ export class SettlementManager {
     this._streets(w, [
       [-4, 3, -2, 3], [-2, 3, -2, 0], [3, -3, 2, -3], [2, -3, 2, 0],
       [-3, -5, -3, -2], [5, 8, 2, 8], [2, 8, 2, 2],
-      [4, -9, 2, -9], [2, -9, 2, -3],
+      [-9, -9, -3, -9], [-3, -9, -3, -5],
     ], 0x9aa8b4);
   }
 
@@ -1040,6 +1109,8 @@ function wrap(group, s, mgr, rng) {
     add: (...objs) => group.add(...objs),
     collider: (lx, lz, r) => mgr._collider(s.x + lx, s.z + lz, r),
     world: (lx, lz) => ({ x: s.x + lx, z: s.z + lz }),
+    /** Registra a pegada (AABB local) de uma estrutura — validador ADR 0085. */
+    fp: (cx, cz, wxs, dzs, label) => mgr._fp(s, cx, cz, wxs, dzs, label),
     rng,
   };
 }
