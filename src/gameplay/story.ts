@@ -14,6 +14,7 @@ import { FORM_ORDER } from './forms.js';
 // Posições-chave no eixo -Z, cada uma dentro do anel do bioma correspondente.
 export const LANDMARKS = {
   npc: { x: 0, z: -14 },
+  sanctuary_wolf: { x: 0, z: -40, form: 'wolf', biome: 'Clareira Viva' },
   sanctuary_bear: { x: 0, z: -82, form: 'bear', biome: 'Pântano' },
   miniboss: { x: 26, z: -74 },
   sanctuary_raven: { x: 0, z: -138, form: 'raven', biome: 'Bosque Cinza' },
@@ -24,6 +25,7 @@ export const LANDMARKS = {
 const STEPS = [
   { id: 'talk', objective: 'Fale com a Guardiã do Carvalho-Mãe' },
   { id: 'purify_clearing', objective: 'Purifique a Clareira: devolva 8 criaturas corrompidas à terra', kills: 8 },
+  { id: 'find_wolf', objective: 'Desperte o Santuário do Lobo, aqui na Clareira' },
   { id: 'find_bear', objective: 'Vá ao Pântano e desperte o Santuário do Urso' },
   { id: 'slay_miniboss', objective: 'Derrote a Árvore-Carniça no Pântano' },
   { id: 'find_raven', objective: 'Encontre o Santuário do Corvo no Bosque Cinza' },
@@ -38,7 +40,7 @@ export const NPC_LINES = [
   'Guardiã: Nossa vila, o Círculo do Carvalho, é o último chão limpo. Outros povos resistem lá fora.',
   'Guardiã: Procure-os: o Vau das Palafitas no Pântano, Cinzafolha no Bosque, o Abrigo do Degelo nos Picos.',
   'Guardiã: Recupere as Formas Ancestrais nos santuários e purifique cada região.',
-  'Guardiã: Comece limpando esta Clareira. A natureza lembra de você.',
+  'Guardiã: A primeira dorme aqui mesmo, na Clareira: o Santuário do Lobo. Limpe a mata e ele responderá.',
 ];
 
 export class StoryManager {
@@ -103,7 +105,7 @@ export class StoryManager {
   }
 
   _sanctuaryStepFor(form) {
-    return { bear: 'find_bear', raven: 'find_raven', frog: 'find_frog' }[form];
+    return { wolf: 'find_wolf', bear: 'find_bear', raven: 'find_raven', frog: 'find_frog' }[form];
   }
 
   unlockForm(form) {
@@ -137,5 +139,5 @@ export class StoryManager {
 }
 
 function formName(form) {
-  return { bear: 'Urso', raven: 'Corvo', frog: 'Sapo' }[form] ?? form;
+  return { wolf: 'Lobo', bear: 'Urso', raven: 'Corvo', frog: 'Sapo' }[form] ?? form;
 }

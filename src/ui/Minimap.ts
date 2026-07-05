@@ -48,6 +48,7 @@ export class Minimap {
     // Assentamentos (cidades)
     for (const s of SETTLEMENTS) this.dot(s.x, s.z, c.x, c.z, s.mapColor, 4);
     // Santuários e chefe
+    this.dot(LANDMARKS.sanctuary_wolf.x, LANDMARKS.sanctuary_wolf.z, c.x, c.z, '#8fd0ff', 3);
     this.dot(LANDMARKS.sanctuary_bear.x, LANDMARKS.sanctuary_bear.z, c.x, c.z, '#ff9a5a', 3);
     this.dot(LANDMARKS.sanctuary_raven.x, LANDMARKS.sanctuary_raven.z, c.x, c.z, '#9a7aff', 3);
     this.dot(LANDMARKS.sanctuary_frog.x, LANDMARKS.sanctuary_frog.z, c.x, c.z, '#6affb0', 3);

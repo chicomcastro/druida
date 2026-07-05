@@ -8,7 +8,7 @@ import { BALANCE } from '../src/data/balance.js';
 describe('BOONS (dados)', () => {
   it('cada forma de santuário oferece 2 dons com ids únicos', () => {
     const ids = new Set<string>();
-    for (const form of ['bear', 'raven', 'frog']) {
+    for (const form of ['wolf', 'bear', 'raven', 'frog']) {
       expect(BOONS[form].length).toBe(2);
       for (const b of BOONS[form]) {
         expect(ids.has(b.id)).toBe(false);
@@ -81,6 +81,30 @@ describe('dons reativos (hooks)', () => {
     hp.hp = hp.max - 30;
     g.emit('formSwap', { id: pid, form: 'wolf' });
     expect(hp.hp).toBe(hp.max - 20);
+  });
+
+  it('Sede de Sangue cura o jogador que abate; ignora abate de não-jogador', () => {
+    const g = makeGame();
+    registerBoonHooks(g);
+    const pid = addPlayer(g, 0, 0, 0);
+    g.boons = { wolf: 'sangue' };
+    const hp = g.world.get(pid, C.Health);
+    hp.hp = hp.max - 30;
+    g.emit('kill', { id: 999, attackerId: pid });
+    expect(hp.hp).toBe(hp.max - 24); // +6
+    // Abate sem atacante-jogador não cura.
+    g.emit('kill', { id: 998, attackerId: undefined });
+    expect(hp.hp).toBe(hp.max - 24);
+  });
+});
+
+describe('Instinto de Caça (dmgMul)', () => {
+  it('aplica +10% de dano de ataque', () => {
+    const g = makeGame();
+    const pid = addPlayer(g, 0, 0, 0);
+    const base = g.dmgMul(pid);
+    g.boons = { wolf: 'cacada' };
+    expect(g.dmgMul(pid)).toBeCloseTo(base * 1.1, 5);
   });
 });
 

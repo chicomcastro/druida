@@ -126,12 +126,14 @@ cada santuário também concede um **Dom** (escolha de 1 de 2 passivas):
 
 | Forma | Santuário em | Passo da campanha | Dons |
 |---|---|---|---|
+| **Lobo** | **Clareira (z −40)** | `find_wolf` | Sede de Sangue (cura ao abater) / Instinto de Caça (+10% dano) |
 | Urso | Pântano (z −82) | `find_bear` | Casca de Carvalho (+vida) / Pelagem de Espinhos (reflete) |
 | Corvo | Bosque Cinza (z −138) | `find_raven` | Asas do Vento (+vel) / Presságio (+i-frames) |
 | Sapo | Picos (z −192) | `find_frog` | Orvalho Eterno (+seiva) / Pele Úmida (cura ao trocar) |
-| **Lobo** | **— (não existe)** | — | **— (lacuna, §15)** |
 
-As formas **não são conteúdo das vilas** hoje — são recompensas de santuários no
+O **Lobo é a primeira Forma Ancestral** (ADR 0106): seu santuário fica na própria
+Clareira e desperta logo após purificar a região — é a introdução ao sistema de
+Dons. As formas **não são conteúdo das vilas** — são recompensas de santuários no
 mundo aberto, na trilha da campanha (um por bioma). Modelos: serviçáveis e no
 padrão MCD; lobo/urso são os mais legíveis, corvo/sapo mais simples.
 
@@ -215,9 +217,10 @@ ondas + perigo ambiental + mini-chefe (ou chefe pleno no Pântano/Picos) e
 recompensa garantida (Único na 1ª limpeza). 5 temas (um por bioma).
 
 ## 12. Quests & campanha
-**Campanha** (`src/gameplay/story.ts`) — 8 passos: falar com a Guardiã →
-purificar a Clareira (8 abates) → Santuário do Urso (Pântano) → Árvore-Carniça
-→ Santuário do Corvo (Bosque) → Santuário do Sapo (Picos) → Coração → vitória.
+**Campanha** (`src/gameplay/story.ts`) — 9 passos: falar com a Guardiã →
+purificar a Clareira (8 abates) → **Santuário do Lobo (Clareira)** → Santuário do
+Urso (Pântano) → Árvore-Carniça → Santuário do Corvo (Bosque) → Santuário do Sapo
+(Picos) → Coração → vitória.
 
 **Missões de vila** (ADR 0047) — o ancião de cada vila dá uma missão temática
 (coletar/caçar/elite) por essência + artefato único.
@@ -250,9 +253,9 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104), `progression.ts`.
   (`firstKill/Level/Purchase/Down/QuestAt`). É o que embasa o tuning do Gate F.
 
 ## 15. Lacunas conhecidas
-- **Forma Lobo sem desbloqueio**: existe FORM + modelo + trilha de talento, mas
-  **não há Santuário do Lobo** nem outro caminho — hoje é inalcançável no jogo.
-  Decidir: santuário do Lobo na Clareira (1ª forma) ou concessão inicial.
+- ~~**Forma Lobo sem desbloqueio**~~ ✅ **Resolvido (ADR 0106)**: o Santuário do
+  Lobo agora fica na Clareira e é a 1ª Forma Ancestral da campanha, com Dons
+  próprios (Sede de Sangue / Instinto de Caça).
 - **Famílias/rixa só na Clareira**: vilas 2–4 têm interiores mas não têm
   família/arco social próprios (candidato a expansão de dados).
 - **Modelos**: formas e fauna são serviçáveis mas sem animação própria além do

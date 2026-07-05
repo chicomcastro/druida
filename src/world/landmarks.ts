@@ -10,10 +10,11 @@ import { buildVoxelModel } from '../entities/voxelModels.js';
  * A Guardiã e o mercador usam os modelos voxel de NPC (ADR 0043), no mesmo
  * estilo dos personagens/inimigos e com animação procedural de idle.
  */
-const FORM_GLOW = { bear: 0xff9a5a, raven: 0x9a7aff, frog: 0x6affb0 };
+const FORM_GLOW = { wolf: 0x8fd0ff, bear: 0xff9a5a, raven: 0x9a7aff, frog: 0x6affb0 };
 
 export function buildLandmarks(game) {
   buildNpc(game, LANDMARKS.npc);
+  buildSanctuary(game, LANDMARKS.sanctuary_wolf, 'wolf');
   buildSanctuary(game, LANDMARKS.sanctuary_bear, 'bear');
   buildSanctuary(game, LANDMARKS.sanctuary_raven, 'raven');
   buildSanctuary(game, LANDMARKS.sanctuary_frog, 'frog');
