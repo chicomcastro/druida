@@ -42,6 +42,10 @@ const C = {
   husk: 0x4b3a2a, huskLt: 0x5c4836, rot: 0x6a7a3a,
   shaman: 0x3a5a3a, shamanLt: 0xb8d0a0, mask: 0xe8e0c8,
   lord: 0x3b2a1c, lordLt: 0x55402a, lordRot: 0x6a7a3a, ember: 0xff7a3a,
+  // Novos inimigos/bosses (ADR 0103).
+  mire: 0x4a6b3a, mireDk: 0x33502a, mireWet: 0x8fbf5a,
+  ash: 0x9a9088, ashDk: 0x63594f, ashGlow: 0xd8cabf,
+  ice: 0xbfe8ff, iceDk: 0x5a8fb8, iceGlow: 0x9fdcff,
 };
 
 const b = (size: [number, number, number], pos: [number, number, number], color: number): VoxelBox => ({ size, pos, color });
@@ -283,11 +287,15 @@ export interface VillagerLook {
   hair?: number;
   apron?: boolean;
   pack?: boolean;
+  /** Variedade de rosto (ADR 0103): tom de pele e barba. */
+  skin?: number;
+  beard?: boolean;
 }
 
 export function makeVillagerSpec({
   robe, trim, glow = C.gold, elder = false,
   hood = true, hair = 0x4a331f, apron = false, pack = false,
+  skin = C.skin, beard = false,
 }: VillagerLook): VoxelModelSpec {
   const parts: VoxelPart[] = [
     { name: 'torso', joint: [0, 0.95, 0], boxes: [
@@ -298,18 +306,20 @@ export function makeVillagerSpec({
       ...(pack ? [b([0.42, 0.55, 0.26], [0, 0.12, -0.38], C.leather)] : []), // mochila
     ] },
     { name: 'head', joint: [0, 1.5, 0], boxes: [
-      b([0.6, 0.58, 0.6], [0, 0.2, 0], C.skin),        // cabeça grande (cubo)
+      b([0.6, 0.58, 0.6], [0, 0.2, 0], skin),          // cabeça grande (cubo)
       ...(elder || hood
         ? [
-            b([0.68, 0.32, 0.7], [0, 0.45, 0], robe),   // capuz topo
-            b([0.7, 0.28, 0.18], [0, 0.24, 0.3], robe), // aba do capuz
+            b([0.68, 0.30, 0.7], [0, 0.48, 0], robe),   // capuz topo (subido)
+            b([0.72, 0.16, 0.16], [0, 0.37, 0.30], robe), // aba fina ACIMA dos olhos (ADR 0103)
           ]
         : [
             b([0.66, 0.24, 0.66], [0, 0.5, 0], hair),   // cabelo
             b([0.66, 0.16, 0.12], [0, 0.38, 0.28], hair), // franja
           ]),
-      b([0.11, 0.11, 0.06], [-0.15, 0.2, 0.31], 0x2a2a2a), // olhos
-      b([0.11, 0.11, 0.06], [0.15, 0.2, 0.31], 0x2a2a2a),
+      // Olhos mais baixos p/ aparecerem sob o capuz — todo aldeão tem rosto.
+      b([0.12, 0.11, 0.06], [-0.15, 0.14, 0.31], 0x2a2a2a),
+      b([0.12, 0.11, 0.06], [0.15, 0.14, 0.31], 0x2a2a2a),
+      ...(beard ? [b([0.44, 0.2, 0.1], [0, -0.04, 0.29], hair)] : []), // barba
     ] },
     { name: 'armL', joint: [-0.5, 1.35, 0], boxes: [b([0.24, 0.58, 0.26], [0, -0.27, 0], robe)] },
     { name: 'armR', joint: [0.5, 1.35, 0], boxes: [b([0.24, 0.58, 0.26], [0, -0.27, 0], robe)] },
@@ -365,9 +375,121 @@ const scythe: VoxelModelSpec = {
   ] }],
 };
 
+// --- Novos inimigos (ADR 0103): silhuetas próprias ------------------------
+// Atoladiço: brutamontes curvado, ombros de lodo, braços pesados.
+const bogbrute: VoxelModelSpec = {
+  gait: 'biped', scale: 1.15,
+  parts: [
+    { name: 'torso', joint: [0, 1.0, 0], boxes: [
+      b([0.95, 1.0, 0.7], [0, 0, 0], C.mireDk),
+      b([1.15, 0.4, 0.85], [0, 0.42, 0], C.mire),        // costas corcundas
+      b([0.5, 0.35, 0.35], [0, 0.2, 0.3], C.mireWet),    // lodo escorrendo
+    ] },
+    { name: 'head', joint: [0, 1.45, 0.15], boxes: [
+      b([0.55, 0.45, 0.5], [0, 0.1, 0], C.mire),
+      b([0.12, 0.1, 0.06], [-0.14, 0.12, 0.26], 0xffe08a),
+      b([0.12, 0.1, 0.06], [0.14, 0.12, 0.26], 0xffe08a),
+    ] },
+    { name: 'armL', joint: [-0.6, 1.4, 0], boxes: [b([0.32, 1.1, 0.34], [0, -0.5, 0], C.mireDk)] },
+    { name: 'armR', joint: [0.6, 1.4, 0], boxes: [b([0.32, 1.1, 0.34], [0, -0.5, 0], C.mireDk)] },
+    { name: 'legL', joint: [-0.24, 0.5, 0], boxes: [b([0.3, 0.55, 0.34], [0, -0.28, 0], C.mireDk)] },
+    { name: 'legR', joint: [0.24, 0.5, 0], boxes: [b([0.3, 0.55, 0.34], [0, -0.28, 0], C.mireDk)] },
+  ],
+};
+// Espectro de Cinza: alto e magro, manto rasgado, sem pernas (flutua), olhos vazios.
+const ashwraith: VoxelModelSpec = {
+  gait: 'biped', scale: 1.05,
+  parts: [
+    { name: 'torso', joint: [0, 1.1, 0], boxes: [
+      b([0.6, 1.2, 0.4], [0, 0, 0], C.ashDk),
+      b([0.9, 0.7, 0.5], [0, -0.7, 0], C.ash),           // manto que afina (saia)
+      b([0.5, 0.3, 0.3], [0, -1.15, 0], C.ashDk),        // cauda esfumaçada
+    ] },
+    { name: 'head', joint: [0, 1.75, 0], boxes: [
+      b([0.46, 0.5, 0.46], [0, 0.15, 0], C.ash),
+      b([0.1, 0.14, 0.06], [-0.12, 0.16, 0.24], C.ashGlow), // olhos ocos brilhantes
+      b([0.1, 0.14, 0.06], [0.12, 0.16, 0.24], C.ashGlow),
+    ] },
+    { name: 'armL', joint: [-0.42, 1.5, 0], boxes: [b([0.18, 0.85, 0.2], [0, -0.42, 0], C.ash)] },
+    { name: 'armR', joint: [0.42, 1.5, 0], boxes: [b([0.18, 0.85, 0.2], [0, -0.42, 0], C.ash)] },
+  ],
+};
+// Presa-Gélida: quadrúpede lupino, pelo branco-azulado, presas e crista de gelo.
+const frostfang: VoxelModelSpec = {
+  gait: 'quadruped',
+  parts: [
+    { name: 'torso', joint: [0, 0.6, 0], boxes: [
+      b([0.75, 0.65, 1.2], [0, 0, 0], C.ice),
+      b([0.3, 0.3, 0.9], [0, 0.4, -0.1], C.iceDk),       // crista dorsal
+    ] },
+    { name: 'head', joint: [0, 0.65, 0.62], boxes: [
+      b([0.5, 0.46, 0.48], [0, 0, 0.08], C.ice),
+      b([0.28, 0.22, 0.24], [0, -0.08, 0.36], C.iceDk),  // focinho
+      b([0.06, 0.2, 0.06], [-0.1, -0.14, 0.46], C.bone), // presas
+      b([0.06, 0.2, 0.06], [0.1, -0.14, 0.46], C.bone),
+      b([0.1, 0.1, 0.06], [-0.13, 0.06, 0.34], 0x6affd8), // olhos gélidos
+      b([0.1, 0.1, 0.06], [0.13, 0.06, 0.34], 0x6affd8),
+    ] },
+    { name: 'legFL', joint: [-0.26, 0.34, 0.4], boxes: [b([0.2, 0.42, 0.22], [0, -0.21, 0], C.iceDk)] },
+    { name: 'legFR', joint: [0.26, 0.34, 0.4], boxes: [b([0.2, 0.42, 0.22], [0, -0.21, 0], C.iceDk)] },
+    { name: 'legBL', joint: [-0.26, 0.34, -0.4], boxes: [b([0.2, 0.42, 0.22], [0, -0.21, 0], C.iceDk)] },
+    { name: 'legBR', joint: [0.26, 0.34, -0.4], boxes: [b([0.2, 0.42, 0.22], [0, -0.21, 0], C.iceDk)] },
+  ],
+};
+// --- Novos bosses (ADR 0103) ----------------------------------------------
+// Senhor do Lodo: colosso pantanoso, núcleo de lodo, braços-clava.
+const mirelord: VoxelModelSpec = {
+  gait: 'biped', scale: 1.0,
+  parts: [
+    { name: 'torso', joint: [0, 1.6, 0], boxes: [
+      b([2.0, 1.9, 1.6], [0, 0, 0], C.mireDk),
+      b([2.3, 0.5, 1.9], [0, 0.7, 0], C.mire),           // ombros de lodo
+      b([1.0, 0.9, 0.6], [0, 0.05, 0.7], C.mireWet),     // núcleo úmido brilhante
+    ] },
+    { name: 'head', joint: [0, 2.6, 0], boxes: [
+      b([1.0, 0.9, 0.95], [0, 0.35, 0], C.mire),
+      b([0.22, 0.2, 0.1], [-0.28, 0.4, 0.48], 0xffe08a),
+      b([0.22, 0.2, 0.1], [0.28, 0.4, 0.48], 0xffe08a),
+      b([0.9, 0.3, 0.5], [0, 0.0, 0.4], C.mireWet),      // mandíbula escorrida
+    ] },
+    { name: 'armL', joint: [-1.2, 2.3, 0], boxes: [b([0.55, 1.7, 0.55], [0, -0.85, 0], C.mireDk)] },
+    { name: 'armR', joint: [1.2, 2.3, 0], boxes: [b([0.55, 1.7, 0.55], [0, -0.85, 0], C.mireDk)] },
+    { name: 'legL', joint: [-0.5, 1.0, 0], boxes: [b([0.65, 1.1, 0.75], [0, -0.55, 0], C.mireDk)] },
+    { name: 'legR', joint: [0.5, 1.0, 0], boxes: [b([0.65, 1.1, 0.75], [0, -0.55, 0], C.mireDk)] },
+  ],
+};
+// Ceifador Gélido: alto e esguio, coroa de gelo e uma foice de gelo.
+const frostreaver: VoxelModelSpec = {
+  gait: 'biped', scale: 1.05,
+  parts: [
+    { name: 'torso', joint: [0, 1.7, 0], boxes: [
+      b([1.2, 1.7, 0.9], [0, 0, 0], C.iceDk),
+      b([1.5, 0.4, 1.1], [0, 0.75, 0], C.ice),           // ombreiras de gelo
+      b([0.6, 0.5, 0.4], [0, 0.1, 0.5], C.iceGlow),      // peito reluzente
+    ] },
+    { name: 'head', joint: [0, 2.75, 0], boxes: [
+      b([0.85, 0.85, 0.85], [0, 0.3, 0], C.ice),
+      b([0.14, 0.18, 0.08], [-0.22, 0.32, 0.44], 0x6affd8),
+      b([0.14, 0.18, 0.08], [0.22, 0.32, 0.44], 0x6affd8),
+      b([0.2, 0.6, 0.2], [-0.35, 0.95, 0], C.iceGlow),   // coroa/chifres de gelo
+      b([0.2, 0.6, 0.2], [0.35, 0.95, 0], C.iceGlow),
+    ] },
+    { name: 'armL', joint: [-0.85, 2.4, 0], boxes: [b([0.35, 1.5, 0.38], [0, -0.75, 0], C.iceDk)] },
+    { name: 'armR', joint: [0.85, 2.4, 0], boxes: [b([0.35, 1.5, 0.38], [0, -0.75, 0], C.iceDk)] },
+    { name: 'weapon', parent: 'armR', joint: [0, -1.3, 0.1], boxes: [
+      b([0.12, 2.2, 0.12], [0, 0.4, 0], C.bone),         // cabo
+      b([1.0, 0.18, 0.14], [0.4, 1.4, 0], C.iceGlow),    // lâmina de foice
+      b([0.5, 0.5, 0.14], [0.8, 1.15, 0], C.iceGlow),
+    ] },
+    { name: 'legL', joint: [-0.35, 1.0, 0], boxes: [b([0.42, 1.1, 0.5], [0, -0.55, 0], C.iceDk)] },
+    { name: 'legR', joint: [0.35, 1.0, 0], boxes: [b([0.42, 1.1, 0.5], [0, -0.55, 0], C.iceDk)] },
+  ],
+};
+
 export const MODEL_SPECS: Record<string, VoxelModelSpec> = {
   druid, wolf, bear, raven, frog,
   rotboar, shadecrow, fungling, husk, shaman, rotlord,
+  bogbrute, ashwraith, frostfang, mirelord, frostreaver,
   guardian, merchant, villager, elder,
   sword, staff, scythe,
 };
@@ -375,7 +497,8 @@ export const MODEL_SPECS: Record<string, VoxelModelSpec> = {
 /** Lista para a vitrine: personagens, formas, inimigos, NPCs e armas. */
 export const SHOWCASE_GROUPS: Array<{ label: string; kinds: string[] }> = [
   { label: 'Druida & Formas', kinds: ['druid', 'wolf', 'bear', 'raven', 'frog'] },
-  { label: 'Inimigos', kinds: ['rotboar', 'shadecrow', 'fungling', 'husk', 'shaman', 'rotlord'] },
+  { label: 'Inimigos', kinds: ['rotboar', 'shadecrow', 'fungling', 'husk', 'shaman', 'bogbrute', 'ashwraith', 'frostfang'] },
+  { label: 'Chefes', kinds: ['rotlord', 'mirelord', 'frostreaver'] },
   { label: 'NPCs', kinds: ['guardian', 'merchant', 'villager', 'elder'] },
   { label: 'Armas', kinds: ['sword', 'staff', 'scythe'] },
 ];
