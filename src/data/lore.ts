@@ -16,4 +16,22 @@ export const LORE = [
   { id: 'l10', title: 'O Vau das Palafitas', text: 'Os coletores do vau dizem que casa boa não toca o chão do pântano. A água escura leva embora o que apodrece — desde que você não pare de se mover.' },
   { id: 'l11', title: 'Cinzafolha', text: 'Os lenhadores queimam a madeira doente antes que ela caminhe. A cinza que cobre a vila é o preço de continuar viva.' },
   { id: 'l12', title: 'O Abrigo do Degelo', text: 'Cada cairn dos montanheses marca um passo da trilha antiga até o Coração. Empilhar pedras é a forma deles de rezar.' },
+  // Rixa das famílias da Clareira (ADR 0095): segredos revelados ao conversar.
+  { id: 'l13', title: 'A Rixa do Riacho', text: 'Fenwick e Aldren partilham um riacho: a forja precisa da água, os campos também. Há três gerações discutem de quem é a nascente — e de quem é a culpa quando ela seca.' },
+  { id: 'l14', title: 'O Segredo do Moinho', text: 'A verdade que ninguém diz em voz alta: foi a Corrupção que envenenou a nascente, não a forja nem o moinho. As duas famílias brigam por uma água que o Apodrecedor já havia amaldiçoado.' },
+  { id: 'l15', title: 'O Nó de Duas Cordas', text: 'A anciã Maroa guarda um velho costume: quando Fenwick e Aldren se casavam, atavam duas cordas num só nó. Reatá-lo talvez valha mais que qualquer arbitragem.' },
 ];
+
+/**
+ * Revela um fragmento do codex (uma vez). Usado ao conversar com NPCs que
+ * guardam segredos — ex.: a rixa das famílias (ADR 0095). Devolve true se
+ * revelou algo novo.
+ */
+export function revealLore(game, id: string): boolean {
+  if (!game.lore || game.lore.found.has(id)) return false;
+  game.lore.found.add(id);
+  const entry = LORE.find((l) => l.id === id);
+  game.emit?.('loreFound', { id });
+  game.emit?.('objective', { text: `📖 Códice: ${entry?.title ?? 'novo fragmento'} (${game.lore.found.size})` });
+  return true;
+}

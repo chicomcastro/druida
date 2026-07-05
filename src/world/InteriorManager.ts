@@ -126,12 +126,15 @@ export class InteriorManager {
       const shopId = 'interior:' + theme.id;
       game._interiorBias = game._interiorBias ?? {};
       game._interiorBias[shopId] = theme.shopBias ?? null;
-      inter = { kind: 'merchant', shopId, prompt: `E — ${theme.npc}`, range: 3, used: false };
+      inter = { kind: 'merchant', shopId, prompt: `E — ${theme.npc}`, range: 3, used: false, lines: theme.lines };
     } else if (theme.service === 'rest') {
       inter = { kind: 'tavern', prompt: `E — ${theme.npc}`, range: 3, used: false, lines: theme.lines };
     } else {
       inter = { kind: 'villager', prompt: `E — ${theme.npc}`, range: 3, used: false, lines: theme.lines };
     }
+    // Rixa das famílias (ADR 0095): afiliação + fragmento do codex ao conversar.
+    inter.family = theme.family;
+    inter.loreId = theme.loreId;
     game.world.add(id, C.Interactable, inter);
     return id;
   }

@@ -98,4 +98,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0092](0092-combo-por-timing.md) | Combate: combo por timing + game feel (E3) | Aceito |
 | [0093](0093-especializacao-skill-tree.md) | Especialização & árvore de talentos (E4) | Aceito |
 | [0094](0094-interiores-das-casas.md) | Interiores acessíveis das casas (E5.1) | Aceito |
+| [0095](0095-rixa-das-familias.md) | Camada social: rixa das famílias (E5.2) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
