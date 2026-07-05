@@ -1,6 +1,6 @@
 import { C, Factions } from '../core/ecs/components.js';
 import { dist, normalize } from '../utils/math.js';
-import { applyDamage, meleeArc } from '../gameplay/combat.js';
+import { applyDamage, meleeArc, applyStatus } from '../gameplay/combat.js';
 import { createProjectile } from '../entities/factories.js';
 
 /**
@@ -85,6 +85,7 @@ export function aiSystem(game, dt) {
           const dd = Math.hypot(target.tr.x - tr.x, target.tr.z - tr.z);
           if (dd <= ai.attackRange + 0.6) {
             applyDamage(game, target.id, ai.damage, { attackerId: id, fromX: tr.x, fromZ: tr.z, knockback: 2 });
+            if (ai.onHit) applyStatus(world, target.id, ai.onHit); // veneno/gelo/atordoar (ADR 0100)
             game.emit('enemyAttack', { id, x: tr.x, z: tr.z });
           } else {
             game.emit('enemyWhiff', { id, x: tr.x, z: tr.z });

@@ -80,6 +80,8 @@ export function createEnemy(world, renderer, def, { x = 0, z = 0 } = {}) {
     targetId: 0,
     projectileColor: def.projectileColor ?? 0xb06bd0,
     summon: def.summon ?? null,
+    telegraph: def.telegraph ?? null,
+    onHit: def.onHit ?? null, // status aplicado no golpe corpo-a-corpo (ADR 0100)
   });
   // Clona o loot: o catálogo ENEMIES é compartilhado e o LootTable da
   // entidade é mutado depois (xp escalado, promoção a elite — ADR 0045).

@@ -47,11 +47,13 @@ export const BIOMES = {
       { key: 'fungling', weight: 4 },
       { key: 'husk', weight: 3 },
       { key: 'shadecrow', weight: 2 },
+      { key: 'bogbrute', weight: 3 }, // atoladiço venenoso do pântano (ADR 0100)
       { key: 'shaman', weight: 1 },
     ],
     packs: [
       { weight: 3, comp: ['shaman', 'husk', 'husk'] }, // xamã escoltado
       { weight: 2, comp: ['fungling', 'fungling', 'fungling'] }, // ninho explosivo
+      { weight: 2, comp: ['bogbrute', 'bogbrute', 'fungling'] }, // atoleiro
       { weight: 2, comp: ['rotboar', 'rotboar', 'shadecrow'] },
     ],
   },
@@ -70,11 +72,13 @@ export const BIOMES = {
     enemies: [
       { key: 'husk', weight: 4 },
       { key: 'shadecrow', weight: 4 },
+      { key: 'ashwraith', weight: 3 }, // espectro de cinza que atordoa (ADR 0100)
       { key: 'shaman', weight: 2 },
       { key: 'fungling', weight: 2 },
     ],
     packs: [
       { weight: 3, comp: ['shadecrow', 'shadecrow', 'husk'] }, // revoada com âncora
+      { weight: 2, comp: ['ashwraith', 'ashwraith', 'shaman'] }, // assombração
       { weight: 2, comp: ['shaman', 'shadecrow', 'shadecrow'] },
       { weight: 2, comp: ['husk', 'husk', 'fungling'] },
     ],
@@ -94,9 +98,11 @@ export const BIOMES = {
       { key: 'husk', weight: 4 },
       { key: 'shaman', weight: 3 },
       { key: 'shadecrow', weight: 3 },
+      { key: 'frostfang', weight: 3 }, // presa-gélida que congela (ADR 0100)
     ],
     packs: [
       { weight: 3, comp: ['husk', 'husk', 'shaman'] }, // patrulha da nevasca
+      { weight: 3, comp: ['frostfang', 'frostfang', 'husk'] }, // matilha gélida
       { weight: 2, comp: ['shadecrow', 'shadecrow', 'shadecrow', 'shaman'] },
     ],
   },
