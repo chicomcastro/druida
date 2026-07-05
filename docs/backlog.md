@@ -228,7 +228,7 @@ Feedback jogando no celular (prints) + refinamentos aprovados:
 
 ---
 
-## M18 — Playtest 5: vilas vivas e identidade dos personagens 🟡
+## M18 — Playtest 5: vilas vivas e identidade dos personagens ✅
 
 Feedback: mercador só faltou textura; avatares/NPCs sem textura e todos
 iguais; vilas pequenas (mais casas, ruas, praça, NPCs); modelos fora das
@@ -236,7 +236,7 @@ arestas do chão.
 
 - [x] 🎨 M18.1 Arestas no grid: pegadas inteiras + snap por paridade (casas 5×4, cabanas 4×3, tendas, palafitas, banca, menires, santuários) — ADR 0079
 - [x] 🏘️ M18.2 Vilas maiores: 9 casas variadas (sobrado/anexos), tendas 5-3-1, cabanas 6×4, ruas de laje, praça com postes, +9 moradores — ADR 0080
-- [ ] 🧙 M18.3 Personagens com trama visível e variedade (tons, capuz/cabelo, acessórios) + mercadorias texturizadas
+- [x] 🧙 M18.3 Personagens com trama visível e variedade (tons, capuz/cabelo, avental/mochila) + mercadorias texturizadas — ADR 0081
 
 ---
 

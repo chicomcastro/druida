@@ -47,11 +47,11 @@ export function buildMerchantStall(canopyColor = 0xd8862a) {
   box(4.6, 0.28, 3.6, 0, 3.1, 0, canopyColor, 'cloth', 4, 3);
   const c = new THREE.Color(canopyColor).multiplyScalar(1.35);
   box(4.62, 0.16, 1.2, 0, 3.32, 0, c.getHex(), 'cloth', 4, 1);
-  // Balcão de vendas no lado do jogador (+Z) com mercadorias em cubos.
+  // Balcão de vendas no lado do jogador (+Z) com mercadorias texturizadas.
   box(3.6, 0.95, 1.15, 0, 0.48, 1.35, 0x7a4a2a, 'planks', 4, 1);
-  box(0.55, 0.32, 0.45, -1.1, 1.12, 1.3, 0x9fe06a);
-  box(0.4, 0.26, 0.4, 0.15, 1.09, 1.45, 0xd8b04a);
-  box(0.5, 0.38, 0.4, 1.15, 1.15, 1.25, 0xb85a3a);
+  box(0.55, 0.32, 0.45, -1.1, 1.12, 1.3, 0x9fe06a, 'cloth');
+  box(0.4, 0.26, 0.4, 0.15, 1.09, 1.45, 0xd8b04a, 'cloth');
+  box(0.5, 0.38, 0.4, 1.15, 1.15, 1.25, 0xb85a3a, 'cloth');
   // Caixotes empilhados nas laterais.
   box(0.85, 0.85, 0.85, -2.55, 0.43, 0.9, 0x8a5a2a, 'planks', 1, 1);
   box(0.7, 0.7, 0.7, -2.5, 1.2, 0.85, 0x9a6a3a, 'planks', 1, 1);

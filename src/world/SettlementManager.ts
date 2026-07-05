@@ -351,11 +351,21 @@ export class SettlementManager {
   _buildVillager(s, v) {
     const { game } = this;
     const palette = VILLAGER_PALETTES[s.theme];
+    // Variedade determinística por NOME (ADR 0081): tom da túnica, capuz ou
+    // cabelo, avental e mochila — cada morador tem cara própria.
+    const hsh = [...String(v.name ?? '')].reduce((a, ch) => ((a * 31 + ch.charCodeAt(0)) >>> 0), 7);
+    const robe = new THREE.Color(v.elder ? palette.elder : palette.robe)
+      .multiplyScalar(0.82 + (hsh % 7) * 0.06).getHex();
+    const HAIR = [0x3a2a1a, 0x6b4a2f, 0x8a8578, 0x2a2a2a, 0xb8863f];
     const g = buildVoxelGroup(makeVillagerSpec({
-      robe: v.elder ? palette.elder : palette.robe,
+      robe,
       trim: palette.trim,
       glow: palette.glow,
       elder: !!v.elder,
+      hood: !!v.elder || hsh % 3 === 0,
+      hair: HAIR[hsh % HAIR.length],
+      apron: hsh % 4 === 1,
+      pack: hsh % 5 === 2,
     }));
     const wx = s.x + v.x, wz = s.z + v.z;
     g.position.set(wx, 0, wz);
