@@ -32,6 +32,7 @@ export function interactionSystem(game, dt) {
         else if (inter.kind === 'quest_giver') game.quests?.onTalk(inter);
         else game.story.onInteract(inter, pc.index);
         if (inter.loreId) revealLore(game, inter.loreId); // segredos da rixa (ADR 0095)
+        if (inter.npc) game.emit('talkedNpc', { npc: inter.npc }); // triggers de side quest (ADR 0096)
         game.emit('interacted', { iid, by: pc.index });
       }
     }

@@ -55,6 +55,7 @@ import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight,
 import { partyEssence as _partyEssence, spendEssence as _spendEssence, giveItem as _giveItem, rerollShop as _rerollShop, setActiveShop as _setActiveShop } from '../gameplay/economy.js';
 import { useConsumable as _useConsumable, useHotbarSlot as _useHotbarSlot } from '../gameplay/consumables.js';
 import { QuestManager } from '../gameplay/quests.js';
+import { SideQuestManager } from '../gameplay/sidequests.js';
 import { registerBoonHooks } from '../gameplay/boons.js';
 import { Telemetry } from '../gameplay/telemetry.js';
 
@@ -66,7 +67,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
-  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; interiors: any; story: any; loop: any;
+  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; sideQuests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; interiors: any; story: any; loop: any;
   inDungeon: boolean;
   meal: any; // bônus temporário da refeição da taverna (ADR 0094)
   // Estado.
@@ -128,6 +129,7 @@ export class Game {
     this.story = new StoryManager(this);
     this.purity = new PurityManager(this); // mundo cura conforme a campanha (ADR 0044)
     this.quests = new QuestManager(this); // missões locais das vilas (ADR 0047)
+    this.sideQuests = new SideQuestManager(this); // side quests por triggers (ADR 0096)
     this.dayNight = new DayNightManager(this); // ciclo dia/noite + clima (ADR 0049)
     this.telemetry = new Telemetry(this); // contadores locais p/ balance (ADR 0051)
     this.hud = new Hud(this);
