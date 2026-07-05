@@ -488,6 +488,12 @@ export class SettlementManager {
         w.add(sprout);
       }
     }
+    // Props de rua (ADR 0084): barris na praça, lenha e varais entre casas.
+    this._barrel(w, 7, -5);
+    this._barrel(w, 7.9, -5.4);
+    this._woodpile(w, -10, -3, Math.PI / 2);
+    this._clothesline(w, 13, 8, 0x6cba5a);
+    this._clothesline(w, -13, 9, 0xb89b5a);
     // Menires gêmeos no portão sul (limiar entre a vila e o mundo selvagem).
     for (const mx of [-3, 3]) {
       const menhir = mesh(new THREE.BoxGeometry(1, 3.2, 1), 0x6a6a72, { tex: 'stone', trx: 1, try: 3 });
@@ -540,7 +546,8 @@ export class SettlementManager {
     this._waterRef = waterMat;
     // Casas sobre estacas.
     // Portas/escadas voltadas ao CENTRO (ADR 0083) — ninguém desce no vazio.
-    const huts = [[-8, -4, Math.PI / 2], [6, -8, 0], [-2, 8, Math.PI], [10, 4, -Math.PI / 2]];
+    // 5a casa a noroeste (ADR 0084): a vila cresce sobre a lagoa.
+    const huts = [[-8, -4, Math.PI / 2], [6, -8, 0], [-2, 8, Math.PI], [10, 4, -Math.PI / 2], [-9, 6, Math.PI / 2]];
     for (const [x, z, ry] of huts) {
       const hut = new THREE.Group();
       for (const [lx, lz] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) {
@@ -610,6 +617,7 @@ export class SettlementManager {
       [6, -2.2, 4.5, 0], [3, 0, 6, Math.PI / 2],     // casa sul
       [-2, 2.2, 4.5, 0], [-1, 0, 2, Math.PI / 2],    // casa norte
       [3.2, 4, 6.5, Math.PI / 2], [0, 2, 4, 0],      // casa leste
+      [-3.2, 6, 4.6, Math.PI / 2], [-1, 4.5, 3.5, 0], // casa noroeste (5a)
     ]) {
       const walk = mesh(new THREE.BoxGeometry(1.1, 0.12, len), 0x5a4028, { shadow: false, tex: 'planks', trx: 1, try: 6 });
       walk.position.set(x, 0.12, z);
@@ -647,6 +655,27 @@ export class SettlementManager {
     w.add(boat);
     w.collider(-13, 6, 1.2);
     this._water.push({ mat: this._waterRef, base: 0.85, seed: 1.3, bob: boat });
+    // Píer de pesca (ADR 0084): a assinatura do Vau — avança sobre a lagoa
+    // rumo ao norte, com postes, lanterna na ponta e barco amarrado.
+    const pier = mesh(new THREE.BoxGeometry(1.3, 0.12, 10), 0x5a4028, { shadow: false, tex: 'planks', trx: 1, try: 8 });
+    pier.position.set(1, 0.14, 7);
+    w.add(pier);
+    for (const pz of [4, 7, 10]) {
+      for (const px of [0.45, 1.55]) {
+        const post = mesh(new THREE.BoxGeometry(0.18, 1.1, 0.18), 0x4a3626, { shadow: false, tex: 'log' });
+        post.position.set(px, 0.45, pz);
+        w.add(post);
+      }
+    }
+    this._lantern(w, 1, 12, 0x6affc8);
+    const boat2 = mesh(new THREE.BoxGeometry(2.6, 0.5, 1.0), 0x5a4028, { tex: 'planks', trx: 2, try: 1 });
+    boat2.position.set(3.2, 0.25, 10.5);
+    boat2.rotation.y = Math.PI / 2;
+    w.add(boat2);
+    this._water.push({ mat: this._waterRef, base: 0.85, seed: 2.6, bob: boat2 });
+    // Barris de seiva na junção das passarelas (ADR 0084).
+    this._barrel(w, 1.6, 1);
+    this._barrel(w, -1.6, -1.2);
     // Lanternas de musgo (verde-água) — a marca da vila.
     for (const [x, z] of [[0, -1], [-6, -6], [8, -5], [-4, 6], [8, 7]]) this._lantern(w, x, z, 0x6affc8);
     this._fireLight(w, 0, -1, 0x6affc8, 0.9);
@@ -760,19 +789,61 @@ export class SettlementManager {
     this._fire(w, -3, 2, 0xff7a2a, 1.2);
     this._fire(w, 4, 4, 0xff7a2a, 0);
     for (const [x, z] of [[-6, 12], [8, -10]]) this._lantern(w, x, z, 0xffb46a);
-    // Ruas de laje: portão sul, portas das cabanas e centro (ADR 0080/0083).
+    // Torre de vigia (ADR 0084): a assinatura de Cinzafolha — os lenhadores
+    // vigiam a floresta corrompida do alto, com lanterna acesa.
+    const tower = new THREE.Group();
+    for (const [lx, lz] of [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2]]) {
+      const leg = mesh(new THREE.BoxGeometry(0.35, 5.2, 0.35), 0x4a3a2c, { tex: 'log', trx: 1, try: 4 });
+      leg.position.set(lx, 2.6, lz);
+      tower.add(leg);
+    }
+    const platform = mesh(new THREE.BoxGeometry(3.4, 0.3, 3.4), 0x5a4232, { tex: 'planks', trx: 3, try: 3 });
+    platform.position.y = 5.2;
+    tower.add(platform);
+    for (const sd of [-1, 1]) {
+      const r1 = mesh(new THREE.BoxGeometry(0.12, 0.12, 3.4), 0x3a2d22, { shadow: false });
+      r1.position.set(sd * 1.65, 6.0, 0);
+      const r2 = mesh(new THREE.BoxGeometry(3.4, 0.12, 0.12), 0x3a2d22, { shadow: false });
+      r2.position.set(0, 6.0, sd * 1.65);
+      tower.add(r1, r2);
+    }
+    for (const [sw2, sy2] of [[3.8, 7.1], [2.2, 7.56]]) {
+      const layer = mesh(new THREE.BoxGeometry(sw2, 0.46, sw2), 0x3a2f28, { rough: 1, tex: 'planks', trx: 3, try: 1 });
+      layer.position.y = sy2;
+      tower.add(layer);
+    }
+    const towerLadder = mesh(new THREE.BoxGeometry(0.7, 5.0, 0.12), 0x3a2d22, { shadow: false, tex: 'planks', trx: 1, try: 4 });
+    towerLadder.position.set(0, 2.5, 1.28);
+    tower.add(towerLadder);
+    const beacon = mesh(new THREE.BoxGeometry(0.4, 0.5, 0.4), 0xffb46a, { emissive: 0xffb46a, emissiveIntensity: 1.2, rough: 0.4 });
+    beacon.position.y = 6.5;
+    tower.add(beacon);
+    this._flames.push({ mesh: beacon, base: 1.2, amp: 0.3, speed: 2.6, seed: 5 });
+    tower.position.set(5, 0, -12);
+    w.add(tower);
+    w.collider(5, -12, 1.9);
+    const tp = w.world(5, -12);
+    this.game.lightPool?.register(tp.x, 6.5, tp.z, 0xffb46a, 14, 0.3);
+    // Barris e lenha ao longo das ruas (ADR 0084).
+    this._barrel(w, -2, -6);
+    this._barrel(w, -2.9, -6.2);
+    this._woodpile(w, 3, 7, Math.PI / 2);
+    this._woodpile(w, -5, -8);
+    // Ruas de laje: portão sul, portas das cabanas, torre e centro.
     this._streets(w, [
       [0, -14, 0, 7],
       [-4, -4, 0, -4], // porta da cabana oeste
       [4, -4, 0, -4],  // porta da cabana leste
       [1, 7, 0, 7],    // porta da cabana norte
+      [3, -12, 0, -12], // torre de vigia
     ], 0x6a6156);
   }
 
   /** Abrigo do Degelo: tendas de pele, cairns, cristais e a chama azul. */
   _buildDegelo(w, rng) {
     // Tendas de pele com capuz de neve.
-    const tents = [[-7, 3, 0], [6, -3, -Math.PI / 2], [-3, -8, 0], [8, 8, Math.PI / 2]];
+    // 5a tenda ao sul (ADR 0084), guardando a trilha dos cairns.
+    const tents = [[-7, 3, 0], [6, -3, -Math.PI / 2], [-3, -8, 0], [8, 8, Math.PI / 2], [4, -12, 0]];
     for (const [x, z, ry] of tents) {
       // Tenda em blocos (M15.8): pirâmide 3-2-1 de pele, no vocabulário MC.
       const tent = new THREE.Group();
@@ -850,11 +921,69 @@ export class SettlementManager {
     totem.position.set(-4, 0, 8);
     w.add(totem);
     w.collider(-4, 8, 0.8);
-    // Trilhas de laje ligando as tendas à chama azul (ADR 0080).
+    // Muro quebra-vento de gelo (ADR 0084): a assinatura do Degelo — blocos
+    // de gelo empilhados protegem o abrigo da nevasca do norte.
+    const iceMat = { emissive: 0x3a7ab8, emissiveIntensity: 0.35, rough: 0.2 };
+    [[-5, 12, 1.3], [-4, 13, 1.7], [-3, 13, 1.4], [-2, 13, 1.8], [2, 13, 1.6], [3, 13, 1.9], [4, 13, 1.4], [5, 12, 1.2]].forEach(([bx, bz, bh]) => {
+      const ice = mesh(new THREE.BoxGeometry(1, bh, 1), 0x9fdcff, iceMat);
+      ice.position.set(bx, bh / 2, bz);
+      w.add(ice);
+    });
+    w.collider(-3, 13, 1.6);
+    w.collider(3, 13, 1.6);
+    // Lenha e barris junto à chama azul (ADR 0084).
+    this._woodpile(w, -5, -1, Math.PI / 2);
+    this._barrel(w, 3, -6);
+    // Trilhas de laje ligando as tendas à chama azul (ADR 0080/0083).
     this._streets(w, [
       [-4, 3, -2, 3], [-2, 3, -2, 0], [3, -3, 2, -3], [2, -3, 2, 0],
       [-3, -5, -3, -2], [5, 8, 2, 8], [2, 8, 2, 2],
+      [4, -9, 2, -9], [2, -9, 2, -3],
     ], 0x9aa8b4);
+  }
+
+  // --- Props de rua (ADR 0084): vida cotidiana nas vilas ---------------------
+
+  /** Barril de tábuas com cintas escuras. */
+  _barrel(w, x, z) {
+    const b = mesh(new THREE.BoxGeometry(0.75, 0.95, 0.75), 0x7a5a34, { tex: 'planks', trx: 1, try: 1 });
+    b.position.set(x, 0.48, z);
+    const band = mesh(new THREE.BoxGeometry(0.82, 0.12, 0.82), 0x4a3a28, { shadow: false });
+    band.position.set(x, 0.72, z);
+    const band2 = mesh(new THREE.BoxGeometry(0.82, 0.12, 0.82), 0x4a3a28, { shadow: false });
+    band2.position.set(x, 0.24, z);
+    w.add(b, band, band2);
+  }
+
+  /** Pilha de lenha: duas toras embaixo, uma em cima. */
+  _woodpile(w, x, z, ry = 0) {
+    const g = new THREE.Group();
+    for (const [px, py] of [[-0.35, 0.3], [0.35, 0.3], [0, 0.9]]) {
+      const log = mesh(new THREE.BoxGeometry(0.6, 0.6, 1.8), 0x6b4a33, { tex: 'log', trx: 1, try: 2 });
+      log.position.set(px, py, 0);
+      g.add(log);
+    }
+    g.position.set(x, 0, z);
+    g.rotation.y = ry;
+    w.add(g);
+  }
+
+  /** Varal: dois postes, linha e panos que balançam ao vento. */
+  _clothesline(w, x, z, color) {
+    for (const px of [-1.2, 1.2]) {
+      const post = mesh(new THREE.BoxGeometry(0.14, 1.9, 0.14), 0x4a3626, { shadow: false });
+      post.position.set(x + px, 0.95, z);
+      w.add(post);
+    }
+    const line = mesh(new THREE.BoxGeometry(2.4, 0.05, 0.05), 0x2e2620, { shadow: false });
+    line.position.set(x, 1.8, z);
+    w.add(line);
+    for (const px of [-0.6, 0.35]) {
+      const cloth = mesh(new THREE.BoxGeometry(0.55, 0.7, 0.06), color, { shadow: false, tex: 'cloth' });
+      cloth.position.set(x + px, 1.42, z);
+      w.add(cloth);
+      this._flags.push({ mesh: cloth, base: 0, seed: x + px * 3 });
+    }
   }
 
   // --- Detalhes com luz/brilho ----------------------------------------------
