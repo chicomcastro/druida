@@ -107,4 +107,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0101](0101-bosses-de-bioma.md) | Mundo vivo: chefes de bioma (E8.4) | Aceito |
 | [0102](0102-telemetria-primeira-hora.md) | Economia & primeira hora: telemetria do funil (E9) | Aceito |
 | [0103](0103-modelos-rostos-silhuetas.md) | Polish de arte: rostos dos aldeões + silhuetas próprias | Aceito |
+| [0104](0104-interiores-mobiliados-loja.md) | Polish: interiores mobiliados + loja com mais itens | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
