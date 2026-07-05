@@ -158,7 +158,7 @@ describe('mundo vivo (ADR 0055)', () => {
     const sm = new SettlementManager(g);
     expect(sm._smoke.length).toBeGreaterThan(0);
     expect(sm._flags.length).toBeGreaterThanOrEqual(3);
-    expect(sm._water.length).toBe(1); // lagoa do Vau
+    expect(sm._water.length).toBeGreaterThanOrEqual(2); // lagoa do Vau + barco do píer (ADR 0084)
     const y = sm._smoke[0].mesh.position.y;
     sm.animate(1.2);
     sm.animate(2.4);

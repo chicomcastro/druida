@@ -228,14 +228,14 @@ Feedback jogando no celular (prints) + refinamentos aprovados:
 
 ---
 
-## M19 — Playtest 6: proporção, conexão e conteúdo das vilas 🟡
+## M19 — Playtest 6: proporção, conexão e conteúdo das vilas ✅
 
 Feedback: portas menores que o avatar encolhem as construções; portas sem
 caminho; vilas dos outros biomas precisam de estrutura e conteúdo.
 
 - [x] 📐 M19.1 Proporção herói/porta: portas ≥2.1u e pé-direito 3u em TODAS as construções (casas, cabanas, tendas, palafitas) — ADR 0082
 - [x] 🛣️ M19.2 Toda porta liga numa rua: espigões automáticos no hub, rotações corrigidas (palafitas/cabanas), rede de píer no Vau — ADR 0083
-- [ ] 🏗️ M19.3 Vilas com estrutura e conteúdo: +construções, assinatura por vila (torre de vigia, píer, muro de gelo) e props de rua (barris, lenha, varais)
+- [x] 🏗️ M19.3 Vilas com estrutura e conteúdo: torre de vigia, píer, muro de gelo, +1 construção por vila e props de rua (barris, lenha, varais) — ADR 0084
 
 ---
 

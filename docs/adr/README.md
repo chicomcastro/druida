@@ -88,3 +88,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0081](0081-personagens-variados.md) | Personagens com trama visível e variedade (M18.3) | Aceito |
 | [0082](0082-proporcao-heroi-porta.md) | Proporção herói/porta: portas 2.5u, pé-direito 3u (M19.1) | Aceito |
 | [0083](0083-portas-ligadas-as-ruas.md) | Toda porta liga numa rua (M19.2) | Aceito |
+| [0084](0084-vilas-com-conteudo.md) | Vilas com conteúdo: assinaturas e props de rua (M19.3) | Aceito |
