@@ -135,6 +135,7 @@ export class InteriorManager {
     // Rixa das famílias (ADR 0095): afiliação + fragmento do codex ao conversar.
     inter.family = theme.family;
     inter.loreId = theme.loreId;
+    inter.npc = theme.id; // chave p/ triggers de side quest (ADR 0096)
     game.world.add(id, C.Interactable, inter);
     return id;
   }

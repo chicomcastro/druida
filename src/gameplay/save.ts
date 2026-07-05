@@ -50,6 +50,7 @@ export function serialize(game): SaveV1 {
     camps: game.poi ? [...game.poi.cleared] : [],
     lore: game.lore ? [...game.lore.found] : [],
     quests: game.quests?.serialize() ?? {},
+    sideQuests: game.sideQuests?.serialize() ?? null,
     boons: game.boons ?? {},
     players,
   };
@@ -69,6 +70,7 @@ export function apply(game, data: SaveV1 | null | undefined): boolean {
   }
   if (data.lore && game.lore) game.lore.found = new Set(data.lore);
   if (data.quests && game.quests) game.quests.restore(data.quests);
+  if (data.sideQuests && game.sideQuests) game.sideQuests.restore(data.sideQuests);
   if (data.boons) game.boons = { ...data.boons }; // antes do loop de players: applyEquipment lê os dons
   if (data.checkpoint) game.checkpoint = { ...data.checkpoint };
   // Reposiciona o grupo onde o save foi gravado (espalhado ao redor do centro).
