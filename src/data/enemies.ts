@@ -27,17 +27,17 @@ export const ENEMIES = {
   },
   // Novos inimigos (ADR 0100, E8.3): golpe corpo-a-corpo que aplica status.
   bogbrute: {
-    name: 'Atoladiço', mesh: 'husk', behavior: 'melee',
+    name: 'Atoladiço', mesh: 'bogbrute', behavior: 'melee',
     hp: 60, speed: 2.3, damage: 12, radius: 0.6, scale: 1.1, aggroRange: 15, attackRange: 1.7,
     attackCooldown: 1.8, onHit: { poison: 2.5 }, xp: 14, loot: { dropChance: 0.34 },
   },
   ashwraith: {
-    name: 'Espectro de Cinza', mesh: 'shaman', behavior: 'melee',
+    name: 'Espectro de Cinza', mesh: 'ashwraith', behavior: 'melee',
     hp: 40, speed: 3.2, damage: 10, radius: 0.5, aggroRange: 17, attackRange: 1.5,
     attackCooldown: 1.4, onHit: { stun: 0.5 }, xp: 15, loot: { dropChance: 0.34 },
   },
   frostfang: {
-    name: 'Presa-Gélida', mesh: 'rotboar', behavior: 'melee',
+    name: 'Presa-Gélida', mesh: 'frostfang', behavior: 'melee',
     hp: 48, speed: 3.6, damage: 13, radius: 0.55, aggroRange: 16, attackRange: 1.6,
     attackCooldown: 1.5, onHit: { freeze: 0.9 }, xp: 16, loot: { dropChance: 0.36 },
   },
@@ -64,13 +64,13 @@ export const BOSSES = {
   },
   // Chefes de bioma (ADR 0101, E8.4): fases/slam via bossSystem.
   mirelord: {
-    name: 'Senhor do Lodo', mesh: 'husk', behavior: 'summoner', boss: true,
+    name: 'Senhor do Lodo', mesh: 'mirelord', behavior: 'summoner', boss: true,
     hp: 700, speed: 1.8, damage: 18, radius: 1.5, scale: 1.7,
     aggroRange: 34, attackRange: 2.6, attackCooldown: 2.2, summon: 'bogbrute', xp: 220,
     loot: { dropChance: 1 },
   },
   frostreaver: {
-    name: 'Ceifador Gélido', mesh: 'wolf', behavior: 'melee', boss: true,
+    name: 'Ceifador Gélido', mesh: 'frostreaver', behavior: 'melee', boss: true,
     hp: 760, speed: 2.6, damage: 20, radius: 1.4, scale: 1.6,
     aggroRange: 36, attackRange: 2.4, attackCooldown: 1.6, onHit: { freeze: 1.0 }, xp: 240,
     loot: { dropChance: 1 },

@@ -405,13 +405,17 @@ export class SettlementManager {
     const robe = new THREE.Color(v.elder ? palette.elder : palette.robe)
       .multiplyScalar(0.82 + (hsh % 7) * 0.06).getHex();
     const HAIR = [0x3a2a1a, 0x6b4a2f, 0x8a8578, 0x2a2a2a, 0xb8863f];
+    const SKIN = [0xe6b88c, 0xd8a273, 0xc68a5a, 0xf0d0a8, 0x8a5a3a, 0xa9714a];
     const g = buildVoxelGroup(makeVillagerSpec({
       robe,
       trim: palette.trim,
       glow: palette.glow,
       elder: !!v.elder,
-      hood: !!v.elder || hsh % 3 === 0,
+      // Menos capuz (ADR 0103): agora só ~1/4 dos comuns; rosto sempre visível.
+      hood: !!v.elder || hsh % 4 === 0,
       hair: HAIR[hsh % HAIR.length],
+      skin: SKIN[hsh % SKIN.length],
+      beard: hsh % 5 === 3,
       apron: hsh % 4 === 1,
       pack: hsh % 5 === 2,
     }));
