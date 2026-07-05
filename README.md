@@ -30,6 +30,7 @@ A aposta de design maior: **cada jogo da série gira em torno de uma única clas
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [`docs/wiki.md`](docs/wiki.md) | 📖 **Wiki viva** — tudo que existe no jogo hoje (mundo, vilas, formas, itens, inimigos, quests) com fontes de dados p/ iterar |
 | [`docs/game-design.md`](docs/game-design.md) | Pilares, classe Druida, mundo aberto, combate, loot, progressão, coop |
 | [`docs/technical-architecture.md`](docs/technical-architecture.md) | Stack, estrutura de pastas, sistemas (ECS), pipeline de assets, performance |
 | [`docs/backlog.md`](docs/backlog.md) | Épicos, milestones (M0–M10) e tarefas acionáveis |
