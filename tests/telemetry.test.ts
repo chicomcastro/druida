@@ -54,7 +54,37 @@ describe('Telemetria local (ADR 0051)', () => {
     expect(t.data.playSeconds).toBeCloseTo(10, 1);
     const out = JSON.parse(t.export());
     expect(out.playSeconds).toBe(10);
-    expect(out.v).toBe(1);
+    expect(out.v).toBe(2);
+  });
+
+  it('registra o funil de economia/progressão da primeira hora (ADR 0102)', () => {
+    const g = makeGame();
+    const t = new Telemetry(g);
+    t.update(5); // t = 5s de jogo
+    g.emit('purchase', { price: 30, item: {} });
+    g.emit('purchase', { price: 12, item: {} });
+    g.emit('levelUp', { level: 2 });
+    g.emit('levelUp', { level: 3 });
+    g.emit('settlementEntered', { id: 'clareira' });
+    g.emit('settlementEntered', { id: 'clareira' }); // repetida: não conta
+    g.emit('settlementEntered', { id: 'vau' });
+    g.emit('interiorEntered', { themeId: 'weapons' });
+    g.emit('rested', {});
+    g.emit('sideQuestStarted', { id: 'feud' });
+    g.emit('loreFound', { id: 'l13' });
+
+    expect(t.data.itemsBought).toBe(2);
+    expect(t.data.essenceSpent).toBe(42);
+    expect(t.data.levelUps).toBe(2);
+    expect(t.data.maxLevel).toBe(3);
+    expect(t.data.villagesVisited).toBe(2); // clareira + vau (sem duplicar)
+    expect(t.data.interiorsEntered).toBe(1);
+    expect(t.data.rests).toBe(1);
+    expect(t.data.sideQuestsStarted).toBe(1);
+    expect(t.data.loreFound).toBe(1);
+    // Marcos gravam o segundo da 1ª ocorrência (uma vez).
+    expect(t.data.firstPurchaseAt).toBe(5);
+    expect(t.data.firstLevelAt).toBe(5);
   });
 
   it('desligada, não coleta nada', () => {

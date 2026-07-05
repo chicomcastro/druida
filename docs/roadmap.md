@@ -146,4 +146,4 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E6 Side quests | ✅ entregue (motor de triggers + 3 arcos) | — |
 | E7 Vilas 2–4 | ✅ entregue (interiores nas 4 vilas + mercado geral) | — |
 | E8 Mundo vivo | ✅ entregue (fauna + hazards + 3 inimigos + 2 bosses) | Gate E |
-| E9 Economia/1ª hora | ⏳ | Gate F |
+| E9 Economia/1ª hora | 🚧 instrumentado (funil de telemetria); tuning aguarda Gate F | Gate F |

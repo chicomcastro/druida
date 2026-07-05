@@ -565,6 +565,7 @@ export class Menus {
     const s = this.game.shopStock[i];
     if (!s || !this.game.spendEssence(s.price)) return;
     this.game.giveItem(s.item);
+    this.game.emit('purchase', { price: s.price, item: s.item }); // telemetria (ADR 0102)
     this.game.shopStock.splice(i, 1);
     this.refreshShop();
   }
