@@ -100,4 +100,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0094](0094-interiores-das-casas.md) | Interiores acessíveis das casas (E5.1) | Aceito |
 | [0095](0095-rixa-das-familias.md) | Camada social: rixa das famílias (E5.2) | Aceito |
 | [0096](0096-side-quests-triggers.md) | Side quests & eventos de mid-game (E6) | Aceito |
+| [0097](0097-vilas-2-4-vivas.md) | Réplica: vilas 2–4 vivas (E7) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

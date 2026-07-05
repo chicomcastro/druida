@@ -88,6 +88,12 @@ export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
       'Registro tudo no códice. A verdade costuma estar no meio.',
     ],
   },
+  market: {
+    id: 'market', name: '🏪 Mercado Geral', npc: 'Mercador', role: 'mercado',
+    service: 'shop', shopBias: null,
+    floor: 0x3a3226, wall: 0x4a4030, accent: 0xffd27a, robe: 0xb8863f, trim: 0x5a4633,
+    lines: ['Tudo que a estrada pede, tenho aqui. Dê uma olhada.'],
+  },
   home: {
     id: 'home', name: '🏠 Moradia', npc: 'Morador', role: 'moradia',
     service: 'talk',

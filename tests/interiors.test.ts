@@ -35,6 +35,30 @@ describe('SettlementManager — portas entráveis', () => {
   });
 });
 
+describe('SettlementManager — vilas 2–4 vivas (E7)', () => {
+  it('todas as 4 vilas ganham portas entráveis (mercado + taverna)', () => {
+    const g = makeGame();
+    new SettlementManager(g);
+    const doors = [...g.world.query(C.Transform, C.Interactable)]
+      .filter(([, , i]: any) => i.kind === 'house');
+    // Clareira (9) + palafitas (5) + lenhadores (3) + degelo (5) = 22.
+    expect(doors.length).toBeGreaterThanOrEqual(20);
+    const themes = new Set(doors.map(([, , i]: any) => i.interiorTheme));
+    expect(themes.has('market')).toBe(true);
+    expect(themes.has('tavern')).toBe(true);
+    expect(themes.has('leader')).toBe(true);
+  });
+
+  it('mercado geral é loja sem viés (vende de tudo)', () => {
+    const g = makeGame();
+    const im = new InteriorManager(g);
+    addPlayer(g, 0);
+    im.enter('market');
+    expect(g.world.get(im.active.npcId, C.Interactable).kind).toBe('merchant');
+    expect(g._interiorBias['interior:market']).toBe(null);
+  });
+});
+
 describe('InteriorManager — entrar/sair', () => {
   it('enter suspende o mundo, cria o NPC certo e teletransporta para a sala', () => {
     const g = makeGame();
