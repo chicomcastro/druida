@@ -25,6 +25,22 @@ export const ENEMIES = {
     hp: 55, speed: 2.6, damage: 6, radius: 0.5, aggroRange: 18, attackRange: 10,
     attackCooldown: 4.5, summon: 'rotboar', xp: 18, loot: { dropChance: 0.5 },
   },
+  // Novos inimigos (ADR 0100, E8.3): golpe corpo-a-corpo que aplica status.
+  bogbrute: {
+    name: 'Atoladiço', mesh: 'husk', behavior: 'melee',
+    hp: 60, speed: 2.3, damage: 12, radius: 0.6, scale: 1.1, aggroRange: 15, attackRange: 1.7,
+    attackCooldown: 1.8, onHit: { poison: 2.5 }, xp: 14, loot: { dropChance: 0.34 },
+  },
+  ashwraith: {
+    name: 'Espectro de Cinza', mesh: 'shaman', behavior: 'melee',
+    hp: 40, speed: 3.2, damage: 10, radius: 0.5, aggroRange: 17, attackRange: 1.5,
+    attackCooldown: 1.4, onHit: { stun: 0.5 }, xp: 15, loot: { dropChance: 0.34 },
+  },
+  frostfang: {
+    name: 'Presa-Gélida', mesh: 'rotboar', behavior: 'melee',
+    hp: 48, speed: 3.6, damage: 13, radius: 0.55, aggroRange: 16, attackRange: 1.6,
+    attackCooldown: 1.5, onHit: { freeze: 0.9 }, xp: 16, loot: { dropChance: 0.36 },
+  },
 };
 
 /**
