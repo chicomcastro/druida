@@ -435,6 +435,9 @@ export class SettlementManager {
       [-7, 19, { annex: true }],
       [7, 19, { w: 4, d: 4, roof: 0x4c7a34 }],
     ];
+    // Espigões de porta (ADR 0083): cada casa ganha um caminho da SUA porta
+    // até a artéria mais próxima — nenhuma porta dá no nada.
+    const spurs: number[][] = [];
     huts.forEach(([x, z, o], i) => {
       const ry = snap90(Math.atan2(-x, -z)); // porta olha o centro, no grid voxel
       const hg = this._house(w, x, z, ry, {
@@ -446,13 +449,17 @@ export class SettlementManager {
         const a = this._spun(hg.position.x, hg.position.z, ry, hg.userData.annex.x, hg.userData.annex.z);
         w.collider(a.x, a.z, 2.1);
       }
+      const dpos = this._spun(hg.position.x, hg.position.z, ry, -0.7, (o.d ?? 4) / 2 + 0.8);
+      const dx = Math.round(dpos.x), dz = Math.round(dpos.z);
+      if (dz >= 15) spurs.push([dx, dz, dx, 14], [dx, 14, 0, 14]); // casas do norte via rua z14
+      else spurs.push(Math.abs(dz - 4) <= Math.abs(dx) ? [dx, dz, dx, 4] : [dx, dz, 0, dz]);
       if (i % 2 === 0) {
         const c = this._spun(hg.position.x, hg.position.z, ry, (o.w ?? 6) / 2 - 0.55, -1.0);
         this._smokeAt(w, c.x, 0.35 + (o.h ?? 3.0) + 2.3, c.z); // topo da chaminé
       }
     });
-    // Ruas de laje (ADR 0080): praça do mercador, anel da fogueira e vias
-    // ligando as casas — a vila ganha circulação legível.
+    // Ruas de laje (ADR 0080/0083): praça, anel da fogueira, artérias e os
+    // espigões de porta — a vila inteira fica interligada.
     this._streets(w, [
       // praça do mercador (sob a banca e o baú, até a Carvalho-Mãe)
       [-8, -6, 8, -6], [-8, -7, 8, -7], [-8, -8, 8, -8], [-8, -9, 8, -9],
@@ -461,11 +468,10 @@ export class SettlementManager {
       [0, -5, 0, 1], [0, 7, 0, 14],
       [-2, 2, -2, 6], [2, 2, 2, 6], [-2, 2, 2, 2], [-2, 6, 2, 6],
       // ruas leste-oeste até as casas laterais
-      [-12, 4, -3, 4], [3, 4, 12, 4],
-      // espigões para as casas ao norte
-      [-9, 7, -9, 8], [9, 8, 9, 9], [-7, 14, -7, 16], [7, 14, 7, 16],
+      [-13, 4, -3, 4], [3, 4, 13, 4],
       // caminho ao portão sul
       [0, -11, 0, -17],
+      ...spurs,
     ]);
     // Fogueira comunal (com fumaça subindo).
     this._fire(w, 0, 4, 0xff9a4a, 1.1);
@@ -533,7 +539,8 @@ export class SettlementManager {
     w.add(water);
     this._waterRef = waterMat;
     // Casas sobre estacas.
-    const huts = [[-8, -4, 0], [6, -8, -Math.PI / 2], [-2, 8, 0], [10, 4, Math.PI / 2]];
+    // Portas/escadas voltadas ao CENTRO (ADR 0083) — ninguém desce no vazio.
+    const huts = [[-8, -4, Math.PI / 2], [6, -8, 0], [-2, 8, Math.PI], [10, 4, -Math.PI / 2]];
     for (const [x, z, ry] of huts) {
       const hut = new THREE.Group();
       for (const [lx, lz] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) {
@@ -596,8 +603,14 @@ export class SettlementManager {
       w.add(hut);
       w.collider(hut.position.x, hut.position.z, 2.9);
     }
-    // Passarelas de tábua ligando as casas ao centro.
-    for (const [x, z, len, ry] of [[-4, -2, 7, Math.PI / 2], [3, -4, 7, 0], [-1, 4, 7, 0], [5, 2, 7, Math.PI / 2]]) {
+    // Passarelas de tábua: da BASE DA ESCADA de cada casa até o centro, em
+    // L ortogonal (ADR 0083) — a rede de píer fica toda interligada.
+    for (const [x, z, len, ry] of [
+      [-2.2, -4, 4.5, Math.PI / 2], [0, -2, 4, 0],   // casa oeste
+      [6, -2.2, 4.5, 0], [3, 0, 6, Math.PI / 2],     // casa sul
+      [-2, 2.2, 4.5, 0], [-1, 0, 2, Math.PI / 2],    // casa norte
+      [3.2, 4, 6.5, Math.PI / 2], [0, 2, 4, 0],      // casa leste
+    ]) {
       const walk = mesh(new THREE.BoxGeometry(1.1, 0.12, len), 0x5a4028, { shadow: false, tex: 'planks', trx: 1, try: 6 });
       walk.position.set(x, 0.12, z);
       walk.rotation.y = ry;
@@ -655,7 +668,8 @@ export class SettlementManager {
       if (i % 2 === 0) w.collider(x, z, 1.5);
     }
     // Cabanas de tronco com telhado de duas águas (prisma triangular).
-    const cabins = [[-7, -6, 0], [7, -4, Math.PI / 2], [0, 9, 0]];
+    // Portas voltadas ao centro (ADR 0083).
+    const cabins = [[-7, -6, Math.PI / 2], [7, -4, -Math.PI / 2], [0, 9, Math.PI]];
     for (const [x, z, ry] of cabins) {
       const cabin = new THREE.Group();
       // Paredes de toras: cilindros horizontais empilhados, com os topos
@@ -746,9 +760,12 @@ export class SettlementManager {
     this._fire(w, -3, 2, 0xff7a2a, 1.2);
     this._fire(w, 4, 4, 0xff7a2a, 0);
     for (const [x, z] of [[-6, 12], [8, -10]]) this._lantern(w, x, z, 0xffb46a);
-    // Ruas de laje entre o portão sul, as cabanas e o centro (ADR 0080).
+    // Ruas de laje: portão sul, portas das cabanas e centro (ADR 0080/0083).
     this._streets(w, [
-      [0, -14, 0, 6], [-7, -3, -7, -2], [-7, -2, 0, -2], [7, -1, 7, 0], [7, 0, 0, 0],
+      [0, -14, 0, 7],
+      [-4, -4, 0, -4], // porta da cabana oeste
+      [4, -4, 0, -4],  // porta da cabana leste
+      [1, 7, 0, 7],    // porta da cabana norte
     ], 0x6a6156);
   }
 
