@@ -238,6 +238,7 @@ export class Game {
     if (pc?.combo) mul *= comboMul(pc.combo); // bônus de combo (ADR 0092)
     mul *= 1 + skillBonus(this, id, 'dmg') / 100; // talentos de dano (ADR 0093)
     if (this.meal && this.meal.expire > 0) mul *= this.meal.mul; // refeição da taverna (ADR 0094)
+    if (Object.values(this.boons ?? {}).includes('cacada')) mul *= 1.1; // Dom Instinto de Caça (Lobo)
     return mul;
   }
 

@@ -16,6 +16,7 @@ const POINTS = [
   ...SETTLEMENTS.map((s) => ({
     key: s.id, x: s.x, z: s.z, label: s.name, color: s.mapColor, always: s.id === 'circulo_carvalho',
   })),
+  { key: 'sanctuary_wolf', x: LANDMARKS.sanctuary_wolf.x, z: LANDMARKS.sanctuary_wolf.z, label: 'Santuário do Lobo', color: '#8fd0ff' },
   { key: 'sanctuary_bear', x: LANDMARKS.sanctuary_bear.x, z: LANDMARKS.sanctuary_bear.z, label: 'Santuário do Urso', color: '#ff9a5a' },
   { key: 'sanctuary_raven', x: LANDMARKS.sanctuary_raven.x, z: LANDMARKS.sanctuary_raven.z, label: 'Santuário do Corvo', color: '#9a7aff' },
   { key: 'sanctuary_frog', x: LANDMARKS.sanctuary_frog.x, z: LANDMARKS.sanctuary_frog.z, label: 'Santuário do Sapo', color: '#6affb0' },
@@ -58,7 +59,7 @@ export class WorldMap {
   _travelable(pt) {
     if (pt.always) return true;
     if (pt.key.startsWith('sanctuary')) {
-      const form = { sanctuary_bear: 'bear', sanctuary_raven: 'raven', sanctuary_frog: 'frog' }[pt.key];
+      const form = { sanctuary_wolf: 'wolf', sanctuary_bear: 'bear', sanctuary_raven: 'raven', sanctuary_frog: 'frog' }[pt.key];
       for (const [, f] of this.game.world.query(C.Form)) if (f.list.includes(form)) return true;
     }
     return this.game.worldManager.isExplored(pt.x, pt.z);

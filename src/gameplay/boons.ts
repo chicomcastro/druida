@@ -12,6 +12,10 @@ import { applyEquipment } from './equip.js';
  */
 
 export const BOONS = {
+  wolf: [
+    { id: 'sangue', name: 'Sede de Sangue', desc: 'Cura 6 de vida a cada abate', icon: '🩸' },
+    { id: 'cacada', name: 'Instinto de Caça', desc: '+10% de dano de ataque', icon: '🐺' },
+  ],
   bear: [
     { id: 'casca', name: 'Casca de Carvalho', desc: '+20% de vida máxima', icon: '🛡️' },
     { id: 'espinhos', name: 'Pelagem de Espinhos', desc: 'Reflete 15% do dano recebido de volta ao agressor', icon: '🌵' },
@@ -65,5 +69,12 @@ export function registerBoonHooks(game) {
   });
   game.on('formSwap', (e) => {
     if (hasBoon(game, 'pele_umida')) healEntity(game, e.id, 10);
+  });
+  game.on('kill', (e) => {
+    // Sede de Sangue: o abate por um jogador o cura. Ignora chefes? Não —
+    // qualquer abate conta; cura leve para sustentar a ofensiva do Lobo.
+    if (!hasBoon(game, 'sangue') || e.attackerId == null) return;
+    if (!game.world.get(e.attackerId, C.PlayerControlled)) return;
+    healEntity(game, e.attackerId, 6);
   });
 }

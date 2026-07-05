@@ -177,7 +177,7 @@ describe('Campanha (StoryManager)', () => {
       spawnBossFight: () => {},
     };
     const pid = world.createEntity();
-    world.add(pid, C.Form, { current: 'humanoid', list: ['humanoid', 'wolf'] });
+    world.add(pid, C.Form, { current: 'humanoid', list: ['humanoid'] });
     return { game, world, pid, events };
   }
 
@@ -190,6 +190,10 @@ describe('Campanha (StoryManager)', () => {
     expect(story.current().id).toBe('purify_clearing');
 
     for (let i = 0; i < 8; i++) game.emit('kill', { id: 99, x: 0, z: 0 });
+    expect(story.current().id).toBe('find_wolf');
+
+    story.onInteract({ kind: 'sanctuary', form: 'wolf' }, 0);
+    expect(world.get(pid, C.Form).list).toContain('wolf');
     expect(story.current().id).toBe('find_bear');
 
     story.onInteract({ kind: 'sanctuary', form: 'bear' }, 0);

@@ -147,3 +147,5 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E7 Vilas 2–4 | ✅ entregue (interiores nas 4 vilas + mercado geral) | — |
 | E8 Mundo vivo | ✅ entregue (fauna + hazards + 3 inimigos + 2 bosses) | Gate E |
 | E9 Economia/1ª hora | 🚧 instrumentado (funil de telemetria); tuning aguarda Gate F | Gate F |
+| E10 Santuário do Lobo | ✅ entregue (Lobo = 1ª forma, na Clareira + Dons) — ADR 0106 | — |
+| E11 Rixa nas vilas 2–4 | 🚧 em andamento (expandir famílias/arco social) | — |
