@@ -61,10 +61,10 @@ const druid: VoxelModelSpec = {
     ] },
     { name: 'head', joint: [0, 1.5, 0], boxes: [
       b([0.62, 0.6, 0.62], [0, 0.2, 0], C.skin),       // cabeça GRANDE (cubo)
-      b([0.7, 0.34, 0.72], [0, 0.46, 0], C.hood),      // capuz topo
-      b([0.72, 0.3, 0.2], [0, 0.18, 0.32], C.hood),    // aba do capuz
-      b([0.12, 0.12, 0.06], [-0.16, 0.2, 0.33], 0x2a2a2a), // olhos
-      b([0.12, 0.12, 0.06], [0.16, 0.2, 0.33], 0x2a2a2a),
+      b([0.7, 0.32, 0.72], [0, 0.48, 0], C.hood),      // capuz topo (subido)
+      b([0.74, 0.16, 0.18], [0, 0.38, 0.33], C.hood),  // aba fina ACIMA dos olhos (ADR 0105)
+      b([0.13, 0.12, 0.06], [-0.16, 0.14, 0.33], 0x2a2a2a), // olhos (mais baixos → visíveis)
+      b([0.13, 0.12, 0.06], [0.16, 0.14, 0.33], 0x2a2a2a),
     ] },
     { name: 'armL', joint: [-0.52, 1.35, 0], boxes: [
       b([0.26, 0.6, 0.28], [0, -0.28, 0], C.leaf),

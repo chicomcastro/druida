@@ -10,8 +10,8 @@ import { BIOMES } from '../data/biomes.js';
  * distância grande (a câmera ortográfica fica longe — valores curtos apagam
  * tudo, como nas masmorras ~40/90). */
 const INDOOR_MOOD = {
-  background: 0x140f0a, fogNear: 55, fogFar: 120,
-  light: { sun: 0xffd6a8, sunIntensity: 0.9, hemi: 0x7a6248, hemiGround: 0x120c06, hemiIntensity: 0.6 },
+  background: 0x2a2016, fogNear: 60, fogFar: 130,
+  light: { sun: 0xffe2ba, sunIntensity: 1.5, hemi: 0x9a7e5c, hemiGround: 0x241a10, hemiIntensity: 1.0 },
 };
 
 /**
@@ -70,12 +70,13 @@ export class InteriorManager {
       this.game.world.add(id, C.Collider, Collider(Math.max(sw, sd) / 2, true));
     }
     // Lâmpadas de canto (emissivo recolorido por tema).
-    this._lampMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffb46a, emissiveIntensity: 1.1 });
-    for (const [lx, lz] of [[-ROOM_R + 1.2, -ROOM_R + 1.2], [ROOM_R - 1.2, -ROOM_R + 1.2]]) {
+    this._lampMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffb46a, emissiveIntensity: 1.3 });
+    // Lâmpadas nos QUATRO cantos (antes só 2) — sala bem iluminada (ADR 0105).
+    for (const [lx, lz] of [[-ROOM_R + 1.2, -ROOM_R + 1.2], [ROOM_R - 1.2, -ROOM_R + 1.2], [-ROOM_R + 1.2, ROOM_R - 1.2], [ROOM_R - 1.2, ROOM_R - 1.2]]) {
       const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.4), this._lampMat);
       lamp.position.set(ROOM.x + lx, 2.6, ROOM.z + lz);
       this.game.renderer.add(lamp);
-      this.game.lightPool?.register(ROOM.x + lx, 2.6, ROOM.z + lz, 0xffb46a, 20, 0.3);
+      this.game.lightPool?.register(ROOM.x + lx, 2.6, ROOM.z + lz, 0xffc27a, 32, 0.25);
     }
     // Portal de saída (batente iluminado) na parede sul.
     const arch = new THREE.Mesh(
