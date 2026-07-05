@@ -83,3 +83,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0076](0076-alinhamento-voxel.md) | Alinhamento voxel: rotações só em 90° (M16.3) | Aceito |
 | [0077](0077-sweep-voxel-final.md) | Sweep voxel final: últimos sólidos viram blocos (M16.4) | Aceito |
 | [0078](0078-telhados-degraus-casas-maiores.md) | Telhados em degraus, casas maiores e partículas cúbicas (M17) | Aceito |
+| [0079](0079-arestas-no-grid.md) | Arestas das construções nas linhas do grid (M18.1) | Aceito |
