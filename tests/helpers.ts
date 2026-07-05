@@ -55,7 +55,7 @@ export function makeGame() {
   // Reaproveita os helpers reais do Game (lógica de verdade, sem o construtor).
   for (const m of [
     'x', 'z', 'dmgMul', 'gainSap', 'spendSap', 'aoeDamageAt', 'schedule',
-    'abilityCooldown', 'spawnEnemyByKey', 'spawnBossFight', 'spawnMiniBoss',
+    'abilityCooldown', 'spawnEnemyByKey', 'spawnBossFight', 'spawnMiniBoss', 'spawnBossByKey',
     '_scaleEnemy', 'regionLevel', 'currentBiomeName', 'partyEssence',
     'spendEssence', 'giveItem', 'rerollShop', 'setActiveShop', 'equip', 'setupNewPlayer',
     'fastTravelTo', 'recallToHub', '_cleanupDestroyed',

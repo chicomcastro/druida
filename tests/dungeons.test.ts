@@ -55,8 +55,10 @@ describe('DungeonManager temático', () => {
     const bosses = [...g.world.query(C.Boss)];
     expect(bosses.length).toBe(1);
     expect(bosses[0][1].name).toBe(dm.active.theme.miniboss.name);
-    expect(bosses[0][1].miniBoss).toBe(true);
-    // O mini-chefe conta como inimigo da onda (precisa morrer para vencer).
+    // Temas com `boss` trazem um chefe pleno (ADR 0101); os demais, mini-chefe.
+    if (dm.active.theme.miniboss.boss) expect(bosses[0][1].miniBoss).toBeFalsy();
+    else expect(bosses[0][1].miniBoss).toBe(true);
+    // O chefe conta como inimigo da onda (precisa morrer para vencer).
     expect(dm.active.enemies).toContain(bosses[0][0]);
   });
 
