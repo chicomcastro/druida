@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateConsumable, useConsumable, CONSUMABLE_BASES } from '../src/gameplay/consumables.js';
+import { generateConsumable, useConsumable, CONSUMABLE_BASES, bagConsumables, useHotbarSlot } from '../src/gameplay/consumables.js';
 
 function stubGame(hp = 50, hpMax = 100, sap = 20, sapMax = 100) {
   const state: any = { hp: { hp, max: hpMax, dead: false }, sap: { value: sap, max: sapMax } };
@@ -43,5 +43,30 @@ describe('Consumíveis (ADR 0089)', () => {
       expect(c.type).toBe('consumable');
       expect(c.magnitude).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('Hotbar de poções (ADR 0091)', () => {
+  it('bagConsumables agrupa por nome com contagem', () => {
+    const inv = { items: [
+      generateConsumable('heal_s', 1), generateConsumable('heal_s', 1),
+      generateConsumable('sap_s', 1),
+      { type: 'weapon', name: 'Machado' },
+    ] };
+    const g = bagConsumables(inv);
+    expect(g.length).toBe(2);
+    expect(g.find((x) => x.item.name === 'Seiva Vital')?.count).toBe(2);
+  });
+
+  it('useHotbarSlot usa e remove 1 da mochila', () => {
+    const state: any = { hp: { hp: 40, max: 100, dead: false } };
+    const inv = { items: [generateConsumable('heal_s', 1), generateConsumable('heal_s', 1)] };
+    const game: any = {
+      world: { get: (_id: number, comp: any) => (comp === 'Inventory' ? inv : comp === 'Health' ? state.hp : null) },
+      emit() {},
+    };
+    expect(useHotbarSlot(game, 1, 0)).toBe(true);
+    expect(inv.items.length).toBe(1);
+    expect(state.hp.hp).toBeGreaterThan(40);
   });
 });

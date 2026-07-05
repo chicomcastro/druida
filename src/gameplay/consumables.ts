@@ -33,6 +33,29 @@ export function generateConsumable(kind: keyof typeof CONSUMABLE_BASES, level = 
   } as ConsumableItem;
 }
 
+/** Consumíveis da mochila agrupados por nome (para a hotbar 1–9). */
+export function bagConsumables(inv): { item: any; count: number; index: number }[] {
+  const groups: Record<string, { item: any; count: number; index: number }> = {};
+  (inv?.items ?? []).forEach((it, i) => {
+    if (it?.type !== 'consumable') return;
+    if (!groups[it.name]) groups[it.name] = { item: it, count: 0, index: i };
+    groups[it.name].count++;
+  });
+  return Object.values(groups);
+}
+
+/** Usa o consumível da posição `slot` da hotbar (grupo). Remove 1 da mochila. */
+export function useHotbarSlot(game, id, slot: number): boolean {
+  const inv = game.world.get(id, C.Inventory);
+  const groups = bagConsumables(inv);
+  const g = groups[slot];
+  if (!g) return false;
+  if (!useConsumable(game, id, g.item)) return false;
+  const i = inv.items.indexOf(g.item);
+  if (i >= 0) inv.items.splice(i, 1);
+  return true;
+}
+
 /** Aplica o efeito de um consumível ao jogador. Retorna true se consumido. */
 export function useConsumable(game, id, item: ConsumableItem): boolean {
   if (!item || item.type !== 'consumable') return false;
