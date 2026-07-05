@@ -3,6 +3,11 @@
 Organizado em **épicos** e **milestones (M0–M10)**. Itens marcados `[x]` já
 foram implementados; `[~]` parcial. Ver `docs/adr/` para as decisões.
 
+> 🗺️ **Visão de longo prazo**: ver [`docs/roadmap.md`](roadmap.md) — épicos
+> E1–E9 (itens RPG, UI MCD 2.0, combo de combate, skill tree, vilas vivas
+> com interiores, side quests, fauna, bosses) com sequência, dependências e
+> gates de playtest. Os milestones M21+ abaixo são fatias desses épicos.
+
 > Estimativas relativas (P/M/G). Estado atualizado conforme o desenvolvimento
 > autônomo avança.
 
