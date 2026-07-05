@@ -1,11 +1,13 @@
 import { makeRng, weightedPick } from '../utils/math.js';
 import { BALANCE } from '../data/balance.js';
-import type { Item, ItemType, Rarity, RarityDef, EnchantDef, WeaponStyle } from '../types.js';
+import type { Item, ItemType, Rarity, RarityDef, EnchantDef, WeaponStyle, ArmorSlot, ArmorSet, WeaponFamily } from '../types.js';
+import { MODIFIERS, rollModifiers } from './modifiers.js';
 
 /**
  * Sistema de loot/itens inspirado no MC Dungeons: raridades, armas de
- * conjuração, armaduras e artefatos (que concedem habilidades), todos com
- * slots de encantamento. Ver docs/adr/0006-loot-enchant.md.
+ * conjuração, armaduras anatômicas (elmo/peito/calças/botas) e artefatos,
+ * todos com slots de encantamento e modificadores por raridade.
+ * Ver docs/adr/0006-loot-enchant.md e 0087/0088.
  */
 export const RARITIES: Record<Rarity, RarityDef> = {
   common: { name: 'Comum', color: 0xd6d6d6, mul: 1.0, slots: 1, weight: 70 },
@@ -13,31 +15,60 @@ export const RARITIES: Record<Rarity, RarityDef> = {
   unique: { name: 'Único', color: 0xffc83a, mul: 1.8, slots: 3, weight: 4 },
 };
 
-// Armas corpo-a-corpo (foco do jogo): maioria do loot. `range`/`arc` dão
-// variedade de alcance/abertura do golpe.
-const MELEE_WEAPON_BASES = [
-  { name: 'Foice da Vinha', element: 'nature', damage: 11, range: 2.4, arc: 1.0 },
-  { name: 'Garras Ancestrais', element: 'nature', damage: 10, range: 1.8, arc: 1.2 },
-  { name: 'Lâmina de Geada', element: 'ice', damage: 12, range: 2.2, arc: 0.7 },
-  { name: 'Maça Trovejante', element: 'storm', damage: 13, range: 2.0, arc: 0.8 },
-  { name: 'Presa em Brasa', element: 'fire', damage: 11, range: 1.9, arc: 0.9 },
+/** Nº de modificadores por raridade (ADR 0088). */
+export const RARITY_MODS: Record<Rarity, number> = { common: 0, rare: 1, unique: 2 };
+
+export const ARMOR_SLOTS: ArmorSlot[] = ['head', 'body', 'legs', 'boots'];
+/** ArmorSet vazio (helper de init/migração). */
+export function emptyArmor(): ArmorSet {
+  return { head: null, body: null, legs: null, boots: null };
+}
+
+// Armas corpo-a-corpo por FAMÍLIA (ADR 0088): machado (pesado/curto), foice
+// (amplo), garras (rápido/estreito). `range`/`arc` dão o toque de cada uma.
+const MELEE_WEAPON_BASES: { name: string; element: string; family: WeaponFamily; damage: number; range: number; arc: number }[] = [
+  { name: 'Machado da Clareira', element: 'nature', family: 'axe', damage: 14, range: 2.0, arc: 0.7 },
+  { name: 'Machado de Geada', element: 'ice', family: 'axe', damage: 15, range: 2.0, arc: 0.6 },
+  { name: 'Foice da Vinha', element: 'nature', family: 'scythe', damage: 11, range: 2.6, arc: 1.1 },
+  { name: 'Foice Trovejante', element: 'storm', family: 'scythe', damage: 12, range: 2.5, arc: 1.0 },
+  { name: 'Garras Ancestrais', element: 'nature', family: 'claws', damage: 9, range: 1.7, arc: 1.3 },
+  { name: 'Garras em Brasa', element: 'fire', family: 'claws', damage: 10, range: 1.7, arc: 1.2 },
 ];
 
 // Cajados de conjuração (ranged): mais raros — atacam à distância. Ver ADR 0035.
-const RANGED_WEAPON_BASES = [
-  { name: 'Cajado de Carvalho', element: 'nature', damage: 9 },
-  { name: 'Galho Tempestuoso', element: 'storm', damage: 10 },
-  { name: 'Cajado em Brasa', element: 'fire', damage: 10 },
+const RANGED_WEAPON_BASES: { name: string; element: string; family: WeaponFamily; damage: number }[] = [
+  { name: 'Cajado de Carvalho', element: 'nature', family: 'staff', damage: 9 },
+  { name: 'Galho Tempestuoso', element: 'storm', family: 'staff', damage: 10 },
+  { name: 'Cajado em Brasa', element: 'fire', family: 'staff', damage: 10 },
 ];
 
 // Chance de uma arma sorteada ser de conjuração (ranged). Melee é o padrão.
 const RANGED_WEAPON_CHANCE = 0.2;
 
-const ARMOR_BASES = [
-  { name: 'Manto de Folhas', armor: 0.08, bonus: 'sapRegen' },
-  { name: 'Casca Viva', armor: 0.16, bonus: 'health' },
-  { name: 'Pelagem Espiritual', armor: 0.12, bonus: 'formDuration' },
-];
+// Armaduras por PEÇA anatômica (ADR 0087): o peito carrega a maior fração de
+// mitigação; elmo/calças/botas complementam. Cada peça tem seu tema/bônus.
+const ARMOR_BASES: Record<ArmorSlot, { name: string; armor: number; bonus: string }[]> = {
+  head: [
+    { name: 'Capuz de Folhas', armor: 0.05, bonus: 'sapRegen' },
+    { name: 'Elmo de Casca', armor: 0.07, bonus: 'health' },
+    { name: 'Coroa Espiritual', armor: 0.06, bonus: 'formDuration' },
+  ],
+  body: [
+    { name: 'Manto de Folhas', armor: 0.10, bonus: 'sapRegen' },
+    { name: 'Peitoral de Casca', armor: 0.16, bonus: 'health' },
+    { name: 'Pelagem Espiritual', armor: 0.12, bonus: 'formDuration' },
+  ],
+  legs: [
+    { name: 'Calças de Vinha', armor: 0.06, bonus: 'sapRegen' },
+    { name: 'Grevas de Casca', armor: 0.09, bonus: 'health' },
+    { name: 'Perneiras Espirituais', armor: 0.07, bonus: 'formDuration' },
+  ],
+  boots: [
+    { name: 'Botas de Musgo', armor: 0.04, bonus: 'sapRegen' },
+    { name: 'Botas de Casca', armor: 0.06, bonus: 'health' },
+    { name: 'Cascos Espirituais', armor: 0.05, bonus: 'formDuration' },
+  ],
+};
 
 const ARTIFACT_BASES = [
   { name: 'Espinhos de Raiz', ability: 'root_spikes' },
@@ -87,6 +118,7 @@ export function generateItem(
   seed: number | null = null,
   forceRarity: Rarity | null = null,
   forceStyle: WeaponStyle | null = null,
+  forceSlot: ArmorSlot | null = null,
 ): Item {
   const rng = makeRng(seed ?? (Date.now() ^ (_uid++ * 2654435761)) >>> 0);
   type = type ?? rng.pick(['weapon', 'armor', 'artifact']);
@@ -101,13 +133,16 @@ export function generateItem(
     const base = rng.pick(style === 'ranged' ? RANGED_WEAPON_BASES : MELEE_WEAPON_BASES);
     item.name = base.name;
     item.element = base.element;
+    item.family = base.family;
     item.style = style;
     item.damage = Math.round(base.damage * rarity.mul * lvlMul);
-    if (style === 'melee') { item.range = base.range; item.arc = base.arc; }
+    if (style === 'melee') { item.range = (base as any).range; item.arc = (base as any).arc; }
   } else if (type === 'armor') {
-    const base = rng.pick(ARMOR_BASES);
+    const slot = forceSlot ?? rng.pick(ARMOR_SLOTS);
+    const base = rng.pick(ARMOR_BASES[slot]);
     item.name = base.name;
-    item.armor = +(base.armor * rarity.mul).toFixed(2);
+    item.slot = slot;
+    item.armor = +(base.armor * rarity.mul).toFixed(3);
     item.bonus = base.bonus;
     item.bonusValue = Math.round(20 * rarity.mul * lvlMul);
   } else {
@@ -118,9 +153,13 @@ export function generateItem(
   }
 
   item.enchants = enchantsFor(type, rarity.slots, rng);
+  // Modificadores por raridade (ADR 0088): 0/1/2 afixos de gameplay.
+  item.mods = rollModifiers(type, RARITY_MODS[rarityKey], level, rng);
   item.power = item.power ?? rarity.mul;
   return item as Item;
 }
+
+export { MODIFIERS };
 
 export function rollDrops(lootTable, level: number, rng = Math.random): Item[] {
   const drops: Item[] = [];
@@ -132,5 +171,6 @@ export function rollDrops(lootTable, level: number, rng = Math.random): Item[] {
 }
 
 export function salvageValue(item: Item): number {
+  if (item.type === 'consumable') return 1;
   return { common: 2, rare: 5, unique: 12 }[item.rarity] ?? 1;
 }

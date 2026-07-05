@@ -1,6 +1,8 @@
 import { C, Factions } from '../core/ecs/components.js';
 import { normalize } from '../utils/math.js';
 import { FORMS } from './forms.js';
+import { sumMod } from './modifiers.js';
+import { equippedItems } from './equip.js';
 
 /** Aplica dano a um alvo, tratando invulnerabilidade, status, morte/queda. */
 export function applyDamage(game, targetId, amount, opts: any = {}) {
@@ -22,6 +24,23 @@ export function applyDamage(game, targetId, amount, opts: any = {}) {
   hp.hp -= amount;
   const dtr = world.get(targetId, C.Transform);
   game.emit('damage', { id: targetId, amount, x: dtr?.x, z: dtr?.z, ...opts });
+
+  // Afixos de comportamento (ADR 0088). Espinhos: alvo reflete % ao atacante.
+  if (eq && !opts._reflected) {
+    const thorns = sumMod(equippedItems(eq), 'thorns');
+    if (thorns > 0 && opts.attackerId != null && opts.attackerId !== targetId) {
+      applyDamage(game, opts.attackerId, amount * thorns / 100, { _reflected: true, ignoreInvuln: true });
+    }
+  }
+  // Roubo de vida: atacante cura % do dano causado.
+  if (opts.attackerId != null && opts.attackerId !== targetId) {
+    const aeq = world.get(opts.attackerId, C.Equipment);
+    const ls = aeq ? sumMod(equippedItems(aeq), 'lifesteal') : 0;
+    if (ls > 0) {
+      const ahp = world.get(opts.attackerId, C.Health);
+      if (ahp && !ahp.dead) ahp.hp = Math.min(ahp.max, ahp.hp + amount * ls / 100);
+    }
+  }
 
   const tint = world.get(targetId, C.Tint);
   if (tint) { tint.flash = 0.12; tint.react = 0.18; } // flash + recuo (flinch)

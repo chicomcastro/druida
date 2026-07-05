@@ -1,5 +1,6 @@
 import { C } from '../core/ecs/components.js';
 import { kvGet, kvSet, kvDel, kvGetLocal, kvSetLocal } from './storage.js';
+import { emptyArmor } from './loot.js';
 import type { SaveV1, PlayerSnapshot } from '../types.js';
 
 /**
@@ -29,10 +30,11 @@ export function serialize(game): SaveV1 {
       index: pc.index,
       forms: [...form.list],
       weapon: loadout.weapon,
-      armor: loadout.armor,
+      armor: { ...loadout.armor },
       artifacts: loadout.artifacts.map((a) => a ?? null),
       essence: inv.essence,
       items: inv.items,
+      hotbar: (inv.hotbar ?? []).map((a) => a ?? null),
     });
   }
   return {
@@ -90,13 +92,18 @@ export function apply(game, data: SaveV1 | null | undefined): boolean {
     const inv = game.world.get(id, C.Inventory);
     inv.essence = sp.essence ?? 0;
     inv.items = sp.items ?? [];
+    inv.hotbar = sp.hotbar ?? [null, null, null, null, null, null, null, null, null];
 
     const loadout = game.world.get(id, C.Loadout);
     const eq = game.world.get(id, C.Equipment);
-    loadout.weapon = null; loadout.armor = null; loadout.artifacts = [null, null, null];
-    eq.weapon = null; eq.armor = null; eq.artifacts = [null, null, null];
+    loadout.weapon = null; loadout.armor = emptyArmor(); loadout.artifacts = [null, null, null];
+    eq.weapon = null; eq.armor = emptyArmor(); eq.artifacts = [null, null, null];
     if (sp.weapon) game.equip(id, sp.weapon);
-    if (sp.armor) game.equip(id, sp.armor);
+    // Migração v1→v2 (ADR 0087): armadura única legada vai para o peito.
+    if (sp.armor) {
+      if ((sp.armor as any).type === 'armor') game.equip(id, { ...(sp.armor as any), slot: (sp.armor as any).slot ?? 'body' });
+      else for (const piece of Object.values(sp.armor as any)) if (piece) game.equip(id, piece);
+    }
     (sp.artifacts ?? []).forEach((a, i) => { if (a) game.equip(id, a, i); });
   }
   return true;
