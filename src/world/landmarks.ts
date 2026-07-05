@@ -38,8 +38,9 @@ export function buildMerchantStall(canopyColor = 0xd8862a) {
     g.add(m);
     return m;
   };
-  // Postes de canto (altura MCD: ~2× o herói).
-  for (const [px, pz] of [[-1.9, -1.35], [1.9, -1.35], [-1.9, 1.35], [1.9, 1.35]]) {
+  // Postes de canto (altura MCD: ~2× o herói) com pegada 4×3: a face
+  // externa de cada poste cai na linha do grid do chão (ADR 0079).
+  for (const [px, pz] of [[-1.89, -1.39], [1.89, -1.39], [-1.89, 1.39], [1.89, 1.39]]) {
     box(0.22, 3.0, 0.22, px, 1.5, pz, 0x4a3626, 'log', 1, 3);
   }
   // Toldo: laje larga + listra central mais clara (leitura de tenda de feira).
@@ -58,16 +59,20 @@ export function buildMerchantStall(canopyColor = 0xd8862a) {
   return g;
 }
 
+/** Centro alinhado p/ arestas no grid (ADR 0079): pegada par ⇒ meio-inteiro. */
+const alignTo = (v, size) => (Math.round(size) % 2 === 1 ? Math.round(v) : Math.round(v - 0.5) + 0.5);
+
 function buildMerchant(game, pos) {
+  const sx = alignTo(pos.x, 4), sz = alignTo(pos.z, 3); // pegada 4×3 da banca
   const g = buildVoxelModel('merchant');
-  g.position.set(pos.x, 0, pos.z);
+  g.position.set(sx, 0, sz);
   game.renderer.add(g);
   // Banca-estrutura (mesh próprio: não balança com o idle do NPC).
   const stall = buildMerchantStall();
-  stall.position.set(pos.x, 0, pos.z);
+  stall.position.set(sx, 0, sz);
   game.renderer.add(stall);
   const id = game.world.createEntity();
-  game.world.add(id, C.Transform, Transform(pos.x, pos.z));
+  game.world.add(id, C.Transform, Transform(sx, sz));
   game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
   game.world.add(id, C.Collider, Collider(0.6, true));
   game.world.add(id, C.Interactable, { kind: 'merchant', prompt: 'E — Mercador', range: 3.5, used: false });
@@ -104,7 +109,7 @@ function buildNpc(game, pos) {
 function buildSanctuary(game, pos, form) {
   const color = FORM_GLOW[form] ?? 0x9fe06a;
   const g = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.5, 3.3), new THREE.MeshStandardMaterial({ color: 0x4a4a55, map: tiledPixelTexture('stone', 3, 1) }));
+  const base = new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 3), new THREE.MeshStandardMaterial({ color: 0x4a4a55, map: tiledPixelTexture('stone', 3, 1) }));
   base.position.y = 0.25; base.receiveShadow = true;
   const stone = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.4, 0.8), new THREE.MeshStandardMaterial({ color: 0x3a3a45, map: tiledPixelTexture('stone', 1, 3) }));
   stone.position.y = 1.5; stone.castShadow = true;
@@ -114,7 +119,7 @@ function buildSanctuary(game, pos, form) {
   );
   crystal.position.y = 3.1;
   g.add(base); g.add(stone); g.add(crystal);
-  g.position.set(pos.x, 0, pos.z);
+  g.position.set(alignTo(pos.x, 3), 0, alignTo(pos.z, 3));
   game.renderer.add(g);
   // animação leve do cristal
   game._sanctCrystals = game._sanctCrystals ?? [];
