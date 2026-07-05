@@ -2,6 +2,8 @@ import { C } from '../core/ecs/components.js';
 import { FORMS } from '../gameplay/forms.js';
 import { xpForLevel } from '../gameplay/progression.js';
 import { isTouchDevice } from './TouchControls.js';
+import { bagConsumables } from '../gameplay/consumables.js';
+import { itemIconURL } from './itemIcons.js';
 
 /**
  * HUD em overlay DOM (mais simples e acessível que desenhar no canvas).
@@ -53,6 +55,14 @@ const css = `
 #hud-victory h1{font-size:52px;margin:0;color:#9fe06a;text-shadow:0 3px 18px rgba(159,224,106,.5);font-family:'Cinzel',Georgia,serif}
 #hud-victory p{opacity:.85;max-width:520px}
 .dmgnum{position:absolute;font-weight:800;font-size:15px;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.6);pointer-events:none;transform:translate(-50%,-50%);transition:none}
+/* Hotbar 1–9 (ADR 0091): itens rápidos (poções) na base central. */
+#hud-hotbar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:6}
+#hud-hotbar .hb{width:44px;height:44px;border-radius:9px;border:2px solid rgba(255,255,255,.16);background:linear-gradient(160deg,rgba(20,32,18,.9),rgba(8,14,8,.9));position:relative;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4)}
+#hud-hotbar .hb.empty{opacity:.35}
+#hud-hotbar .hb .ic{width:36px;height:36px;position:absolute;top:2px;left:2px;image-rendering:pixelated;image-rendering:crisp-edges;border-radius:5px}
+#hud-hotbar .hb .k{position:absolute;top:1px;left:3px;font-size:9px;font-weight:800;color:#ffd56a;text-shadow:0 1px 2px #000}
+#hud-hotbar .hb .n{position:absolute;bottom:1px;right:3px;font-size:11px;font-weight:800;color:#eaf3e6;text-shadow:0 1px 2px #000}
+#hud-root.touch #hud-hotbar{bottom:auto;top:120px;transform:scale(.85);transform-origin:top center}
 /* Touch: os slots de artefato do painel duplicam os botões U/I/O na tela —
    esconde e o painel volta a ser compacto (nome + barras). */
 #hud-root.touch .arts{display:none}
@@ -83,6 +93,7 @@ export class Hud {
   bossEl: any; objEl: any; promptEl: any;
   dialogueEl: any; victoryEl: any; toastEl: any; saveEl: any;
   panels: Map<number, any>;
+  hotbarEl: any; _hotbarKey: string;
   _dialogueQueue: string[];
   _dlgT: any; _toastT: any; _saveT: any;
   constructor(game) {
@@ -102,8 +113,9 @@ export class Hud {
       <div id="hud-dialogue"></div>
       <div id="hud-toast"></div>
       <div id="hud-save">💾 Salvo</div>
+      <div id="hud-hotbar"></div>
       <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
-      <div id="hud-hint">WASD andar · J atacar · Shift esquivar · E falar<br>5–9 formas · U/I/O dons · B mochila · M mapa · T voltar ao Carvalho</div>`;
+      <div id="hud-hint">WASD andar · J atacar · Shift esquivar · E falar<br>5–9 formas · U/I/O dons · Q poção · B mochila · M mapa · T voltar ao Carvalho</div>`;
     document.body.appendChild(this.root);
     // Touch não tem teclado: as dicas de atalho só confundem (ADR 0068).
     if (isTouchDevice()) {
@@ -122,6 +134,8 @@ export class Hud {
     this.bossEl = this.root.querySelector('#hud-boss');
     this.toastEl = this.root.querySelector('#hud-toast');
     this.saveEl = this.root.querySelector('#hud-save');
+    this.hotbarEl = this.root.querySelector('#hud-hotbar');
+    this._hotbarKey = '';
     this.panels = new Map();
 
     game.on('biomeChanged', (e) => this.toast(e.def.name));
@@ -161,6 +175,28 @@ export class Hud {
     this.toastEl.classList.add('show');
     clearTimeout(this._toastT);
     this._toastT = setTimeout(() => this.toastEl.classList.remove('show'), Math.max(ms, 2200));
+  }
+
+  /** Hotbar 1–9 (ADR 0091): poções da mochila do P1, com contagem e tecla. */
+  _updateHotbar() {
+    const { game } = this;
+    let inv = null;
+    for (const [id, pc] of game.world.query(C.PlayerControlled, C.Inventory)) {
+      if (pc.index === 0) { inv = game.world.get(id, C.Inventory); break; }
+    }
+    const groups = inv ? bagConsumables(inv).slice(0, 9) : [];
+    // Assinatura para só reconstruir o DOM quando mudar (barato no loop).
+    const sig = groups.map((g) => `${g.item.name}:${g.count}`).join('|');
+    if (sig === this._hotbarKey) return;
+    this._hotbarKey = sig;
+    if (!groups.length) { this.hotbarEl.innerHTML = ''; return; }
+    const KEYS = ['Q', '4']; // teclas livres p/ poções (1-3=dons, 5-9=formas)
+    this.hotbarEl.innerHTML = groups.map((g, i) => {
+      const url = itemIconURL(g.item);
+      const ic = url ? `<img class="ic" src="${url}" alt="">` : '';
+      const k = KEYS[i] ? `<span class="k">${KEYS[i]}</span>` : '';
+      return `<div class="hb">${k}${ic}<span class="n">${g.count}</span></div>`;
+    }).join('');
   }
 
   update() {
@@ -207,6 +243,8 @@ export class Hud {
     for (const [id, p] of this.panels) {
       if (!seen.has(id)) { p.el.remove(); this.panels.delete(id); }
     }
+
+    this._updateHotbar();
 
     this.biomeEl.textContent = `${game.currentBiomeName()} ${game.dayNight?.icon?.() ?? ''}`;
     this.lvlEl.textContent = `Nível ${game.progress.level} · ${game.partyEssence()} essência`;

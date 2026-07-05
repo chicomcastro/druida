@@ -125,6 +125,13 @@ export class Menus {
       } else if (e.code === 'Escape' || e.code === 'KeyP') this.togglePause();
       else if ((e.code === 'KeyB' || e.code === 'Tab') && !mapOpen) { e.preventDefault(); this.toggleInventory(); }
       else if (e.code === 'KeyT' && !this.game.paused) this.game.recallToHub();
+      // Cinto de poções (ADR 0091): Q usa a 1ª poção, Digit4 a 2ª (1-3=dons,
+      // 5-9=formas já ocupam a fileira numérica).
+      else if (e.code === 'KeyQ' && !this.game.paused && !this.inv.classList.contains('show')) {
+        this.game.useHotbarSlot(0);
+      } else if (e.code === 'Digit4' && !this.game.paused && !this.inv.classList.contains('show')) {
+        this.game.useHotbarSlot(1);
+      }
     });
   }
 
