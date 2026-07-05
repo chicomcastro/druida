@@ -44,10 +44,12 @@ export function giveItem(game, item) {
 export function rerollShop(game) {
   const lvl = game.regionLevel();
   const price = { common: 12, rare: 30, unique: 70 };
+  // Lojas de interior (ADR 0094): armeiro só vende armas, armaduraria só peças.
+  const bias = game._interiorBias?.[game.activeShopKey] ?? null;
   game.shopStock = [];
   // 3 equipamentos + 1 poção (ADR 0089): sempre há cura à venda.
   for (let i = 0; i < 3; i++) {
-    const it = generateItem(lvl);
+    const it = generateItem(lvl, bias);
     game.shopStock.push({ item: it, price: Math.round((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
   }
   const potion = generateConsumable('heal_s', lvl);

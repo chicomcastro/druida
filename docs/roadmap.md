@@ -142,7 +142,7 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E2 UI MCD 2.0 | ✅ entregue | Gate A |
 | E3 Combate/Combo | ✅ entregue | Gate B |
 | E4 Skill Tree | ✅ entregue | Gate C |
-| E5 Vila 1 viva | 🚧 próximo | Gate D |
+| E5 Vila 1 viva | 🚧 E5.1 interiores ok (falta rixa/famílias) | Gate D |
 | E6 Side quests | ⏳ | — |
 | E7 Vilas 2–4 | ⏳ | — |
 | E8 Mundo vivo | ⏳ | Gate E |

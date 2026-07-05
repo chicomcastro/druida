@@ -29,6 +29,7 @@ import { DayNightManager } from '../world/DayNightManager.js';
 import { PoiManager } from '../world/PoiManager.js';
 import { EventManager } from '../world/EventManager.js';
 import { DungeonManager } from '../world/DungeonManager.js';
+import { InteriorManager } from '../world/InteriorManager.js';
 import { buildLandmarks } from '../world/landmarks.js';
 import { StoryManager } from '../gameplay/story.js';
 import { Hud } from '../ui/Hud.js';
@@ -65,8 +66,9 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
-  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; story: any; loop: any;
+  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; dayNight: any; telemetry: any; poi: any; events: any; dungeon: any; interiors: any; story: any; loop: any;
   inDungeon: boolean;
+  meal: any; // bônus temporário da refeição da taverna (ADR 0094)
   // Estado.
   seed: number;
   progress: { xp: number; level: number; enchantPoints: number };
@@ -122,6 +124,7 @@ export class Game {
     this.poi = new PoiManager(this);
     this.events = new EventManager(this);
     this.dungeon = new DungeonManager(this);
+    this.interiors = new InteriorManager(this); // interiores das casas (ADR 0094)
     this.story = new StoryManager(this);
     this.purity = new PurityManager(this); // mundo cura conforme a campanha (ADR 0044)
     this.quests = new QuestManager(this); // missões locais das vilas (ADR 0047)
@@ -160,6 +163,7 @@ export class Game {
       (g) => g.poi.update(),
       (g, dt) => g.events.update(dt),
       (g, dt) => g.dungeon.update(dt),
+      (g, dt) => g.interiors.update(dt),
       (g, dt) => g.vfx.update(dt),
       idleRegenSystem,
     ];
@@ -225,6 +229,7 @@ export class Game {
     const pc = this.world.get(id, C.PlayerControlled);
     if (pc?.combo) mul *= comboMul(pc.combo); // bônus de combo (ADR 0092)
     mul *= 1 + skillBonus(this, id, 'dmg') / 100; // talentos de dano (ADR 0093)
+    if (this.meal && this.meal.expire > 0) mul *= this.meal.mul; // refeição da taverna (ADR 0094)
     return mul;
   }
 
