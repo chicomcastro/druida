@@ -76,10 +76,10 @@ function values(kind: Kind): number[] {
     for (let i = 0; i < v.length; i++) v[i] = 0.93 + r() * 0.07;
     for (let i = 0; i < 8; i++) v[at(Math.floor(r() * 16), Math.floor(r() * 16))] *= 0.9;
   } else if (kind === 'cloth') {
-    // Tecido dos personagens (ADR 0066): trama sutil, sem contraste forte —
-    // é textura de pele/roupa, não de bloco.
+    // Tecido (ADR 0066/0081): trama em xadrez com costuras horizontais —
+    // visível de longe sem virar ruído (tinta pela cor da parte).
     for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
-      v[at(x, y)] = 0.92 + ((x + y) % 2) * 0.035 + r() * 0.045;
+      v[at(x, y)] = 0.88 + ((x + y) % 2) * 0.07 + (y % 5 === 0 ? -0.05 : 0) + r() * 0.05;
     }
   }
 

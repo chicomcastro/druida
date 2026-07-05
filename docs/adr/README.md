@@ -85,3 +85,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0078](0078-telhados-degraus-casas-maiores.md) | Telhados em degraus, casas maiores e partículas cúbicas (M17) | Aceito |
 | [0079](0079-arestas-no-grid.md) | Arestas das construções nas linhas do grid (M18.1) | Aceito |
 | [0080](0080-vilas-vivas.md) | Vilas vivas: casas com anexos, ruas e praças (M18.2) | Aceito |
+| [0081](0081-personagens-variados.md) | Personagens com trama visível e variedade (M18.3) | Aceito |

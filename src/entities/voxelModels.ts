@@ -278,19 +278,36 @@ export interface VillagerLook {
   /** Cor do cristal do cajado (só anciãos). */
   glow?: number;
   elder?: boolean;
+  /** Variedade (ADR 0081): sem capuz mostra cabelo; avental; mochila. */
+  hood?: boolean;
+  hair?: number;
+  apron?: boolean;
+  pack?: boolean;
 }
 
-export function makeVillagerSpec({ robe, trim, glow = C.gold, elder = false }: VillagerLook): VoxelModelSpec {
+export function makeVillagerSpec({
+  robe, trim, glow = C.gold, elder = false,
+  hood = true, hair = 0x4a331f, apron = false, pack = false,
+}: VillagerLook): VoxelModelSpec {
   const parts: VoxelPart[] = [
     { name: 'torso', joint: [0, 0.95, 0], boxes: [
       b([0.8, 0.85, 0.5], [0, 0.1, 0], robe),          // túnica
       b([0.88, 0.2, 0.56], [0, -0.28, 0], trim),       // cinto
       ...(elder ? [b([0.92, 0.24, 0.6], [0, 0.42, 0], trim)] : []), // capa do ancião
+      ...(apron ? [b([0.62, 0.55, 0.1], [0, -0.02, 0.28], 0xd8cfb0)] : []), // avental de linho
+      ...(pack ? [b([0.42, 0.55, 0.26], [0, 0.12, -0.38], C.leather)] : []), // mochila
     ] },
     { name: 'head', joint: [0, 1.5, 0], boxes: [
       b([0.6, 0.58, 0.6], [0, 0.2, 0], C.skin),        // cabeça grande (cubo)
-      b([0.68, 0.32, 0.7], [0, 0.45, 0], robe),        // capuz topo
-      b([0.7, 0.28, 0.18], [0, 0.24, 0.3], robe),      // aba do capuz
+      ...(elder || hood
+        ? [
+            b([0.68, 0.32, 0.7], [0, 0.45, 0], robe),   // capuz topo
+            b([0.7, 0.28, 0.18], [0, 0.24, 0.3], robe), // aba do capuz
+          ]
+        : [
+            b([0.66, 0.24, 0.66], [0, 0.5, 0], hair),   // cabelo
+            b([0.66, 0.16, 0.12], [0, 0.38, 0.28], hair), // franja
+          ]),
       b([0.11, 0.11, 0.06], [-0.15, 0.2, 0.31], 0x2a2a2a), // olhos
       b([0.11, 0.11, 0.06], [0.15, 0.2, 0.31], 0x2a2a2a),
     ] },
