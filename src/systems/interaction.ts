@@ -1,5 +1,6 @@
 import { C } from '../core/ecs/components.js';
 import { dist } from '../utils/math.js';
+import { revealLore } from '../data/lore.js';
 
 /**
  * Detecta o jogador próximo de um Interactable e dispara a ação ao pressionar
@@ -17,7 +18,10 @@ export function interactionSystem(game, dt) {
       if (d > (inter.range ?? 3)) continue;
       if (d < promptD) { promptD = d; prompt = inter.prompt; }
       if (intent.interact) {
-        if (inter.kind === 'merchant') { game.setActiveShop?.(inter.shopId ?? 'hub'); game.menus.openShop(); }
+        if (inter.kind === 'merchant') {
+          if (inter.lines) game.emit('dialogue', { lines: inter.lines }); // fofoca da família (ADR 0095)
+          game.setActiveShop?.(inter.shopId ?? 'hub'); game.menus.openShop();
+        }
         else if (inter.kind === 'chest') game.menus.openStash();
         else if (inter.kind === 'dungeon') game.dungeon.enter(inter.entranceId);
         else if (inter.kind === 'dungeon_reward') game.dungeon.claimReward();
@@ -27,6 +31,7 @@ export function interactionSystem(game, dt) {
         else if (inter.kind === 'tavern') { game.emit('dialogue', { lines: inter.lines }); game.interiors.rest(); }
         else if (inter.kind === 'quest_giver') game.quests?.onTalk(inter);
         else game.story.onInteract(inter, pc.index);
+        if (inter.loreId) revealLore(game, inter.loreId); // segredos da rixa (ADR 0095)
         game.emit('interacted', { iid, by: pc.index });
       }
     }

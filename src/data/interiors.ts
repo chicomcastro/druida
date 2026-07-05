@@ -18,6 +18,10 @@ export interface InteriorTheme {
   service: InteriorService;
   /** Viés do estoque das lojas (armeiro só vende armas etc.). */
   shopBias?: 'weapon' | 'armor' | null;
+  /** Família à qual o NPC pertence (rixa — ADR 0095). */
+  family?: string;
+  /** Fragmento do codex revelado ao conversar (uma vez). */
+  loreId?: string;
   floor: number;
   wall: number;
   accent: number;
@@ -41,16 +45,22 @@ export const TAVERN = {
 
 export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
   weapons: {
-    id: 'weapons', name: '⚔️ Forja do Armeiro', npc: 'Brida, a Armeira', role: 'armeiro',
-    service: 'shop', shopBias: 'weapon',
+    id: 'weapons', name: '⚔️ Forja do Armeiro', npc: 'Brida Fenwick', role: 'armeiro',
+    service: 'shop', shopBias: 'weapon', family: 'fenwick', loreId: 'l13',
     floor: 0x3a2b22, wall: 0x4a3628, accent: 0xff8a3a, robe: 0x8a5a3a, trim: 0x3a2d22,
-    lines: ['O aço canta quando bem forjado. Escolha o seu.'],
+    lines: [
+      'O aço canta quando bem forjado. Escolha o seu.',
+      'Só não repare na fumaça — os Aldren dizem que ela mata o trigo. Trigo fraco não é culpa da minha forja.',
+    ],
   },
   armor: {
-    id: 'armor', name: '🛡️ Armaduraria', npc: 'Orin, o Curtidor', role: 'armaduraria',
-    service: 'shop', shopBias: 'armor',
+    id: 'armor', name: '🛡️ Armaduraria', npc: 'Orin Aldren', role: 'armaduraria',
+    service: 'shop', shopBias: 'armor', family: 'aldren', loreId: 'l14',
     floor: 0x2c3038, wall: 0x3a404a, accent: 0x6aa0ff, robe: 0x5a6e86, trim: 0xd8e4ea,
-    lines: ['Couro curtido, placas batidas. Nada te fura aqui.'],
+    lines: [
+      'Couro curtido, placas batidas. Nada te fura aqui.',
+      'Curto o couro no riacho — quando os Fenwick deixam sobrar água. Mas… entre nós, ando achando que o problema não é a forja deles.',
+    ],
   },
   tavern: {
     id: 'tavern', name: '🍲 Taverna do Carvalho', npc: 'Vesna, a Taverneira', role: 'taverna',
@@ -60,7 +70,7 @@ export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
   },
   leader: {
     id: 'leader', name: '🏛️ Casa da Liderança', npc: 'Anciã Maroa', role: 'liderança',
-    service: 'talk',
+    service: 'talk', loreId: 'l15',
     floor: 0x2e3a28, wall: 0x3f5236, accent: 0x9fe06a, robe: 0x3f7a58, trim: 0x6b4a2f,
     lines: [
       'Bem-vindo à Clareira, druida. Eu falo pelos que ficaram.',
@@ -70,7 +80,7 @@ export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
   },
   hall: {
     id: 'hall', name: '🔥 Salão Comunal', npc: 'Tovar, o Cronista', role: 'salão comunal',
-    service: 'talk',
+    service: 'talk', loreId: 'l14',
     floor: 0x342a1e, wall: 0x4a3a28, accent: 0xffd27a, robe: 0x6b4a2f, trim: 0x8a6b3a,
     lines: [
       'Aqui a vila se reúne — e discute. Sente-se junto ao fogo.',
