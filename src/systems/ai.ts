@@ -65,6 +65,7 @@ export function aiSystem(game, dt) {
       vel.vx = rooted ? 0 : n.x * vel.speed * slow;
       vel.vz = rooted ? 0 : n.z * vel.speed * slow;
       ai.state = 'chase';
+      ai.windup = 0; // cancela telegraph ao sair do alcance (ADR 0092)
     } else {
       vel.vx = vel.vz = 0;
       if (ai.behavior === 'exploder') {
@@ -74,11 +75,25 @@ export function aiSystem(game, dt) {
         world.destroyEntity(id);
         continue;
       }
-      if (ai.timer <= 0) {
-        ai.timer = ai.attackCooldown;
-        ai.swing = 0.25;
-        applyDamage(game, target.id, ai.damage, { attackerId: id, fromX: tr.x, fromZ: tr.z, knockback: 2 });
-        game.emit('enemyAttack', { id, x: tr.x, z: tr.z });
+      // Telegraph (ADR 0092): antecipa o golpe com um aviso — dá janela de
+      // esquiva. Ao fim do windup, se o alvo saiu do alcance, o golpe erra.
+      if (ai.windup > 0) {
+        ai.windup -= dt;
+        if (ai.windup <= 0) {
+          ai.timer = ai.attackCooldown;
+          ai.swing = 0.25;
+          const dd = Math.hypot(target.tr.x - tr.x, target.tr.z - tr.z);
+          if (dd <= ai.attackRange + 0.6) {
+            applyDamage(game, target.id, ai.damage, { attackerId: id, fromX: tr.x, fromZ: tr.z, knockback: 2 });
+            game.emit('enemyAttack', { id, x: tr.x, z: tr.z });
+          } else {
+            game.emit('enemyWhiff', { id, x: tr.x, z: tr.z });
+          }
+        }
+      } else if (ai.timer <= 0) {
+        ai.windup = ai.telegraph ?? 0.35;
+        const tint = world.get(id, C.Tint); if (tint) tint.warn = ai.windup;
+        game.emit('enemyTelegraph', { id, x: tr.x, z: tr.z, dur: ai.windup });
       }
     }
   }

@@ -54,6 +54,12 @@ export function bindGameEvents(game) {
     }
   });
   game.on('playerDowned', () => game.camera.addShake(0.6));
+  // Combo (ADR 0092): micro hit-stop + shake sutil escalando com a contagem —
+  // o "peso" do encadeamento no timing certo.
+  game.on('combo', (e) => {
+    game.hitStop = Math.max(game.hitStop, 0.03 + 0.006 * Math.min(e.count, 8));
+    game.camera.addShake(0.08 + 0.02 * Math.min(e.count, 6));
+  });
   game.on('kill', (e) => {
     game.camera.addShake(e.bossName ? 0.8 : 0.18);
     game.hitStop = Math.max(game.hitStop, e.bossName ? 0.12 : 0.045); // hit-stop

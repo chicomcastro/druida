@@ -3,6 +3,7 @@ import { speedBoonMul, iframeBoonMul } from '../gameplay/boons.js';
 import { normalize, angleTo } from '../utils/math.js';
 import { FORMS } from '../gameplay/forms.js';
 import { castAbility } from '../gameplay/abilities/index.js';
+import { COMBO, evalCombo } from '../gameplay/combo.js';
 
 /**
  * Traduz o Intent (preenchido a partir do input) em movimento, mira, ataque,
@@ -15,6 +16,11 @@ export function playerControlSystem(game, dt) {
   )) {
     pc.dodgeTimer = Math.max(0, pc.dodgeTimer - dt);
     pc.attackTimer = Math.max(0, pc.attackTimer - dt);
+    // Decaimento do combo (ADR 0092): sem novo acerto na janela de graça, zera.
+    if (pc.combo > 0) {
+      pc.comboExpire = (pc.comboExpire ?? 0) - dt;
+      if (pc.comboExpire <= 0) { pc.combo = 0; game.emit('comboEnd', { id }); }
+    }
 
     if (pc.downed) {
       vel.vx = vel.vz = 0;
@@ -80,10 +86,32 @@ export function playerControlSystem(game, dt) {
       game.emit('dodge', { id, x: tr.x, z: tr.z });
     }
 
-    // Ataque básico (depende da forma) --------------------------------
-    if (intent.attack && pc.attackTimer <= 0 && st.stun <= 0) {
-      pc.attackTimer = formDef.attackCooldown;
-      castAbility(game, id, formDef.basic, aimAngle);
+    // Ataque básico + combo por timing (ADR 0092) ---------------------
+    // Edge de PRESS (não auto-fire): o timing do jogador é o que importa.
+    const pressed = intent.attack && !pc._atkHeld;
+    pc._atkHeld = intent.attack;
+    if (st.stun <= 0 && pressed) {
+      const total = formDef.attackCooldown;
+      if (pc.attackTimer <= 0) {
+        // Primeiro golpe da sequência: abre a janela de combo.
+        pc.attackTimer = total; pc.castTotal = total;
+        castAbility(game, id, formDef.basic, aimAngle);
+      } else {
+        // Cast em andamento: avalia o timing do encadeamento.
+        const p = 1 - pc.attackTimer / (pc.castTotal || total);
+        const r = evalCombo(p);
+        if (r.ok) {
+          pc.combo = Math.min((pc.combo ?? 0) + 1, COMBO.cap);
+          pc.comboExpire = total * COMBO.graceMul;
+          pc.attackTimer = total; pc.castTotal = total;
+          castAbility(game, id, formDef.basic, aimAngle);
+          game.emit('combo', { id, count: pc.combo, quality: r.quality });
+        } else {
+          pc.combo = 0;
+          pc.attackTimer = Math.min(pc.castTotal || total, pc.attackTimer + COMBO.missPenalty);
+          game.emit('comboBreak', { id, progress: p });
+        }
+      }
     }
 
     // Artefatos (3 slots) ---------------------------------------------

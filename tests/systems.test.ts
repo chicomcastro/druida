@@ -60,12 +60,13 @@ describe('movementSystem', () => {
 });
 
 describe('aiSystem', () => {
-  it('inimigo persegue o jogador e ataca no alcance', () => {
+  it('inimigo persegue o jogador e ataca no alcance (após telegraph)', () => {
     const g = makeGame();
     const pid = addPlayer(g, 0, 0, 0);
     const eid = enemy(g, 1, 0); // dentro do attackRange
     const hpBefore = g.world.get(pid, C.Health).hp;
-    aiSystem(g, 0.2);
+    // Telegraph (ADR 0092): 1º tick inicia o windup, o golpe conecta ao fim.
+    for (let i = 0; i < 5; i++) aiSystem(g, 0.15);
     expect(g.world.get(pid, C.Health).hp).toBeLessThan(hpBefore);
   });
 
