@@ -20,6 +20,8 @@ export interface InteriorTheme {
   kitchen?: boolean;
   /** Viés do estoque das lojas (armeiro só vende armas etc.). */
   shopBias?: 'weapon' | 'armor' | null;
+  /** Categoria de estoque especializada (E21): 'food' cozinheiro, 'garden' jardineiro. */
+  shopKind?: 'food' | 'garden' | null;
   /** Família à qual o NPC pertence (rixa — ADR 0095). */
   family?: string;
   /** Fragmento do codex revelado ao conversar (uma vez). */
