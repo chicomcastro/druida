@@ -146,4 +146,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0140](0140-salao-comunal-cozinha-interior.md) | Salão Comunal: cozinha nos interiores (E19.6) | Aceito |
 | [0141](0141-plantacao-fundacao.md) | Plantação: fundação (culturas, sementes, canteiros) (E20.1) | Aceito |
 | [0142](0142-plantacao-canteiros-interativos.md) | Plantação: canteiros interativos + painel (E20.2) | Aceito |
+| [0143](0143-plantacao-sementes-mercador.md) | Plantação: sementes no mercador (E20.3) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

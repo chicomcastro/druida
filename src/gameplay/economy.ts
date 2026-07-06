@@ -2,6 +2,7 @@ import { C } from '../core/ecs/components.js';
 import { generateItem } from './loot.js';
 import { generateConsumable, generateFood, FOOD_BASES } from './consumables.js';
 import { INGREDIENTS, consumeIngredients } from './ingredients.js';
+import { CROPS } from './farming.js';
 import { repDiscount, shopSettlement } from './reputation.js';
 
 /**
@@ -81,6 +82,12 @@ export function rerollShop(game) {
   const foodKinds = Object.keys(FOOD_BASES);
   const fk = foodKinds[Math.floor(Math.random() * foodKinds.length)] as keyof typeof FOOD_BASES;
   game.shopStock.push({ item: generateFood(fk, lvl), price: tag(12 * (1 + (lvl - 1) * 0.1)) });
+  // Plantação (E20.3): 2 sementes à venda para semear a própria horta.
+  const cropIds = Object.keys(CROPS);
+  for (let i = 0; i < 2; i++) {
+    const crop = CROPS[cropIds[Math.floor(Math.random() * cropIds.length)]];
+    game.shopStock.push({ seed: crop.id, name: crop.seedName, icon: crop.seedIcon, price: tag(crop.price) });
+  }
   if (game._shopStocks) game._shopStocks[game.activeShopKey ?? 'hub'] = game.shopStock;
   return game.shopStock;
 }

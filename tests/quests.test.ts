@@ -125,7 +125,7 @@ describe('mercador regional (setActiveShop)', () => {
     g.setActiveShop('hub');
     g.rerollShop();
     const hubStock = g.shopStock;
-    expect(hubStock.length).toBe(11); // 5 equip + 2 poções + 3 ingredientes + 1 comida (ADR 0104/0138)
+    expect(hubStock.length).toBe(13); // 5 equip + 2 poções + 3 ingredientes + 1 comida + 2 sementes (ADR 0104/0138/0143)
     g.setActiveShop('vau_palafitas');
     expect(g.shopStock).toBeNull(); // gera sob demanda ao abrir
     g.rerollShop();
