@@ -49,7 +49,10 @@ describe('SettlementManager', () => {
     };
     const ambient = SETTLEMENTS.reduce((n, s) => n + ambientCount(s), 0);
     expect(ambient).toBeGreaterThan(0);
-    expect(villagers.length + givers.length).toBe(total + ambient);
+    // Trabalhadores fixos nos postos (ADR 0123): 1 por vila com posto de trabalho.
+    const WORKERS = { palafitas: 1, lenhadores: 1, degelo: 1 };
+    const workers = SETTLEMENTS.reduce((n, s) => n + (WORKERS[s.theme] ?? 0), 0);
+    expect(villagers.length + givers.length).toBe(total + ambient + workers);
     expect(givers.length).toBe(SETTLEMENTS.filter((s) => s.quest).length);
     // Mercadores regionais (fora o hub, que usa o dos landmarks).
     expect(inters.filter((k) => k === 'merchant').length).toBe(SETTLEMENTS.filter((s) => s.merchant).length);
@@ -155,9 +158,9 @@ describe('mundo vivo (ADR 0055)', () => {
     const sm = new SettlementManager(g);
     expect(sm._villagers.length).toBeGreaterThan(0);
     const v = sm._villagers[0];
+    const tr0 = g.world.get(v.id, C.Transform);
     v.wait = 0;
-    sm._wander(0.016); // escolhe alvo
-    v.wait = 0;
+    v.target = { x: tr0.x + 5, z: tr0.z }; // alvo fixo/longe: sem flakiness de RNG
     sm._wander(0.016); // anda em direção ao alvo
     const vel = g.world.get(v.id, C.Velocity);
     expect(Math.hypot(vel.vx, vel.vz)).toBeGreaterThan(0.5);
