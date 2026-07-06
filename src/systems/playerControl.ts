@@ -6,7 +6,8 @@ import { castAbility } from '../gameplay/abilities/index.js';
 import { evalCombo } from '../gameplay/combo.js';
 import { COMBO } from '../gameplay/combo.js';
 import { skillBonus, gainProficiency } from '../gameplay/skills.js';
-import { hotbarAbility, FORM_SLOT_START } from '../gameplay/hotbar.js';
+import { hotbarEntry } from '../gameplay/hotbar.js';
+import { useConsumableNamed } from '../gameplay/consumables.js';
 
 /**
  * Traduz o Intent (preenchido a partir do input) em movimento, mira, ataque,
@@ -132,18 +133,21 @@ export function playerControlSystem(game, dt) {
       if (art) castAbility(game, id, art.ability, aimAngle, { slot: i, item: art });
     }
 
-    // Hotbar unificado (teclas 1–9, E17.5) ----------------------------
-    // Cada slot é uma FORMA (faixa contígua a partir de FORM_SLOT_START, na
-    // ordem de form.list) ou uma HABILIDADE atribuída. Forma → troca (com toggle
-    // de volta ao humanoide); habilidade → conjura. Só do P1 (hotbar em
-    // game.progress). O d-pad do gamepad segue trocando forma via switchForm.
+    // Hotbar livre (teclas 1–9, E18) ---------------------------------
+    // Cada slot é uma entrada tipada acionável: skill → conjura; form → troca
+    // (com toggle de volta ao humanoide); potion → bebe da mochila pelo nome;
+    // equip → troca de equipamento (E18.2). Só do P1 (hotbar em game.progress);
+    // o d-pad do gamepad segue trocando forma via switchForm.
     if (intent.hotbar) {
       for (let s = 0; s < intent.hotbar.length; s++) {
         if (!intent.hotbar[s]) continue;
-        const fi = s - FORM_SLOT_START;
-        if (fi >= 0 && fi < form.list.length) {
-          const wanted = form.list[fi];
-          if (wanted && wanted !== form.current) {
+        const e = hotbarEntry(game, s);
+        if (!e) continue;
+        if (e.k === 'skill') {
+          castAbility(game, id, String(e.id), aimAngle, { slot: s, hotbar: true });
+        } else if (e.k === 'form') {
+          const wanted = String(e.id);
+          if (form.list.includes(wanted) && wanted !== form.current) {
             form.current = wanted;
             form.swapFlash = 0.35;
             game.emit('formSwap', { id, form: wanted, x: tr.x, z: tr.z });
@@ -151,10 +155,10 @@ export function playerControlSystem(game, dt) {
             form.current = 'humanoid';
             form.swapFlash = 0.35;
           }
-        } else {
-          const ab = hotbarAbility(game, s);
-          if (ab) castAbility(game, id, ab, aimAngle, { slot: s, hotbar: true });
+        } else if (e.k === 'potion') {
+          useConsumableNamed(game, id, String(e.id));
         }
+        // e.k === 'equip': troca de equipamento com swap-back vem no E18.2.
       }
     }
   }
