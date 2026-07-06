@@ -149,3 +149,9 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E9 Economia/1ª hora | 🚧 instrumentado (funil de telemetria); tuning aguarda Gate F | Gate F |
 | E10 Santuário do Lobo | ✅ entregue (Lobo = 1ª forma, na Clareira + Dons) — ADR 0106 | — |
 | E11 Rixa nas vilas 2–4 | ✅ entregue (famílias + arco em todas as vilas — ADR 0107; reputação por vila com desconto — ADR 0108) | — |
+| E12 Wiki ilustrada | 🚧 planejado (fotos de modelos/inimigos/vilas/mapa) | — |
+| E13 Missões/campanha | 🚧 planejado (descrições melhores) | — |
+| E14 Mapa-mundi das vilas | 🚧 planejado (legibilidade + localização) | — |
+| E15 Vilas evoluídas | 🚧 planejado (espaçamento, ruas, Clareira em torno da árvore) | — |
+| E16 Mundo orgânico + progressão aberta | 🚧 E16.1 mapa orgânico entregue (ADR 0109); E16.2 level-scaling + reposicionar marcos a seguir | — |
+| E17 Hotbar 1–9 + skills | 🚧 planejado (redesenhar skill tree em skills ativas, depois hotbar) | — |

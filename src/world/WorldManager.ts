@@ -1,30 +1,47 @@
 import * as THREE from 'three';
 import { C, Transform, Collider } from '../core/ecs/components.js';
 import { BIOMES } from '../data/biomes.js';
-import { makeRng } from '../utils/math.js';
+import { makeRng, valueNoise2 } from '../utils/math.js';
+import { SETTLEMENTS } from '../data/settlements.js';
 import { createLootOrb } from '../entities/factories.js';
 import { pixelTexture, tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { LORE } from '../data/lore.js';
 import { canopyGeo, pineGeo, rockGeo, mergeBoxes } from './voxelGeo.js';
 
 /**
- * Mundo aberto: zonas de bioma dispostas em anéis concêntricos a partir do
- * hub (origem), criando um gradiente natural de dificuldade ao se afastar.
- * Props (árvores/rochas) são gerados em anel ao redor do grupo e descartados
- * ao se distanciar — pseudo-streaming. Ver docs/adr/0008-open-world.md.
+ * Mundo aberto **orgânico** (ADR 0109): em vez de anéis concêntricos, cada
+ * bioma é uma região de Voronoi ao redor de uma âncora (o centro da sua vila),
+ * com as fronteiras deformadas por value-noise (domain warp) para dar bordas
+ * irregulares e naturais — sem ordem radial imposta. O Coração Corrompido é uma
+ * mancha própria ao sul. Props são gerados em anel ao redor do grupo e
+ * descartados ao se distanciar — pseudo-streaming. Ver docs/adr/0008 e 0109.
  */
-export const RING_RADII = [
-  { biome: 'clareira', max: 55 },
-  { biome: 'pantano', max: 110 },
-  { biome: 'bosque_cinza', max: 165 },
-  { biome: 'picos', max: 220 },
-  { biome: 'coracao', max: Infinity },
-];
 
+// Âncora de cada bioma = centro da vila daquele bioma (data-driven).
+export const BIOME_ANCHORS = SETTLEMENTS.map((s) => ({ biome: s.biome, x: s.x, z: s.z }));
+
+// Mancha do Coração Corrompido (bioma final), fora do alcance das vilas.
+export const CORACAO_BLOB = { x: 0, z: -225, r: 90 };
+
+// Deformação das fronteiras: amplitude (u) e frequência do domain warp.
+const WARP_AMP = 24;
+const WARP_FREQ = 0.012;
+
+/**
+ * Bioma em (x,z): warpa a posição por ruído e devolve o bioma da âncora mais
+ * próxima — ou `coracao` se cair na mancha do Coração. Determinístico e puro.
+ */
 export function biomeAt(x, z) {
-  const r = Math.hypot(x, z);
-  for (const ring of RING_RADII) if (r <= ring.max) return ring.biome;
-  return 'coracao';
+  const wx = x + valueNoise2(x * WARP_FREQ + 11.3, z * WARP_FREQ - 4.1) * WARP_AMP;
+  const wz = z + valueNoise2(x * WARP_FREQ - 7.7, z * WARP_FREQ + 19.5) * WARP_AMP;
+  if (Math.hypot(wx - CORACAO_BLOB.x, wz - CORACAO_BLOB.z) < CORACAO_BLOB.r) return 'coracao';
+  let best = BIOME_ANCHORS[0].biome, bd = Infinity;
+  for (const a of BIOME_ANCHORS) {
+    const dx = wx - a.x, dz = wz - a.z;
+    const d = dx * dx + dz * dz;
+    if (d < bd) { bd = d; best = a.biome; }
+  }
+  return best;
 }
 
 export class WorldManager {

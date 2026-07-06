@@ -1,6 +1,7 @@
 import { C } from '../core/ecs/components.js';
 import { LANDMARKS } from '../gameplay/story.js';
 import { SETTLEMENTS } from '../data/settlements.js';
+import { biomeAt } from '../world/WorldManager.js';
 
 /**
  * Mapa-mundi em tela cheia (tecla M) com fog of war: só áreas exploradas são
@@ -23,8 +24,11 @@ const POINTS = [
   { key: 'boss', x: LANDMARKS.boss.x, z: LANDMARKS.boss.z, label: 'Coração Corrompido', color: '#ff3030' },
 ];
 
-const RING_COLORS = ['#3e6b3a', '#40492f', '#4a4036', '#8aa0b0', '#2a1f2a'];
-const RING_MAX = [55, 110, 165, 220, 290];
+// Cor de cada bioma no mapa (regiões orgânicas, ADR 0109).
+const BIOME_MAP_COLOR = {
+  clareira: '#3e6b3a', pantano: '#40492f', bosque_cinza: '#4a4036',
+  picos: '#8aa0b0', coracao: '#2a1f2a',
+};
 
 export class WorldMap {
   game: any;
@@ -78,13 +82,19 @@ export class WorldMap {
     const wm = this.game.worldManager;
     ctx.clearRect(0, 0, PX, PX);
 
-    // Anéis de bioma (fundo).
-    for (let i = RING_MAX.length - 1; i >= 0; i--) {
-      const [cx, cy] = this._w2p(0, 0);
-      ctx.beginPath();
-      ctx.arc(cx, cy, (RING_MAX[i] / MAP_RADIUS) * (PX / 2), 0, Math.PI * 2);
-      ctx.fillStyle = RING_COLORS[i] + '22';
-      ctx.fill();
+    // Regiões orgânicas de bioma (fundo): amostra biomeAt numa grade, recortada
+    // no disco do mapa. Cada célula é pintada com a cor do seu bioma (ADR 0109).
+    const GRID = 60;                 // resolução da amostragem
+    const cellW = PX / GRID;
+    const wStep = (MAP_RADIUS * 2) / GRID;
+    for (let i = 0; i < GRID; i++) {
+      for (let j = 0; j < GRID; j++) {
+        const wx = -MAP_RADIUS + (i + 0.5) * wStep;
+        const wz = -MAP_RADIUS + (j + 0.5) * wStep;
+        if (Math.hypot(wx, wz) > MAP_RADIUS) continue; // fora do disco
+        ctx.fillStyle = (BIOME_MAP_COLOR[biomeAt(wx, wz)] ?? '#3e6b3a') + '88';
+        ctx.fillRect(i * cellW, j * cellW, cellW + 1, cellW + 1);
+      }
     }
 
     // Fog of war: células exploradas iluminadas.

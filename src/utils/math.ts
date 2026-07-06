@@ -35,6 +35,29 @@ export function makeRng(seed) {
   return rng;
 }
 
+/** Hash determinístico de uma célula inteira -> [0,1). */
+function hash2(ix, iz) {
+  let h = (Math.imul(ix, 374761393) + Math.imul(iz, 668265263)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177) | 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/**
+ * Value-noise 2D suave e determinístico em [-1,1] (bilerp com smoothstep sobre
+ * uma grade de hashes). Sem estado nem Math.random — seguro para geração de
+ * mundo reprodutível e para funções puras como `biomeAt`.
+ */
+export function valueNoise2(x, z) {
+  const x0 = Math.floor(x), z0 = Math.floor(z);
+  const fx = x - x0, fz = z - z0;
+  const sx = fx * fx * (3 - 2 * fx), sz = fz * fz * (3 - 2 * fz);
+  const n00 = hash2(x0, z0), n10 = hash2(x0 + 1, z0);
+  const n01 = hash2(x0, z0 + 1), n11 = hash2(x0 + 1, z0 + 1);
+  const nx0 = n00 + (n10 - n00) * sx;
+  const nx1 = n01 + (n11 - n01) * sx;
+  return (nx0 + (nx1 - nx0) * sz) * 2 - 1;
+}
+
 /** Escolha ponderada: items = [{weight, ...}] */
 export function weightedPick(items, rng = Math.random) {
   let total = 0;

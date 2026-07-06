@@ -11,10 +11,19 @@ import { bossSystem } from '../src/systems/boss.js';
 import { coopSystem } from '../src/systems/coop.js';
 
 describe('WorldManager', () => {
-  it('biomeAt mapeia anéis concêntricos', () => {
-    expect(biomeAt(0, 0)).toBe('clareira');
-    expect(biomeAt(0, 80)).toBe('pantano');
-    expect(biomeAt(0, 300)).toBe('coracao');
+  it('biomeAt: regiões orgânicas ancoradas nas vilas (ADR 0109)', () => {
+    // Cada centro de vila cai no seu próprio bioma (âncora exata).
+    expect(biomeAt(0, 0)).toBe('clareira'); // Círculo do Carvalho
+    expect(biomeAt(62, -48)).toBe('pantano'); // Vau das Palafitas
+    expect(biomeAt(-128, 30)).toBe('bosque_cinza'); // Cinzafolha
+    expect(biomeAt(120, 140)).toBe('picos'); // Abrigo do Degelo
+    // A mancha do Coração é uma região própria ao sul.
+    expect(biomeAt(0, -225)).toBe('coracao');
+    // Determinístico e não puramente radial: dois pontos no mesmo raio podem
+    // diferir de bioma (o mundo deixou de ser concêntrico).
+    expect(biomeAt(0, 0)).toBe(biomeAt(0, 0));
+    const ring = new Set([biomeAt(150, 0), biomeAt(-150, 0), biomeAt(0, 150), biomeAt(0, -150)]);
+    expect(ring.size).toBeGreaterThan(1);
   });
 
   it('constrói, revela fog, gera props/colhíveis e troca de bioma', () => {
@@ -30,8 +39,8 @@ describe('WorldManager', () => {
     for (let i = 0; i < 400; i++) wm.update(0.1);
     expect(wm.props.length).toBeGreaterThan(0);
 
-    // longe -> muda bioma e descarta props distantes
-    g.groupCenter = { x: 0, z: 300 };
+    // longe -> muda bioma e descarta props distantes (mancha do Coração ao sul)
+    g.groupCenter = { x: 0, z: -225 };
     wm.update(0.1);
     expect(wm.currentBiome).toBe('coracao');
   });
