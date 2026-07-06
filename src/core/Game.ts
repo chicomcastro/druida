@@ -57,6 +57,7 @@ import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight,
 import { partyEssence as _partyEssence, spendEssence as _spendEssence, giveItem as _giveItem, rerollShop as _rerollShop, setActiveShop as _setActiveShop } from '../gameplay/economy.js';
 import { useConsumable as _useConsumable, useHotbarSlot as _useHotbarSlot } from '../gameplay/consumables.js';
 import { seedForms } from '../gameplay/hotbar.js';
+import { tickBuffs, buffMul } from '../gameplay/buffs.js';
 import { QuestManager } from '../gameplay/quests.js';
 import { SideQuestManager } from '../gameplay/sidequests.js';
 import { registerBoonHooks } from '../gameplay/boons.js';
@@ -164,6 +165,7 @@ export class Game {
       statusSystem,
       pickupSystem,
       spawnerSystem,
+      (g, dt) => tickBuffs(g, dt), // buffs temporários de comida (ADR 0134)
       (g, dt) => g.worldManager.update(dt),
       (g, dt) => g.lightPool.update(dt), // N luzes mais próximas acesas (ADR 0065)
       (g, dt) => g.dayNight.update(dt),
@@ -246,6 +248,7 @@ export class Game {
     if (pc?.combo) mul *= comboMul(pc.combo); // bônus de combo (ADR 0092)
     mul *= 1 + skillBonus(this, id, 'dmg') / 100; // talentos de dano (ADR 0093)
     if (this.meal && this.meal.expire > 0) mul *= this.meal.mul; // refeição da taverna (ADR 0094)
+    mul *= buffMul(this, 'dmg'); // comida com buff de dano (ADR 0134)
     if (Object.values(this.boons ?? {}).includes('cacada')) mul *= 1.1; // Dom Instinto de Caça (Lobo)
     return mul;
   }

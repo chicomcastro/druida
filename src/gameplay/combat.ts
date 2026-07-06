@@ -3,6 +3,7 @@ import { normalize } from '../utils/math.js';
 import { FORMS } from './forms.js';
 import { sumMod } from './modifiers.js';
 import { equippedItems } from './equip.js';
+import { buffMul } from './buffs.js';
 
 /** Aplica dano a um alvo, tratando invulnerabilidade, status, morte/queda. */
 export function applyDamage(game, targetId, amount, opts: any = {}) {
@@ -20,6 +21,7 @@ export function applyDamage(game, targetId, amount, opts: any = {}) {
   const form = world.get(targetId, C.Form);
   const fdr = form && FORMS[form.current]?.damageReduction;
   if (fdr) amount *= 1 - fdr;
+  if (pc) amount *= buffMul(game, 'taken'); // comida defensiva reduz dano (ADR 0134)
 
   hp.hp -= amount;
   const dtr = world.get(targetId, C.Transform);

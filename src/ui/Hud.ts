@@ -4,6 +4,7 @@ import { xpForLevel } from '../gameplay/progression.js';
 import { isTouchDevice } from './TouchControls.js';
 import { ensureHotbar } from '../gameplay/hotbar.js';
 import { abilityBranch } from '../gameplay/skillTree.js';
+import { activeBuffs } from '../gameplay/buffs.js';
 
 /**
  * HUD em overlay DOM (mais simples e acessível que desenhar no canvas).
@@ -77,6 +78,11 @@ const css = `
 #hud-hotbar .hb .n{position:absolute;bottom:1px;right:3px;font-size:11px;font-weight:800;color:#eaf3e6;text-shadow:0 1px 2px #000;z-index:2}
 #hud-hotbar .hb .cd{position:absolute;inset:0;background:rgba(0,0,0,.62);transform-origin:bottom;transform:scaleY(0);border-radius:7px}
 #hud-root.touch #hud-hotbar{bottom:auto;top:120px;transform:scale(.85);transform-origin:top center}
+/* Buffs ativos (ADR 0134): chips de comida acima da hotbar, com tempo restante. */
+#hud-buffs{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:6}
+#hud-buffs .bf{display:flex;align-items:center;gap:4px;padding:2px 8px 2px 4px;border-radius:20px;background:linear-gradient(160deg,rgba(20,32,18,.92),rgba(8,14,8,.92));border:1px solid rgba(255,255,255,.18);font-size:11px;font-weight:700;text-shadow:0 1px 2px #000;box-shadow:0 3px 10px rgba(0,0,0,.4)}
+#hud-buffs .bf .bi{font-size:16px}
+#hud-buffs .bf .bt{color:#eaf3e6;min-width:20px;text-align:right}
 /* Touch: os slots de artefato do painel duplicam os botões U/I/O na tela —
    esconde e o painel volta a ser compacto (nome + barras). */
 #hud-root.touch .arts{display:none}
@@ -121,6 +127,7 @@ export class Hud {
   dialogueEl: any; victoryEl: any; toastEl: any; saveEl: any;
   panels: Map<number, any>;
   hotbarEl: any; _hotbarKey: string;
+  buffsEl: any; _buffsKey: string;
   comboEl: any; comboFill: any; comboCnt: any; _comboFlash: any;
   _dialogueQueue: string[];
   _dlgT: any; _toastT: any; _saveT: any;
@@ -141,6 +148,7 @@ export class Hud {
       <div id="hud-dialogue"></div>
       <div id="hud-toast"></div>
       <div id="hud-save">💾 Salvo</div>
+      <div id="hud-buffs"></div>
       <div id="hud-hotbar"></div>
       <div id="hud-combo"><div class="track"><div class="zone"></div><div class="fill"></div></div><div class="cnt"></div></div>
       <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
@@ -165,6 +173,8 @@ export class Hud {
     this.toastEl = this.root.querySelector('#hud-toast');
     this.saveEl = this.root.querySelector('#hud-save');
     this.hotbarEl = this.root.querySelector('#hud-hotbar');
+    this.buffsEl = this.root.querySelector('#hud-buffs');
+    this._buffsKey = '';
     this._hotbarKey = '';
     this.comboEl = this.root.querySelector('#hud-combo');
     this.comboFill = this.comboEl.querySelector('.fill');
@@ -274,6 +284,18 @@ export class Hud {
     }
   }
 
+  /** Chips de buff ativo (ADR 0134): ícone + tempo restante (arredondado). */
+  _updateBuffs() {
+    const buffs = activeBuffs(this.game);
+    const sig = buffs.map((b) => `${b.id}:${Math.ceil(b.remaining)}`).join('|');
+    if (sig === this._buffsKey) return;
+    this._buffsKey = sig;
+    this.buffsEl.innerHTML = buffs.map((b) =>
+      `<span class="bf" title="${b.name}" style="border-color:#${(b.color >>> 0).toString(16).padStart(6, '0')}">`
+      + `<span class="bi">${b.icon}</span><span class="bt">${Math.ceil(b.remaining)}s</span></span>`,
+    ).join('');
+  }
+
   /** Barra de combo (ADR 0092): visível só durante a janela do P1. */
   _updateCombo() {
     const { game } = this;
@@ -333,6 +355,7 @@ export class Hud {
     }
 
     this._updateHotbar();
+    this._updateBuffs();
     this._updateCombo();
 
     this.biomeEl.textContent = `${game.currentBiomeName()} ${game.dayNight?.icon?.() ?? ''}`;

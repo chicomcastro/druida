@@ -137,4 +137,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0131](0131-hotbar-unificado-1-9.md) | Hotbar unificado 1–9: formas + skills reatribuíveis (E17.5) | Aceito |
 | [0132](0132-hotbar-livre-entradas-tipadas.md) | Hotbar totalmente livre: entradas tipadas (E18.1) | Aceito |
 | [0133](0133-hotbar-equip-potion-inventario.md) | Hotbar livre: equipar/poção pelo inventário + swap-back (E18.2) | Aceito |
+| [0134](0134-comida-buffs-temporarios.md) | Comida & buffs temporários (E18.3) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

@@ -2,7 +2,7 @@ import { makeRng, weightedPick } from '../utils/math.js';
 import { BALANCE } from '../data/balance.js';
 import type { Item, ItemType, Rarity, RarityDef, EnchantDef, WeaponStyle, ArmorSlot, ArmorSet, WeaponFamily } from '../types.js';
 import { MODIFIERS, rollModifiers } from './modifiers.js';
-import { generateConsumable } from './consumables.js';
+import { generateConsumable, generateFood } from './consumables.js';
 
 /**
  * Sistema de loot/itens inspirado no MC Dungeons: raridades, armas de
@@ -171,6 +171,11 @@ export function rollDrops(lootTable, level: number, rng = Math.random): Item[] {
   // Chance menor de dropar uma poção de cura (ADR 0089).
   if (rng() < (lootTable?.potionChance ?? 0.1)) {
     drops.push(generateConsumable('heal_s', level));
+  }
+  // Chance de dropar comida com buff temporário (ADR 0134, E18.3).
+  if (rng() < (lootTable?.foodChance ?? 0.06)) {
+    const kinds = ['jerky', 'herbtea', 'stew'] as const;
+    drops.push(generateFood(kinds[Math.floor(rng() * kinds.length)], level));
   }
   return drops;
 }
