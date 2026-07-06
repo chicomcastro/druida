@@ -62,6 +62,7 @@ export class SettlementManager {
       game.renderer.add(g);
       for (const v of s.villagers) this._buildVillager(s, v);
       this._ambientVillagers(s); // moradores passivos extras — vida própria (ADR 0121)
+      this._workers(s); // trabalhadores fixos nos postos de trabalho (ADR 0123)
       if (s.merchant) this._buildMerchant(s);
     }
     // Aviso em dev: nenhuma estrutura pode nascer dentro de outra (ADR 0085).
@@ -119,9 +120,11 @@ export class SettlementManager {
       if (playerNear) { vel.vx = 0; vel.vz = 0; continue; }
       if (v.wait > 0) { v.wait -= dt; vel.vx = 0; vel.vz = 0; continue; }
       if (!v.target || Math.hypot(v.target.x - tr.x, v.target.z - tr.z) < 0.4) {
+        // Trabalhadores (raio pequeno) ficam junto ao posto; demais passeiam (ADR 0123).
+        const spread = v.radius ?? 7;
         v.target = {
-          x: v.home.x + (Math.random() - 0.5) * 7,
-          z: v.home.z + (Math.random() - 0.5) * 7,
+          x: v.home.x + (Math.random() - 0.5) * spread,
+          z: v.home.z + (Math.random() - 0.5) * spread,
         };
         v.wait = 1.5 + Math.random() * 3.5;
         continue;
@@ -430,7 +433,7 @@ export class SettlementManager {
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
     game.world.add(id, C.Collider, Collider(0.55, true));
     // Anciãos ficam no posto; os demais passeiam pela vila (ADR 0055).
-    if (!v.elder) this._villagers.push({ id, home: { x: wx, z: wz }, target: null, wait: Math.random() * 2 });
+    if (!v.elder) this._villagers.push({ id, home: { x: wx, z: wz }, target: null, wait: Math.random() * 2, radius: v.radius });
     // Ancião com missão vira quest giver (ADR 0047); demais só conversam.
     if (v.elder && s.quest) {
       game.world.add(id, C.Interactable, {
@@ -463,6 +466,13 @@ export class SettlementManager {
       this._buildVillager(s, { name: names[made % names.length], x, z, lines });
       made++;
     }
+  }
+
+  /** Trabalhador fixo (ADR 0123): morador que fica junto a um posto de trabalho
+   *  (raio de passeio curto), dando a leitura de "vida própria" — o NPC usa o
+   *  objeto de cenário. Coords locais à vila. */
+  _worker(s, x, z, name, lines) {
+    this._buildVillager(s, { name, x, z, lines, radius: 2.2 });
   }
 
   /** Mercador regional da vila: mesmo voxel do hub, estoque da região. */
@@ -780,6 +790,7 @@ export class SettlementManager {
     this._barrel(w, 1.6, 1);
     this._barrel(w, -1.6, -1.2);
     // Lanternas de musgo (verde-água) — a marca da vila.
+    this._fishTable(w, 4, -3); // mesa de limpar peixe (worker em _workers, ADR 0123)
     // Lanternas de musgo com a luz voltada ao centro/passarelas (ADR 0122).
     for (const [x, z] of [[0, -1], [-6, -6], [8, -5], [-4, 6], [8, 7]]) this._lantern(w, x, z, 0x6affc8, 0, 0);
     this._fireLight(w, 0, -1, 0x6affc8, 0.9);
@@ -946,6 +957,7 @@ export class SettlementManager {
     w.fp(-2.45, -6.1, 2, 1.2, 'barris');
     w.fp(4, 6, 1.9, 1.9, 'lenha-norte');
     w.fp(-3, -8, 1.9, 1.9, 'lenha-sul');
+    this._choppingBlock(w, 8, 1); // posto de rachar lenha (worker em _workers, ADR 0123)
     // Ruas de laje: portão sul, portas das cabanas, torre e centro.
     this._streets(w, [
       [0, -14, 0, 7],
@@ -1068,6 +1080,7 @@ export class SettlementManager {
     // Lenha e barris junto à chama azul (ADR 0084).
     this._woodpile(w, -5, -1, Math.PI / 2);
     this._barrel(w, 3, -6);
+    this._furRack(w, 6, 2); // bastidor de curtir peles (worker em _workers, ADR 0123)
     // Trilhas de laje ligando as tendas à chama azul (ADR 0080/0083).
     this._streets(w, [
       [-4, 3, -2, 3], [-2, 3, -2, 0], [3, -3, 2, -3], [2, -3, 2, 0],
@@ -1111,6 +1124,67 @@ export class SettlementManager {
     band2.position.set(x, 0.24, z);
     w.add(b, band, band2);
     w.collider(x, z, 0.45);
+  }
+
+  /** Postos de trabalho (ADR 0123): objeto de cenário que um morador usa. */
+  _choppingBlock(w, x, z) {
+    const block = mesh(new THREE.BoxGeometry(1.0, 0.9, 1.0), 0x6b4a33, { tex: 'log', trx: 1, try: 1 });
+    block.position.set(x, 0.45, z);
+    const cut = mesh(new THREE.BoxGeometry(1.02, 0.12, 1.02), 0x8a6a48, { shadow: false });
+    cut.position.set(x, 0.9, z);
+    const handle = mesh(new THREE.BoxGeometry(0.1, 0.1, 0.9), 0x4a3626, { shadow: false });
+    handle.position.set(x, 1.05, z + 0.35); handle.rotation.x = -0.5;
+    const head = mesh(new THREE.BoxGeometry(0.4, 0.28, 0.12), 0x9a9aa8, { rough: 0.4 });
+    head.position.set(x, 1.3, z + 0.02);
+    w.add(block, cut, handle, head);
+    for (let i = 0; i < 4; i++) {
+      const acha = mesh(new THREE.BoxGeometry(0.5, 0.16, 0.16), 0x7a5a3c, { shadow: false, tex: 'log' });
+      acha.position.set(x + (i % 2 ? 1.0 : -1.0), 0.1 + Math.floor(i / 2) * 0.18, z - 0.6 + (i % 2) * 0.2);
+      w.add(acha);
+    }
+    w.collider(x, z, 0.7);
+    w.fp(x, z, 1.6, 1.6, 'toco de rachar');
+  }
+
+  _fishTable(w, x, z) {
+    for (const px of [-0.7, 0.7]) {
+      const leg = mesh(new THREE.BoxGeometry(0.14, 0.8, 0.14), 0x5a4028, { shadow: false });
+      leg.position.set(x + px, 0.4, z); w.add(leg);
+    }
+    const top = mesh(new THREE.BoxGeometry(2.0, 0.16, 1.0), 0x7a5a3d, { tex: 'planks', trx: 2, try: 1 });
+    top.position.set(x, 0.85, z); w.add(top);
+    for (let i = 0; i < 3; i++) {
+      const fish = mesh(new THREE.BoxGeometry(0.5, 0.12, 0.2), 0x9ab0a0, { shadow: false });
+      fish.position.set(x - 0.5 + i * 0.5, 0.96, z); w.add(fish);
+    }
+    w.collider(x, z, 0.9);
+    w.fp(x, z, 2.2, 1.2, 'mesa de peixe');
+  }
+
+  _furRack(w, x, z) {
+    for (const px of [-1.0, 1.0]) {
+      const post = mesh(new THREE.BoxGeometry(0.16, 1.9, 0.16), 0x6a5a48, { tex: 'log', trx: 1, try: 2 });
+      post.position.set(x + px, 0.95, z); w.add(post);
+    }
+    const bar = mesh(new THREE.BoxGeometry(2.2, 0.14, 0.14), 0x6a5a48, { shadow: false });
+    bar.position.set(x, 1.8, z); w.add(bar);
+    for (const px of [-0.5, 0.5]) {
+      const pelt = mesh(new THREE.BoxGeometry(0.7, 0.9, 0.08), 0xb8a488, { shadow: false, tex: 'cloth' });
+      pelt.position.set(x + px, 1.25, z); w.add(pelt);
+      this._flags.push({ mesh: pelt, base: 0, seed: x + px * 5 });
+    }
+    w.collider(x, z, 0.9);
+    w.fp(x, z, 2.4, 0.9, 'bastidor de peles');
+  }
+
+  /** Trabalhadores fixos por vila, nos postos criados pelos builders (ADR 0123). */
+  _workers(s) {
+    const table = {
+      palafitas: [[4, -1.5, 'Peixeira Vaza', ['Limpo o peixe antes que a seiva o pegue.', 'A lagoa ainda dá o que comer.']]],
+      lenhadores: [[8, 2.4, 'Rachador Lasca', ['Rachar lenha aquece duas vezes.', 'A praga não gosta de fogo.']]],
+      degelo: [[6, 3.4, 'Curtidora Pele', ['Curto as peles antes que o gelo as tome.', 'O frio conserva tudo, forasteiro.']]],
+    };
+    for (const [x, z, name, lines] of (table[s.theme] ?? [])) this._worker(s, x, z, name, lines);
   }
 
   /** Pilha de lenha: duas toras embaixo, uma em cima. Sólida (ADR 0113). */
