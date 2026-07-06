@@ -224,5 +224,7 @@ export interface SaveV1 {
   sideQuests?: { states: Record<string, { status: string; step: number }>; visited: string[]; forms: string[] } | null;
   /** Dons dos santuários (ADR 0050): form -> boonId. Opcional. */
   boons?: Record<string, string>;
+  /** Reputação por vila (ADR 0108): settlementId -> pontos. Opcional. */
+  reputation?: Record<string, number>;
   players: PlayerSnapshot[];
 }

@@ -52,6 +52,7 @@ export function serialize(game): SaveV1 {
     quests: game.quests?.serialize() ?? {},
     sideQuests: game.sideQuests?.serialize() ?? null,
     boons: game.boons ?? {},
+    reputation: game.reputation ?? {},
     players,
   };
 }
@@ -72,6 +73,7 @@ export function apply(game, data: SaveV1 | null | undefined): boolean {
   if (data.quests && game.quests) game.quests.restore(data.quests);
   if (data.sideQuests && game.sideQuests) game.sideQuests.restore(data.sideQuests);
   if (data.boons) game.boons = { ...data.boons }; // antes do loop de players: applyEquipment lê os dons
+  if (data.reputation) game.reputation = { ...data.reputation }; // reputação por vila (ADR 0108)
   if (data.checkpoint) game.checkpoint = { ...data.checkpoint };
   // Reposiciona o grupo onde o save foi gravado (espalhado ao redor do centro).
   if (data.groupCenter) {

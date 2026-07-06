@@ -259,6 +259,7 @@ describe('Save/Load', () => {
   it('serializa e restaura progresso, história e jogador', () => {
     const { game, world, pid } = saveGame();
     game.equip(pid, { type: 'weapon', name: 'Cajado Teste', element: 'fire', damage: 14, rarity: 'rare', enchants: [] });
+    game.reputation = { vau_palafitas: 3 }; // reputação por vila (ADR 0108)
     const data = JSON.parse(JSON.stringify(serialize(game)));
 
     // "Novo" jogo, depois aplica o save.
@@ -280,6 +281,7 @@ describe('Save/Load', () => {
     expect(fresh.game.sharedChest).toHaveLength(1);
     expect(fresh.game.sharedChest[0].name).toBe('Manto Guardado');
     expect(fresh.game.lore.found.has('l3')).toBe(true);
+    expect(fresh.game.reputation.vau_palafitas).toBe(3);
     expect(fresh.world.get(fresh.pid, C.Loadout).weapon.name).toBe('Cajado Teste');
     expect(fresh.game.worldManager.explored.has('1,-5')).toBe(true);
   });
