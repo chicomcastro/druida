@@ -130,4 +130,6 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0124](0124-arvore-de-skills-ativas.md) | Árvore de skills ativas (fundação do E17) | Aceito |
 | [0125](0125-ui-arvore-skills-ativas.md) | UI da árvore de skills ativas (E17.2) | Aceito |
 | [0126](0126-hotbar-modelo.md) | Hotbar 1–9: modelo de dados (E17.3a) | Aceito |
+| [0127](0127-fix-vau-portas-lanternas-cinza-degelo.md) | Fix: portas do Vau + lanternas do Vau/Cinza/Degelo | Aceito |
+| [0128](0128-validador-postes-nas-ruas.md) | Validador: poste não pode ficar sobre a laje da rua | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
