@@ -111,6 +111,27 @@ describe('InteriorManager — entrar/sair', () => {
     im.enter('tavern');
     expect(g.world.get(im.active.npcId, C.Interactable).kind).toBe('tavern');
   });
+
+  it('taverna e salão comunal têm caldeirão (kitchen); loja não (E19.6)', () => {
+    const g = makeGame();
+    const im = new InteriorManager(g);
+    addPlayer(g, 0);
+    // Taverna cozinha
+    im.enter('tavern');
+    expect(im.active.kitchenId).not.toBe(null);
+    expect(g.world.get(im.active.kitchenId, C.Interactable).kind).toBe('kitchen');
+    const kid = im.active.kitchenId;
+    im.exit();
+    g.world.flushDestroyed();
+    expect(g.world.entities.has(kid)).toBe(false); // some ao sair
+    // Salão comunal cozinha
+    im.enter('hall');
+    expect(g.world.get(im.active.kitchenId, C.Interactable).kind).toBe('kitchen');
+    im.exit();
+    // Loja não tem caldeirão
+    im.enter('weapons');
+    expect(im.active.kitchenId).toBe(null);
+  });
 });
 
 describe('InteriorManager — taverna (descanso + refeição)', () => {

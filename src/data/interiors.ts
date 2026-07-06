@@ -16,6 +16,8 @@ export interface InteriorTheme {
   /** Papel/assinatura curta para o prompt da porta. */
   role: string;
   service: InteriorService;
+  /** Estação de cozinha (caldeirão + interativo 'kitchen') dentro da sala. */
+  kitchen?: boolean;
   /** Viés do estoque das lojas (armeiro só vende armas etc.). */
   shopBias?: 'weapon' | 'armor' | null;
   /** Família à qual o NPC pertence (rixa — ADR 0095). */
@@ -64,7 +66,7 @@ export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
   },
   tavern: {
     id: 'tavern', name: '🍲 Taverna do Carvalho', npc: 'Vesna, a Taverneira', role: 'taverna',
-    service: 'rest',
+    service: 'rest', kitchen: true,
     floor: 0x3a2c1e, wall: 0x5a4230, accent: 0xffb46a, robe: 0xb8863f, trim: 0x5a4633,
     lines: ['Senta, viajante. Um caldo quente e uma cama fazem milagres.'],
   },
@@ -80,7 +82,7 @@ export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
   },
   hall: {
     id: 'hall', name: '🔥 Salão Comunal', npc: 'Tovar, o Cronista', role: 'salão comunal',
-    service: 'talk', loreId: 'l14',
+    service: 'talk', kitchen: true, loreId: 'l14',
     floor: 0x342a1e, wall: 0x4a3a28, accent: 0xffd27a, robe: 0x6b4a2f, trim: 0x8a6b3a,
     lines: [
       'Aqui a vila se reúne — e discute. Sente-se junto ao fogo.',
