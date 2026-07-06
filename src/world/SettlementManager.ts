@@ -68,7 +68,8 @@ export class SettlementManager {
       this._ambientVillagers(s); // moradores passivos extras — vida própria (ADR 0121)
       this._workers(s); // trabalhadores fixos nos postos de trabalho (ADR 0123)
       if (s.merchant) this._buildMerchant(s);
-      this._buildKitchen(s); // caldeirão de cozinha (E19.2)
+      // Cozinhar deixou de ficar exposto na praça (E19.6): o caldeirão agora
+      // vive dentro da taverna e do salão comunal (ver InteriorManager).
     }
     // Aviso em dev: nenhuma estrutura pode nascer dentro de outra (ADR 0085).
     for (const o of this.overlaps()) {
@@ -527,41 +528,6 @@ export class SettlementManager {
     game.world.add(id, C.Interactable, {
       kind: 'merchant', shopId: s.id, prompt: 'E — Mercador', range: 3.5, used: false,
     });
-  }
-
-  /** Caldeirão de cozinha (E19.2): estação interativa 'kitchen' na praça. */
-  _buildKitchen(s) {
-    const game = this.game;
-    const mx = s.merchant ? s.x + s.merchant.x : s.x;
-    const mz = s.merchant ? s.z + s.merchant.z : s.z + 4;
-    const wx = alignAxis(mx + 3.5, 2), wz = alignAxis(mz, 2);
-    const g = this._cauldronMesh();
-    g.position.set(wx, 0, wz);
-    game.renderer.add(g);
-    this._collider(wx, wz, 0.85); // sólido, mas sem footprint (prop pequeno, como as lanternas)
-    const id = game.world.createEntity();
-    game.world.add(id, C.Transform, Transform(wx, wz));
-    game.world.add(id, C.Interactable, { kind: 'kitchen', prompt: '🍲 E — Cozinhar', range: 3, used: false });
-  }
-
-  /** Malha voxel simples de um caldeirão fumegante. */
-  _cauldronMesh() {
-    const g = new THREE.Group();
-    const box = (w, h, d, color, y, opts: any = {}) => {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
-        new THREE.MeshLambertMaterial({ color, ...opts }));
-      m.position.y = y; g.add(m); return m;
-    };
-    box(1.4, 0.4, 1.4, 0x6b6b73, 0.2); // base de pedra
-    box(0.5, 0.7, 0.5, 0x2a2a30, 0.55); // tripé/haste
-    box(1.15, 0.7, 1.15, 0x33333a, 1.05); // panela de ferro
-    box(1.25, 0.16, 1.25, 0x22222a, 1.42); // borda
-    box(1.0, 0.12, 1.0, 0xff8a3a, 1.46, { emissive: 0xff6a2a, emissiveIntensity: 0.8 }); // sopa borbulhante
-    // Vapor: caixinhas translúcidas subindo.
-    for (let i = 0; i < 3; i++) {
-      box(0.22, 0.22, 0.22, 0xffffff, 1.9 + i * 0.4, { transparent: true, opacity: 0.28 - i * 0.07 });
-    }
-    return g;
   }
 
   // --- Temas ----------------------------------------------------------------

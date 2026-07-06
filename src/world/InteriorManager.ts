@@ -119,6 +119,7 @@ export class InteriorManager {
     this._teleport(ROOM.x, ROOM.z - ROOM_R + 3);
     this.active.npcId = this._spawnNpc(theme);
     this.active.props = this._buildProps(theme); // móveis temáticos (ADR 0104)
+    this.active.kitchenId = theme.kitchen ? this._buildKitchen() : null; // caldeirão (E19.6)
     this.game.renderer.setBiomeMood?.(INDOOR_MOOD); // sela a sala (fundo escuro)
     this.game.emit('objective', { text: `${theme.name} — ${label ?? theme.role}` });
     this.game.emit('interiorEntered', { themeId: theme.id });
@@ -166,6 +167,47 @@ export class InteriorManager {
       box(0.9, 1.8, 0.08, 0, 3.3, -ROOM_R + 0.5, acc, acc); // estandarte na parede do fundo
     }
     this.game.renderer.add(g);
+    return g;
+  }
+
+  /**
+   * Estação de cozinha dentro do interior (E19.6): um caldeirão fumegante num
+   * canto da sala com o interativo 'kitchen'. Cozinhar deixa de ficar exposto
+   * na praça — passa a acontecer na taverna e no salão comunal. A entidade é
+   * destruída na saída (como o NPC e os móveis).
+   */
+  _buildKitchen() {
+    const { game } = this;
+    // Canto dos fundos à esquerda (a lareira da taverna ocupa o canto direito).
+    const kx = ROOM.x - ROOM_R + 2.4, kz = ROOM.z - ROOM_R + 2.4;
+    const g = this._cauldronMesh();
+    g.position.set(kx, 0, kz);
+    game.renderer.add(g);
+    game.lightPool?.register(kx, 1.6, kz, 0xff7a2a, 20, 0.5);
+    const id = game.world.createEntity();
+    game.world.add(id, C.Transform, Transform(kx, kz));
+    game.world.add(id, C.Collider, Collider(0.85, true));
+    game.world.add(id, C.Interactable, { kind: 'kitchen', prompt: '🍲 E — Cozinhar', range: 3, used: false });
+    this.active.kitchenMesh = g;
+    return id;
+  }
+
+  /** Malha voxel de um caldeirão fumegante (relativa à origem do grupo). */
+  _cauldronMesh() {
+    const g = new THREE.Group();
+    const box = (w, h, d, color, y, opts: any = {}) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
+        new THREE.MeshStandardMaterial({ color, roughness: 0.9, ...opts }));
+      m.position.y = y; g.add(m); return m;
+    };
+    box(1.4, 0.4, 1.4, 0x6b6b73, 0.2); // base de pedra
+    box(0.5, 0.7, 0.5, 0x2a2a30, 0.55); // tripé/haste
+    box(1.15, 0.7, 1.15, 0x33333a, 1.05); // panela de ferro
+    box(1.25, 0.16, 1.25, 0x22222a, 1.42); // borda
+    box(1.0, 0.12, 1.0, 0xff8a3a, 1.46, { emissive: 0xff6a2a, emissiveIntensity: 0.8 }); // sopa
+    for (let i = 0; i < 3; i++) {
+      box(0.22, 0.22, 0.22, 0xffffff, 1.9 + i * 0.4, { transparent: true, opacity: 0.28 - i * 0.07 });
+    }
     return g;
   }
 
@@ -218,6 +260,8 @@ export class InteriorManager {
     const a = this.active;
     if (!a) return;
     if (a.npcId != null && this.game.world.entities.has(a.npcId)) this.game.world.destroyEntity(a.npcId);
+    if (a.kitchenId != null && this.game.world.entities.has(a.kitchenId)) this.game.world.destroyEntity(a.kitchenId);
+    if (a.kitchenMesh) this.game.renderer.remove?.(a.kitchenMesh); // remove o caldeirão (E19.6)
     if (a.props) this.game.renderer.remove?.(a.props); // remove os móveis (ADR 0104)
     this._teleport(a.returnPos.x, a.returnPos.z);
     this.game.inDungeon = false;

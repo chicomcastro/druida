@@ -143,4 +143,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0137](0137-forrageamento.md) | Forrageamento: nós de coleta no mundo (E19.3) | Aceito |
 | [0138](0138-mercador-ingredientes-comida.md) | Mercador: ingredientes & comida (E19.4) | Aceito |
 | [0139](0139-loja-icone-comida-vender-ingredientes.md) | Loja: ícone de comida + venda de ingredientes (E19.5) | Aceito |
+| [0140](0140-salao-comunal-cozinha-interior.md) | Salão Comunal: cozinha nos interiores (E19.6) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
