@@ -500,7 +500,6 @@ export class SettlementManager {
     // Os postes ficam no FIM do espigão (na via em anel), longe das casas e
     // espaçados — não mais ao lado das portas (ADR 0120).
     const spurs: number[][] = [];
-    const ringEnds: number[][] = []; // [rx, rz, doorX, doorZ] — fim de cada espigão
     huts.forEach(([x, z, o], i) => {
       const ry = snap90(Math.atan2(-x, -z)); // porta olha o centro, no grid voxel
       const hg = this._house(w, x, z, ry, {
@@ -523,8 +522,6 @@ export class SettlementManager {
       const rx = Math.abs(dx) > RING ? Math.sign(dx) * RING : dx;
       const rz = Math.abs(dz) > RING ? Math.sign(dz) * RING : dz;
       spurs.push([dx, dz, rx, dz], [rx, dz, rx, rz]);
-      // Fim do espigão (onde encontra a via em anel): candidato a poste (ADR 0120).
-      ringEnds.push([rx, rz, dx, dz]);
       if (i % 2 === 0) {
         const c = this._spun(hg.position.x, hg.position.z, ry, (o.w ?? 6) / 2 - 0.55, -1.0);
         this._smokeAt(w, c.x, 0.35 + (o.h ?? 3.0) + 2.3, c.z); // topo da chaminé
@@ -582,21 +579,16 @@ export class SettlementManager {
       w.add(menhir);
       w.collider(mx, -24, 0.8);
     }
-    // Lanternas nas ARTÉRIAS, no FIM de cada espigão (junto à via em anel), longe
-    // das casas e sem aglomerar (ADR 0120): o poste é empurrado ~1.3u para FORA
-    // do anel (flanqueia o caminho, sem bloqueá-lo), deduplica a <4u e a luz
-    // aponta para a casa que aquele espigão serve. [x, z, faceX, faceZ].
-    const lampSpots: number[][] = [];
-    for (const [rx, rz, dxx, dzz] of ringEnds) {
-      const len = Math.hypot(rx, rz) || 1;
-      const px = rx + (rx / len) * 1.3, pz = rz + (rz / len) * 1.3; // fora do anel
-      if (lampSpots.some(([lx, lz]) => Math.hypot(lx - px, lz - pz) < 4)) continue; // não aglomera
-      lampSpots.push([px, pz, dxx, dzz]); // luz sobe o espigão até a porta
-    }
-    // Acentos nas demais artérias, flanqueando (não bloqueando) e longe das casas.
-    lampSpots.push([2.2, -15, 0, -24]);   // flanco do corredor sul, luz p/ o portão
-    lampSpots.push([-2.2, -20.5, 0, -24]); // portão sul
-    lampSpots.push([14.5, 13, 12, 15]);   // fim do espigão do mercado, luz p/ a banca
+    // Lanternas LADEANDO os caminhos (ADR 0120): cada poste fica no tile ao lado
+    // da rua (~1.3u fora da via, nunca sobre ela) e a luz aponta para a rua mais
+    // próxima. Postes ladeiam a via em anel (2 por lado), o corredor sul e o
+    // espigão do mercado — espaçados, longe das casas. [x, z, faceX, faceZ].
+    const lampSpots = [
+      [8.3, 4, 7, 4], [8.3, -4, 7, -4], [-8.3, 4, -7, 4], [-8.3, -4, -7, -4],   // lados L/O do anel
+      [4, 8.3, 4, 7], [-4, 8.3, -4, 7], [4, -8.3, 4, -7], [-4, -8.3, -4, -7],   // lados S/N do anel
+      [1.7, -12, 0, -12], [1.7, -19, 0, -19],                                   // corredor sul
+      [13.7, 11, 12, 11],                                                       // espigão do mercado
+    ];
     for (const [x, z, fx, fz] of lampSpots) this._lantern(w, x, z, 0xd8ffa0, fx, fz);
   }
 
