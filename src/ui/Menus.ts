@@ -11,7 +11,7 @@ import { SKILL_TREES, canLearn, learn, respec, nodeText, ensureSkillState } from
 import { ACTIVE_SKILL_TREE, canUnlock, unlock, isUnlocked, respecActive, ensureActiveSkills } from '../gameplay/skillTree.js';
 import { ensureHotbar, assignSkill, assignForm, assignPotion, assignEquip, clearSlot, autoFillHotbar, sameEntry, pruneHotbar } from '../gameplay/hotbar.js';
 import { RECIPES, canCook, cook, craftLevel, ensureCraft, craftXpForLevel } from '../gameplay/recipes.js';
-import { INGREDIENTS, ingredientCount, pouchList } from '../gameplay/ingredients.js';
+import { INGREDIENTS, ingredientCount, pouchList, addIngredient } from '../gameplay/ingredients.js';
 import { FOOD_BASES } from '../gameplay/consumables.js';
 
 /**
@@ -736,8 +736,13 @@ export class Menus {
     const essence = this.game.partyEssence();
     const pid = this._playerId();
     const loadout = pid != null ? this.game.world.get(pid, C.Loadout) : null;
-    const slots = this.game.shopStock.map((s, i) =>
-      this._gslot(s.item, { data: `data-buy="${i}"`, price: s.price })).join('');
+    const slots = this.game.shopStock.map((s, i) => {
+      if (s.ingredient) {
+        // Oferta de ingrediente (E19.4): slot com emoji + preço.
+        return `<div class="gslot" data-buy="${i}" title="${s.name}"><span style="font-size:26px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${s.icon}</span><span class="price">${s.price}✦</span></div>`;
+      }
+      return this._gslot(s.item, { data: `data-buy="${i}"`, price: s.price });
+    }).join('');
     this.shop.innerHTML = `<div class="panel">
       <span class="close" id="sh-close">✕ (E/Esc)</span>
       <h2>🪙 Mercador</h2>
@@ -763,6 +768,14 @@ export class Menus {
   _buy(i) {
     const s = this.game.shopStock[i];
     if (!s || !this.game.spendEssence(s.price)) return;
+    if (s.ingredient) {
+      // Ingrediente (E19.4): vai para a despensa. Reabastece (não some da loja).
+      addIngredient(this.game, s.ingredient, 1);
+      this.game.emit('purchase', { price: s.price });
+      this.game.emit('objective', { text: `${s.icon} +1 ${s.name} (despensa)` });
+      this.refreshShop();
+      return;
+    }
     this.game.giveItem(s.item);
     this.game.emit('purchase', { price: s.price, item: s.item }); // telemetria (ADR 0102)
     this.game.shopStock.splice(i, 1);

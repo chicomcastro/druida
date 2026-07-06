@@ -49,8 +49,9 @@ describe('Reputação por vila (ADR 0108)', () => {
   });
 
   it('rerollShop aplica o desconto da vila (preço das poções é determinístico)', () => {
-    // As duas últimas entradas do estoque são poções de preço fixo por nível.
-    const potionPrices = (g) => g.rerollShop().slice(-2).map((e) => e.price);
+    // As poções são as entradas 5 e 6 (após os 5 equipamentos), preço fixo por
+    // nível — ingredientes/comida vêm depois (E19.4), então fixamos os índices.
+    const potionPrices = (g) => g.rerollShop().slice(5, 7).map((e) => e.price);
 
     const base = makeGame();
     base.progress.level = 3;

@@ -1,6 +1,7 @@
 import { C } from '../core/ecs/components.js';
 import { generateItem } from './loot.js';
-import { generateConsumable } from './consumables.js';
+import { generateConsumable, generateFood, FOOD_BASES } from './consumables.js';
+import { INGREDIENTS } from './ingredients.js';
 import { repDiscount, shopSettlement } from './reputation.js';
 
 /**
@@ -59,6 +60,15 @@ export function rerollShop(game) {
   }
   game.shopStock.push({ item: generateConsumable('heal_s', lvl), price: tag(8 * (1 + (lvl - 1) * 0.1)) });
   game.shopStock.push({ item: generateConsumable('heal_l', lvl), price: tag(18 * (1 + (lvl - 1) * 0.1)) });
+  // Culinária (E19.4): o mercador vende ingredientes e uma comida pronta.
+  const ingIds = Object.keys(INGREDIENTS);
+  for (let i = 0; i < 3; i++) {
+    const def = INGREDIENTS[ingIds[Math.floor(Math.random() * ingIds.length)]];
+    game.shopStock.push({ ingredient: def.id, name: def.name, icon: def.icon, price: tag(3) });
+  }
+  const foodKinds = Object.keys(FOOD_BASES);
+  const fk = foodKinds[Math.floor(Math.random() * foodKinds.length)] as keyof typeof FOOD_BASES;
+  game.shopStock.push({ item: generateFood(fk, lvl), price: tag(12 * (1 + (lvl - 1) * 0.1)) });
   if (game._shopStocks) game._shopStocks[game.activeShopKey ?? 'hub'] = game.shopStock;
   return game.shopStock;
 }

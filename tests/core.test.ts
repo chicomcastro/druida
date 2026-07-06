@@ -441,11 +441,14 @@ describe('Economia (essência + mercador)', () => {
     expect(world.get(p1![0], C.Inventory).items).toContain(item);
   });
 
-  it('rerollShop gera 7 itens com preço', () => {
+  it('rerollShop gera estoque com preço (equip + poções + ingredientes + comida)', () => {
     const { game } = makeGame([0]);
     const stock = rerollShop(game);
-    expect(stock).toHaveLength(7); // 5 equipamentos + 2 poções (ADR 0104)
-    expect(stock.every((s: any) => s.item && s.price > 0)).toBe(true);
+    // 5 equipamentos + 2 poções + 3 ingredientes + 1 comida (ADR 0104/0138).
+    expect(stock).toHaveLength(11);
+    expect(stock.every((s: any) => s.price > 0)).toBe(true);
+    expect(stock.every((s: any) => s.item || s.ingredient)).toBe(true); // item OU ingrediente
+    expect(stock.some((s: any) => s.ingredient)).toBe(true);
     expect(game.shopStock).toBe(stock);
   });
 });
