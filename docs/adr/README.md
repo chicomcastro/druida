@@ -128,4 +128,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0122](0122-lanternas-vilas-2-4-luz-ao-centro.md) | Lanternas das vilas 2–4 com luz voltada ao centro | Aceito |
 | [0123](0123-postos-de-trabalho-vilas.md) | Postos de trabalho com trabalhador nas vilas 2–4 | Aceito |
 | [0124](0124-arvore-de-skills-ativas.md) | Árvore de skills ativas (fundação do E17) | Aceito |
+| [0125](0125-ui-arvore-skills-ativas.md) | UI da árvore de skills ativas (E17.2) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

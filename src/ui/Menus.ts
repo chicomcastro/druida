@@ -8,6 +8,7 @@ import { saveToStorage, hasSave } from '../gameplay/save.js';
 import { BOONS, chooseBoon } from '../gameplay/boons.js';
 import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
 import { SKILL_TREES, canLearn, learn, respec, nodeText, ensureSkillState } from '../gameplay/skills.js';
+import { ACTIVE_SKILL_TREE, canUnlock, unlock, isUnlocked, respecActive, ensureActiveSkills } from '../gameplay/skillTree.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -92,6 +93,9 @@ const RCOLOR = { common: '#d6d6d6', rare: '#5aa0ff', unique: '#ffc83a' };
 const SK_TRACK_NAME = { axe: 'Machado', scythe: 'Foice', claws: 'Garras', staff: 'Cajado', wolf: 'Lobo', bear: 'Urso', raven: 'Corvo', frog: 'Sapo' };
 const SK_TRACK_ICON = { axe: '🪓', scythe: '🌾', claws: '🐾', staff: '🪄', wolf: '🐺', bear: '🐻', raven: '🦅', frog: '🐸' };
 const SK_ICON = { dmg: '⚔️', atkSpeed: '⚡', combo: '🎯', range: '↔️', formDur: '⏳', dr: '🛡️' };
+// Ramos da árvore de skills ATIVAS (E17, ADR 0124).
+const SK_BRANCH_NAME = { natureza: 'Natureza', chama: 'Chama', gelo: 'Gelo', tempestade: 'Tempestade', feras: 'Feras', vida: 'Vida' };
+const SK_BRANCH_ICON = { natureza: '🌿', chama: '🔥', gelo: '❄️', tempestade: '🌩️', feras: '🐺', vida: '💚' };
 const ALL_NODE_NAME: Record<string, string> = {};
 for (const nodes of Object.values(SKILL_TREES)) for (const n of nodes) ALL_NODE_NAME[n.id] = n.name;
 
@@ -327,18 +331,46 @@ export class Menus {
       </div>`;
     }).join('');
 
+    // Árvore de SKILLS ATIVAS (E17, ADR 0124): cada nó libera uma habilidade.
+    ensureActiveSkills(this.game);
+    const branches = Object.entries(ACTIVE_SKILL_TREE).map(([branch, nodes]) => {
+      const rows = (nodes as any[]).map((node) => {
+        const has = isUnlocked(this.game, node.id);
+        const unlockable = canUnlock(this.game, node.id);
+        const reqLocked = node.req && !isUnlocked(this.game, node.req);
+        return `<div class="sk-node${reqLocked && !has ? ' locked' : ''}">
+          <span class="ico">${SK_BRANCH_ICON[branch] ?? '✦'}</span>
+          <div class="body">
+            <div class="nm">${node.name} ${has ? '<span class="lv">✓ liberada</span>' : `<span class="lv">${node.cost}★</span>`}</div>
+            <div class="ds">${node.desc}${reqLocked && !has ? ` · requer ${nodes.find((n: any) => n.id === node.req)?.name ?? ''}` : ''}</div>
+          </div>
+          <button class="buy" data-skill="${node.id}" ${has ? 'disabled title="Já liberada"' : (unlockable ? 'title="Liberar habilidade"' : 'disabled')}>${has ? '✓' : '+'}</button>
+        </div>`;
+      }).join('');
+      return `<div class="sk-track"><h3>${SK_BRANCH_ICON[branch] ?? '✦'} ${SK_BRANCH_NAME[branch] ?? branch}</h3>${rows}</div>`;
+    }).join('');
+
     this.skills.innerHTML = `<div class="panel" style="min-width:min(760px,92vw)">
       <span class="close" id="sk-close">✕ (K)</span>
       <h2>🌟 Talentos</h2>
       <p class="sub">Pontos disponíveis: <b>${pr.skillPoints ?? 0}</b> · trilhas destacadas seguem sua arma/forma ativa. Especialize usando cada arma e forma.</p>
+      <h3 style="margin:6px 0 4px;color:#9fe06a">✦ Habilidades ativas</h3>
+      <p class="sub">Libere magias para atribuir à hotbar (1–9). Cada ramo tem seu efeito visual.</p>
+      <div class="sk-tracks">${branches}</div>
+      <button class="btn" id="sk-respec-active" style="text-align:center;margin:8px 0 16px">↺ Redistribuir habilidades (grátis)</button>
+      <h3 style="margin:6px 0 4px;color:#ffd56a">⚔️ Passivas por arma/forma</h3>
       <div class="sk-tracks">${tracks}</div>
-      <button class="btn" id="sk-respec" style="text-align:center;margin-top:14px">↺ Redistribuir tudo (grátis)</button>
+      <button class="btn" id="sk-respec" style="text-align:center;margin-top:14px">↺ Redistribuir passivas (grátis)</button>
     </div>`;
 
     this.skills.querySelector('#sk-close').onclick = () => this.toggleSkills();
     this.skills.querySelector('#sk-respec').onclick = () => { respec(this.game); this.refreshSkills(); };
+    this.skills.querySelector('#sk-respec-active').onclick = () => { respecActive(this.game); this.refreshSkills(); };
     this.skills.querySelectorAll('.buy[data-node]').forEach((el: any) => {
       el.onclick = () => { if (learn(this.game, el.dataset.node)) this.refreshSkills(); };
+    });
+    this.skills.querySelectorAll('.buy[data-skill]').forEach((el: any) => {
+      el.onclick = () => { if (unlock(this.game, el.dataset.skill)) this.refreshSkills(); };
     });
   }
 
