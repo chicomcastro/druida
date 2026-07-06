@@ -120,6 +120,8 @@ export class InteriorManager {
     this.active.npcId = this._spawnNpc(theme);
     this.active.props = this._buildProps(theme); // móveis temáticos (ADR 0104)
     this.active.kitchenId = theme.kitchen ? this._buildKitchen() : null; // caldeirão (E19.6)
+    // Cozinheiro na taverna (E21.2): um 2º NPC que vende comida pronta e ingredientes.
+    this.active.cookId = theme.service === 'rest' ? this._spawnCook() : null;
     this.game.renderer.setBiomeMood?.(INDOOR_MOOD); // sela a sala (fundo escuro)
     this.game.emit('objective', { text: `${theme.name} — ${label ?? theme.role}` });
     this.game.emit('interiorEntered', { themeId: theme.id });
@@ -227,6 +229,8 @@ export class InteriorManager {
       const shopId = 'interior:' + theme.id;
       game._interiorBias = game._interiorBias ?? {};
       game._interiorBias[shopId] = theme.shopBias ?? null;
+      game._interiorKind = game._interiorKind ?? {};
+      game._interiorKind[shopId] = theme.shopKind ?? null; // categoria de estoque (E21.2/E21.3)
       inter = { kind: 'merchant', shopId, prompt: `E — ${theme.npc}`, range: 3, used: false, lines: theme.lines };
     } else if (theme.service === 'rest') {
       inter = { kind: 'tavern', prompt: `E — ${theme.npc}`, range: 3, used: false, lines: theme.lines };
@@ -238,6 +242,34 @@ export class InteriorManager {
     inter.loreId = theme.loreId;
     inter.npc = theme.id; // chave p/ triggers de side quest (ADR 0096)
     game.world.add(id, C.Interactable, inter);
+    return id;
+  }
+
+  /**
+   * Cozinheiro da taverna (E21.2): vive na taverna e vende comida pronta e
+   * ingredientes (categoria de loja 'food'). Fica ao lado da taverneira, à
+   * direita da sala; destruído na saída.
+   */
+  _spawnCook() {
+    const { game } = this;
+    const g = buildVoxelGroup(makeVillagerSpec({ robe: 0xb85a3a, trim: 0xe8d8b0 }));
+    const nx = ROOM.x + 3.4, nz = ROOM.z - ROOM_R + 6;
+    g.position.set(nx, 0, nz);
+    game.renderer.add(g);
+    const id = game.world.createEntity();
+    game.world.add(id, C.Transform, Transform(nx, nz, Math.PI));
+    game.world.add(id, C.Velocity, Velocity(0, 0, 1));
+    game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
+    game.world.add(id, C.Collider, Collider(0.55, true));
+    const shopId = 'interior:cook';
+    game._interiorKind = game._interiorKind ?? {};
+    game._interiorKind[shopId] = 'food';
+    game._interiorBias = game._interiorBias ?? {};
+    game._interiorBias[shopId] = null;
+    game.world.add(id, C.Interactable, {
+      kind: 'merchant', shopId, prompt: '🍲 E — Cozinheiro', range: 3, used: false,
+      lines: ['Caldo quente e um farnel pra estrada? Tenho do bom.'],
+    });
     return id;
   }
 
@@ -260,6 +292,7 @@ export class InteriorManager {
     const a = this.active;
     if (!a) return;
     if (a.npcId != null && this.game.world.entities.has(a.npcId)) this.game.world.destroyEntity(a.npcId);
+    if (a.cookId != null && this.game.world.entities.has(a.cookId)) this.game.world.destroyEntity(a.cookId); // cozinheiro (E21.2)
     if (a.kitchenId != null && this.game.world.entities.has(a.kitchenId)) this.game.world.destroyEntity(a.kitchenId);
     if (a.kitchenMesh) this.game.renderer.remove?.(a.kitchenMesh); // remove o caldeirão (E19.6)
     if (a.props) this.game.renderer.remove?.(a.props); // remove os móveis (ADR 0104)

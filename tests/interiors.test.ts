@@ -4,7 +4,7 @@ import { C } from '../src/core/ecs/components.js';
 import { SettlementManager } from '../src/world/SettlementManager.js';
 import { InteriorManager } from '../src/world/InteriorManager.js';
 import { interactionSystem } from '../src/systems/interaction.js';
-import { rerollShop } from '../src/gameplay/economy.js';
+import { rerollShop, shopCategory } from '../src/gameplay/economy.js';
 import { INTERIOR_THEMES, interiorTheme, TAVERN } from '../src/data/interiors.js';
 
 describe('Interiores — dados (ADR 0094)', () => {
@@ -186,6 +186,54 @@ describe('Loja com viés de estoque (ADR 0094)', () => {
     g.activeShopKey = 'hub';
     rerollShop(g);
     expect(g.shopStock.length).toBe(13); // 5 equip + 2 poções + 3 ingredientes + 1 comida + 2 sementes (ADR 0104/0138/0143)
+  });
+
+  it('mercadores especializados vendem só sua categoria (E21.2)', () => {
+    const g = makeGame();
+    // Armeiro: só equipamento (+ poção), nada de ingrediente/semente/comida.
+    g._interiorBias = { 'interior:weapons': 'weapon' };
+    g.activeShopKey = 'interior:weapons';
+    expect(shopCategory(g)).toBe('weapon');
+    rerollShop(g);
+    expect(g.shopStock.some((s) => s.ingredient || s.seed)).toBe(false);
+    expect(g.shopStock.filter((s) => s.item?.type === 'weapon').length).toBe(5);
+    // Cozinheiro: comida + ingredientes (+ poção), sem equipamento nem semente.
+    g._interiorKind = { 'interior:cook': 'food' };
+    g.activeShopKey = 'interior:cook';
+    expect(shopCategory(g)).toBe('food');
+    rerollShop(g);
+    expect(g.shopStock.some((s) => s.seed)).toBe(false);
+    expect(g.shopStock.some((s) => s.ingredient)).toBe(true);
+    expect(g.shopStock.some((s) => s.item?.effect === 'buff')).toBe(true); // comida
+    expect(g.shopStock.some((s) => s.item?.type === 'weapon' || s.item?.type === 'armor')).toBe(false);
+    // Jardineiro: só sementes (+ ingredientes forrageáveis).
+    g._interiorKind = { 'interior:garden': 'garden' };
+    g.activeShopKey = 'interior:garden';
+    expect(shopCategory(g)).toBe('garden');
+    rerollShop(g);
+    expect(g.shopStock.some((s) => s.seed)).toBe(true);
+    expect(g.shopStock.some((s) => s.item)).toBe(false);
+  });
+});
+
+describe('Cozinheiro na taverna (E21.2)', () => {
+  it('a taverna ganha um cozinheiro (merchant, categoria food) além da taverneira', () => {
+    const g = makeGame();
+    const im = new InteriorManager(g);
+    addPlayer(g, 0);
+    im.enter('tavern');
+    expect(im.active.cookId).not.toBe(null);
+    const cook = g.world.get(im.active.cookId, C.Interactable);
+    expect(cook.kind).toBe('merchant');
+    expect(cook.shopId).toBe('interior:cook');
+    expect(g._interiorKind['interior:cook']).toBe('food');
+    const cid = im.active.cookId;
+    im.exit();
+    g.world.flushDestroyed();
+    expect(g.world.entities.has(cid)).toBe(false); // some ao sair
+    // Loja normal não tem cozinheiro.
+    im.enter('weapons');
+    expect(im.active.cookId).toBe(null);
   });
 });
 

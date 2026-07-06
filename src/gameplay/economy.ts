@@ -52,42 +52,73 @@ export function giveItem(game, item) {
 }
 
 /**
- * (Re)gera o estoque do mercador ativo: itens no nível da região + preço.
- * Cada mercador (hub e vilas — ADR 0047) tem estoque próprio: `setActiveShop`
- * troca `game.shopStock` pela entrada do mapa `_shopStocks`.
+ * Categoria da loja ativa (E21.2): define o QUE cada mercador vende, para dar
+ * profundidade à vila — armeiro/armadureiro só equipamento, cozinheiro só
+ * comida/ingredientes, jardineiro só sementes; o mercado geral segue variado.
+ * Deriva de `_interiorKind` (food/garden) ou do viés de equipamento (weapon/
+ * armor); sem nenhum, é 'general'.
+ */
+export function shopCategory(game): 'weapon' | 'armor' | 'food' | 'garden' | 'general' {
+  const key = game.activeShopKey;
+  const kind = game._interiorKind?.[key];
+  if (kind === 'food' || kind === 'garden') return kind;
+  const bias = game._interiorBias?.[key];
+  if (bias === 'weapon') return 'weapon';
+  if (bias === 'armor') return 'armor';
+  return 'general';
+}
+
+/**
+ * (Re)gera o estoque do mercador ativo conforme sua categoria (E21.2): itens no
+ * nível da região + preço. Cada mercador (hub e vilas — ADR 0047) tem estoque
+ * próprio: `setActiveShop` troca `game.shopStock` pela entrada de `_shopStocks`.
  */
 export function rerollShop(game) {
   const lvl = game.regionLevel();
   const price = { common: 12, rare: 30, unique: 70 };
-  // Lojas de interior (ADR 0094): armeiro só vende armas, armaduraria só peças.
-  const bias = game._interiorBias?.[game.activeShopKey] ?? null;
   // Desconto por reputação da vila (ADR 0108): 0/5/10% conforme os marcos.
   const settlement = shopSettlement(game.activeShopKey);
   const disc = settlement ? repDiscount(game, settlement) : 0;
   const tag = (p) => Math.max(1, Math.round(p * (1 - disc)));
-  game.shopStock = [];
-  // Estoque maior (ADR 0104): 5 equipamentos + 2 poções (cura pequena e grande).
-  for (let i = 0; i < 5; i++) {
-    const it = generateItem(lvl, bias);
-    game.shopStock.push({ item: it, price: tag((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
-  }
-  game.shopStock.push({ item: generateConsumable('heal_s', lvl), price: tag(8 * (1 + (lvl - 1) * 0.1)) });
-  game.shopStock.push({ item: generateConsumable('heal_l', lvl), price: tag(18 * (1 + (lvl - 1) * 0.1)) });
-  // Culinária (E19.4): o mercador vende ingredientes e uma comida pronta.
-  const ingIds = Object.keys(INGREDIENTS);
-  for (let i = 0; i < 3; i++) {
-    const def = INGREDIENTS[ingIds[Math.floor(Math.random() * ingIds.length)]];
-    game.shopStock.push({ ingredient: def.id, name: def.name, icon: def.icon, price: tag(3) });
-  }
-  const foodKinds = Object.keys(FOOD_BASES);
-  const fk = foodKinds[Math.floor(Math.random() * foodKinds.length)] as keyof typeof FOOD_BASES;
-  game.shopStock.push({ item: generateFood(fk, lvl), price: tag(12 * (1 + (lvl - 1) * 0.1)) });
-  // Plantação (E20.3): 2 sementes à venda para semear a própria horta.
-  const cropIds = Object.keys(CROPS);
-  for (let i = 0; i < 2; i++) {
-    const crop = CROPS[cropIds[Math.floor(Math.random() * cropIds.length)]];
-    game.shopStock.push({ seed: crop.id, name: crop.seedName, icon: crop.seedIcon, price: tag(crop.price) });
-  }
+  const cat = shopCategory(game);
+  const stock: any[] = [];
+  const equip = (bias, n) => {
+    for (let i = 0; i < n; i++) {
+      const it = generateItem(lvl, bias);
+      stock.push({ item: it, price: tag((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
+    }
+  };
+  const potions = () => {
+    stock.push({ item: generateConsumable('heal_s', lvl), price: tag(8 * (1 + (lvl - 1) * 0.1)) });
+    stock.push({ item: generateConsumable('heal_l', lvl), price: tag(18 * (1 + (lvl - 1) * 0.1)) });
+  };
+  const ingredients = (n) => {
+    const ids = Object.keys(INGREDIENTS);
+    for (let i = 0; i < n; i++) {
+      const def = INGREDIENTS[ids[Math.floor(Math.random() * ids.length)]];
+      stock.push({ ingredient: def.id, name: def.name, icon: def.icon, price: tag(3) });
+    }
+  };
+  const foods = (n) => {
+    const ks = Object.keys(FOOD_BASES);
+    for (let i = 0; i < n; i++) {
+      const fk = ks[Math.floor(Math.random() * ks.length)] as keyof typeof FOOD_BASES;
+      stock.push({ item: generateFood(fk, lvl), price: tag(12 * (1 + (lvl - 1) * 0.1)) });
+    }
+  };
+  const seeds = (n) => {
+    const ids = Object.keys(CROPS);
+    for (let i = 0; i < n; i++) {
+      const c = CROPS[ids[Math.floor(Math.random() * ids.length)]];
+      stock.push({ seed: c.id, name: c.seedName, icon: c.seedIcon, price: tag(c.price) });
+    }
+  };
+  if (cat === 'weapon') { equip('weapon', 5); potions(); }
+  else if (cat === 'armor') { equip('armor', 5); potions(); }
+  else if (cat === 'food') { foods(2); ingredients(4); potions(); }        // cozinheiro na taverna
+  else if (cat === 'garden') { seeds(3); ingredients(2); }                 // jardineiro
+  else { equip(null, 5); potions(); ingredients(3); foods(1); seeds(2); }  // mercado geral (variado)
+  game.shopStock = stock;
   if (game._shopStocks) game._shopStocks[game.activeShopKey ?? 'hub'] = game.shopStock;
   return game.shopStock;
 }
