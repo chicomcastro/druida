@@ -2,8 +2,8 @@ import { C } from '../core/ecs/components.js';
 import { FORMS } from '../gameplay/forms.js';
 import { xpForLevel } from '../gameplay/progression.js';
 import { isTouchDevice } from './TouchControls.js';
-import { bagConsumables } from '../gameplay/consumables.js';
-import { itemIconURL } from './itemIcons.js';
+import { ensureHotbar } from '../gameplay/hotbar.js';
+import { abilityBranch } from '../gameplay/skillTree.js';
 
 /**
  * HUD em overlay DOM (mais simples e acessível que desenhar no canvas).
@@ -65,12 +65,17 @@ const css = `
 #hud-combo .cnt{margin-top:2px;font-size:12px;font-weight:800;color:#ffd56a;text-shadow:0 1px 3px #000}
 #hud-combo.flash .track{box-shadow:0 0 14px rgba(160,255,150,.8)}
 /* Hotbar 1–9 (ADR 0091): itens rápidos (poções) na base central. */
-#hud-hotbar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:6}
+#hud-hotbar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:6}
 #hud-hotbar .hb{width:44px;height:44px;border-radius:9px;border:2px solid rgba(255,255,255,.16);background:linear-gradient(160deg,rgba(20,32,18,.9),rgba(8,14,8,.9));position:relative;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4)}
-#hud-hotbar .hb.empty{opacity:.35}
-#hud-hotbar .hb .ic{width:36px;height:36px;position:absolute;top:2px;left:2px;image-rendering:pixelated;image-rendering:crisp-edges;border-radius:5px}
-#hud-hotbar .hb .k{position:absolute;top:1px;left:3px;font-size:9px;font-weight:800;color:#ffd56a;text-shadow:0 1px 2px #000}
-#hud-hotbar .hb .n{position:absolute;bottom:1px;right:3px;font-size:11px;font-weight:800;color:#eaf3e6;text-shadow:0 1px 2px #000}
+#hud-hotbar .hb.empty{opacity:.4}
+/* Separador visual entre a fileira de skills (1–4) e as formas (5–9). */
+#hud-hotbar .hb.sep{margin-left:12px}
+#hud-hotbar .hb.form{border-color:rgba(159,224,106,.28)}
+#hud-hotbar .hb.active{border-color:#ffd56a;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 0 12px rgba(255,213,106,.5)}
+#hud-hotbar .hb .ic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.8))}
+#hud-hotbar .hb .k{position:absolute;top:1px;left:3px;font-size:9px;font-weight:800;color:#ffd56a;text-shadow:0 1px 2px #000;z-index:2}
+#hud-hotbar .hb .n{position:absolute;bottom:1px;right:3px;font-size:11px;font-weight:800;color:#eaf3e6;text-shadow:0 1px 2px #000;z-index:2}
+#hud-hotbar .hb .cd{position:absolute;inset:0;background:rgba(0,0,0,.62);transform-origin:bottom;transform:scaleY(0);border-radius:7px}
 #hud-root.touch #hud-hotbar{bottom:auto;top:120px;transform:scale(.85);transform-origin:top center}
 /* Touch: os slots de artefato do painel duplicam os botões U/I/O na tela —
    esconde e o painel volta a ser compacto (nome + barras). */
@@ -94,6 +99,7 @@ const css = `
 `;
 
 const FORM_ICON = { humanoid: '🧙', wolf: '🐺', bear: '🐻', raven: '🐦‍⬛', frog: '🐸' };
+const BRANCH_ICON = { natureza: '🌿', chama: '🔥', gelo: '❄️', tempestade: '🌩️', feras: '🐺', vida: '💚' };
 
 export class Hud {
   game: any;
@@ -193,26 +199,60 @@ export class Hud {
     this._toastT = setTimeout(() => this.toastEl.classList.remove('show'), Math.max(ms, 2200));
   }
 
-  /** Hotbar 1–9 (ADR 0091): poções da mochila do P1, com contagem e tecla. */
+  /**
+   * Hotbar estilo Minecraft (E17.3b). 9 células:
+   *  - 1–4: habilidades ativas atribuídas (game.progress.hotbar), com cooldown.
+   *  - 5–9: formas do P1 (a atual fica destacada).
+   * Reconstrói o DOM só quando a atribuição/formas mudam; o cooldown e o
+   * destaque da forma atual são atualizados por frame sem recriar nós.
+   */
   _updateHotbar() {
     const { game } = this;
-    let inv = null;
-    for (const [id, pc] of game.world.query(C.PlayerControlled, C.Inventory)) {
-      if (pc.index === 0) { inv = game.world.get(id, C.Inventory); break; }
+    let pid = null;
+    for (const [id, pc] of game.world.query(C.PlayerControlled)) {
+      if (pc.index === 0) { pid = id; break; }
     }
-    const groups = inv ? bagConsumables(inv).slice(0, 9) : [];
-    // Assinatura para só reconstruir o DOM quando mudar (barato no loop).
-    const sig = groups.map((g) => `${g.item.name}:${g.count}`).join('|');
-    if (sig === this._hotbarKey) return;
-    this._hotbarKey = sig;
-    if (!groups.length) { this.hotbarEl.innerHTML = ''; return; }
-    const KEYS = ['Q', '4']; // teclas livres p/ poções (1-3=dons, 5-9=formas)
-    this.hotbarEl.innerHTML = groups.map((g, i) => {
-      const url = itemIconURL(g.item);
-      const ic = url ? `<img class="ic" src="${url}" alt="">` : '';
-      const k = KEYS[i] ? `<span class="k">${KEYS[i]}</span>` : '';
-      return `<div class="hb">${k}${ic}<span class="n">${g.count}</span></div>`;
-    }).join('');
+    const hb = ensureHotbar(game);
+    const form = pid != null ? game.world.get(pid, C.Form) : null;
+    const forms = form?.list ?? ['humanoid'];
+
+    // Assinatura de layout: skills nos 4 slots + lista de formas.
+    const sig = hb.slice(0, 4).join(',') + '|' + forms.join(',');
+    if (sig !== this._hotbarKey) {
+      this._hotbarKey = sig;
+      const skillCells = [0, 1, 2, 3].map((s) => {
+        const ab = hb[s];
+        const icon = ab ? (BRANCH_ICON[abilityBranch(ab) ?? ''] ?? '✦') : '';
+        const empty = ab ? '' : ' empty';
+        return `<div class="hb skill${empty}" data-skill="${s}"><span class="k">${s + 1}</span>`
+          + `<span class="ic">${icon}</span><div class="cd"></div></div>`;
+      });
+      const formCells = [0, 1, 2, 3, 4].map((f) => {
+        const fm = forms[f];
+        const first = f === 0 ? ' sep' : '';
+        if (!fm) return `<div class="hb form empty${first}"><span class="k">${f + 5}</span></div>`;
+        return `<div class="hb form${first}" data-form="${fm}"><span class="k">${f + 5}</span>`
+          + `<span class="ic">${FORM_ICON[fm] ?? '🧙'}</span></div>`;
+      });
+      this.hotbarEl.innerHTML = skillCells.concat(formCells).join('');
+    }
+
+    // Atualização por frame: cooldown das skills + forma ativa destacada.
+    const cds = pid != null ? game.world.get(pid, C.Cooldowns) : null;
+    const cells = this.hotbarEl.children;
+    for (let s = 0; s < 4; s++) {
+      const ab = hb[s];
+      const cd = cells[s]?.querySelector('.cd');
+      if (!cd) continue;
+      const remain = ab && cds ? (cds.map[ab] ?? 0) : 0;
+      const total = ab ? (game.abilityCooldown(ab) || 1) : 1;
+      cd.style.transform = `scaleY(${Math.max(0, Math.min(1, remain / total))})`;
+    }
+    for (let f = 0; f < 5; f++) {
+      const cell = cells[4 + f];
+      if (!cell) continue;
+      cell.classList.toggle('active', forms[f] && forms[f] === form?.current);
+    }
   }
 
   /** Barra de combo (ADR 0092): visível só durante a janela do P1. */
