@@ -6,6 +6,7 @@ import { castAbility } from '../gameplay/abilities/index.js';
 import { evalCombo } from '../gameplay/combo.js';
 import { COMBO } from '../gameplay/combo.js';
 import { skillBonus, gainProficiency } from '../gameplay/skills.js';
+import { hotbarAbility } from '../gameplay/hotbar.js';
 
 /**
  * Traduz o Intent (preenchido a partir do input) em movimento, mira, ataque,
@@ -129,6 +130,18 @@ export function playerControlSystem(game, dt) {
       if (!intent.artifact[i]) continue;
       const art = loadout.artifacts[i];
       if (art) castAbility(game, id, art.ability, aimAngle, { slot: i, item: art });
+    }
+
+    // Hotbar de habilidades (teclas 1–4, E17.3b) ----------------------
+    // Conjura a habilidade ativa atribuída ao slot (skillTree/hotbar). É só do
+    // P1 por ora — a hotbar mora em game.progress (party) e os slots 5–9 seguem
+    // como formas (migração completa no E17.5).
+    if (intent.hotbar) {
+      for (let s = 0; s < intent.hotbar.length; s++) {
+        if (!intent.hotbar[s]) continue;
+        const ab = hotbarAbility(game, s);
+        if (ab) castAbility(game, id, ab, aimAngle, { slot: s, hotbar: true });
+      }
     }
   }
 }

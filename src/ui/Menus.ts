@@ -9,6 +9,7 @@ import { BOONS, chooseBoon } from '../gameplay/boons.js';
 import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
 import { SKILL_TREES, canLearn, learn, respec, nodeText, ensureSkillState } from '../gameplay/skills.js';
 import { ACTIVE_SKILL_TREE, canUnlock, unlock, isUnlocked, respecActive, ensureActiveSkills } from '../gameplay/skillTree.js';
+import { ensureHotbar, assignSkill, clearSlot, autoFillHotbar } from '../gameplay/hotbar.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -82,6 +83,10 @@ const css = `
 .sk-node .pips{display:flex;gap:2px;margin-top:3px}
 .sk-node .pips i{width:9px;height:5px;border-radius:2px;background:rgba(255,255,255,.14)}
 .sk-node .pips i.on{background:#9fe06a;box-shadow:0 0 5px rgba(159,224,106,.5)}
+.sk-slots{display:flex;gap:4px;margin-top:5px}
+.sk-slots .slot{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.16);background:rgba(20,32,18,.7);color:#cfe6c0;font-size:11px;font-weight:800;cursor:pointer;line-height:1;padding:0}
+.sk-slots .slot:hover{border-color:#9fe06a}
+.sk-slots .slot.on{border-color:#ffd56a;background:linear-gradient(160deg,#3a3216,#241d0d);color:#ffd56a;box-shadow:0 0 8px rgba(255,213,106,.35)}
 #tip{position:fixed;z-index:60;pointer-events:none;display:none;max-width:240px;background:linear-gradient(165deg,#152315,#0a130c);border:1px solid rgba(159,224,106,.4);border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.45;box-shadow:0 12px 32px rgba(0,0,0,.6);color:#eaf3e6;font-family:system-ui,sans-serif}
 #tip b{font-size:13px}
 #tip .up{color:#8affa0}#tip .down{color:#ff8a8a}
@@ -163,11 +168,11 @@ export class Menus {
       else if ((e.code === 'KeyB' || e.code === 'Tab') && !mapOpen) { e.preventDefault(); this.toggleInventory(); }
       else if (e.code === 'KeyK' && !mapOpen && !this.pause.classList.contains('show') && !this.inv.classList.contains('show')) { e.preventDefault(); this.toggleSkills(); }
       else if (e.code === 'KeyT' && !this.game.paused) this.game.recallToHub();
-      // Cinto de poções (ADR 0091): Q usa a 1ª poção, Digit4 a 2ª (1-3=dons,
-      // 5-9=formas já ocupam a fileira numérica).
+      // Cinto de poções (ADR 0091): Q usa a 1ª poção, R a 2ª. A fileira numérica
+      // 1–9 agora é a hotbar de habilidades (1–4) + formas (5–9), E17.3b.
       else if (e.code === 'KeyQ' && !this.game.paused && !this.inv.classList.contains('show')) {
         this.game.useHotbarSlot(0);
-      } else if (e.code === 'Digit4' && !this.game.paused && !this.inv.classList.contains('show')) {
+      } else if (e.code === 'KeyR' && !this.game.paused && !this.inv.classList.contains('show')) {
         this.game.useHotbarSlot(1);
       }
     });
@@ -333,16 +338,23 @@ export class Menus {
 
     // Árvore de SKILLS ATIVAS (E17, ADR 0124): cada nó libera uma habilidade.
     ensureActiveSkills(this.game);
+    const hbSlots = ensureHotbar(this.game); // 9 slots; 1–4 são atribuíveis (E17.3b)
     const branches = Object.entries(ACTIVE_SKILL_TREE).map(([branch, nodes]) => {
       const rows = (nodes as any[]).map((node) => {
         const has = isUnlocked(this.game, node.id);
         const unlockable = canUnlock(this.game, node.id);
         const reqLocked = node.req && !isUnlocked(this.game, node.req);
+        // Atribuição à hotbar: só para skills já liberadas. 4 botões (1–4)
+        // destacando o slot atual; clicar de novo no mesmo slot desatribui.
+        const slots = has ? `<div class="sk-slots">${[0, 1, 2, 3].map((i) =>
+          `<button class="slot${hbSlots[i] === node.ability ? ' on' : ''}" data-assign="${node.ability}" data-slot="${i}" title="Atribuir à tecla ${i + 1}">${i + 1}</button>`,
+        ).join('')}</div>` : '';
         return `<div class="sk-node${reqLocked && !has ? ' locked' : ''}">
           <span class="ico">${SK_BRANCH_ICON[branch] ?? '✦'}</span>
           <div class="body">
             <div class="nm">${node.name} ${has ? '<span class="lv">✓ liberada</span>' : `<span class="lv">${node.cost}★</span>`}</div>
             <div class="ds">${node.desc}${reqLocked && !has ? ` · requer ${nodes.find((n: any) => n.id === node.req)?.name ?? ''}` : ''}</div>
+            ${slots}
           </div>
           <button class="buy" data-skill="${node.id}" ${has ? 'disabled title="Já liberada"' : (unlockable ? 'title="Liberar habilidade"' : 'disabled')}>${has ? '✓' : '+'}</button>
         </div>`;
@@ -355,7 +367,7 @@ export class Menus {
       <h2>🌟 Talentos</h2>
       <p class="sub">Pontos disponíveis: <b>${pr.skillPoints ?? 0}</b> · trilhas destacadas seguem sua arma/forma ativa. Especialize usando cada arma e forma.</p>
       <h3 style="margin:6px 0 4px;color:#9fe06a">✦ Habilidades ativas</h3>
-      <p class="sub">Libere magias para atribuir à hotbar (1–9). Cada ramo tem seu efeito visual.</p>
+      <p class="sub">Libere magias e atribua às teclas <b>1–4</b> da hotbar (5–9 são as formas). Cada ramo tem seu efeito visual.</p>
       <div class="sk-tracks">${branches}</div>
       <button class="btn" id="sk-respec-active" style="text-align:center;margin:8px 0 16px">↺ Redistribuir habilidades (grátis)</button>
       <h3 style="margin:6px 0 4px;color:#ffd56a">⚔️ Passivas por arma/forma</h3>
@@ -370,7 +382,20 @@ export class Menus {
       el.onclick = () => { if (learn(this.game, el.dataset.node)) this.refreshSkills(); };
     });
     this.skills.querySelectorAll('.buy[data-skill]').forEach((el: any) => {
-      el.onclick = () => { if (unlock(this.game, el.dataset.skill)) this.refreshSkills(); };
+      el.onclick = () => {
+        // Ao liberar, auto-equipa no 1º slot livre (1–4) — conveniência.
+        if (unlock(this.game, el.dataset.skill)) { autoFillHotbar(this.game); this.refreshSkills(); }
+      };
+    });
+    this.skills.querySelectorAll('.slot[data-assign]').forEach((el: any) => {
+      el.onclick = () => {
+        const slot = +el.dataset.slot;
+        const ab = el.dataset.assign;
+        const hb = ensureHotbar(this.game);
+        if (hb[slot] === ab) clearSlot(this.game, slot); // clicar de novo desatribui
+        else assignSkill(this.game, slot, ab);
+        this.refreshSkills();
+      };
     });
   }
 

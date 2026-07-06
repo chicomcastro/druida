@@ -56,11 +56,24 @@ export const ACTIVE_SKILL_TREE: Record<SkillBranch, ActiveSkillNode[]> = {
 /** Índice nó→ramo e id→nó (montado uma vez). */
 const NODE_INDEX: Record<string, ActiveSkillNode> = {};
 const NODE_BRANCH: Record<string, SkillBranch> = {};
+const ABILITY_BRANCH: Record<string, SkillBranch> = {};
+const ABILITY_NODE: Record<string, ActiveSkillNode> = {};
 for (const branch of Object.keys(ACTIVE_SKILL_TREE) as SkillBranch[]) {
   for (const node of ACTIVE_SKILL_TREE[branch]) {
     NODE_INDEX[node.id] = node;
     NODE_BRANCH[node.id] = branch;
+    ABILITY_BRANCH[node.ability] = branch;
+    ABILITY_NODE[node.ability] = node;
   }
+}
+
+/** Ramo de uma habilidade (para ícone/VFX na HUD). */
+export function abilityBranch(abilityId: string): SkillBranch | undefined {
+  return ABILITY_BRANCH[abilityId];
+}
+/** Nó da árvore que libera uma habilidade (nome, custo). */
+export function abilityNode(abilityId: string): ActiveSkillNode | undefined {
+  return ABILITY_NODE[abilityId];
 }
 
 /** Todo nó aponta para uma habilidade existente (guarda de sanidade/teste). */

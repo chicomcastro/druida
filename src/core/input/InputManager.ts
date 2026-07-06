@@ -118,6 +118,7 @@ export class InputManager {
       attack: a.attack || b.attack,
       dodge: a.dodge || b.dodge,
       artifact: [0, 1, 2].map((i) => a.artifact[i] || b.artifact[i]),
+      hotbar: [0, 1, 2, 3].map((i) => a.hotbar[i] || b.hotbar[i]),
       switchForm: b.switchForm || a.switchForm,
       interact: a.interact || b.interact,
     };
@@ -142,6 +143,7 @@ export class InputManager {
     return {
       moveX: 0, moveZ: 0, aimX: 0, aimZ: 0, hasAim: false,
       attack: false, dodge: false, artifact: [false, false, false],
+      hotbar: [false, false, false, false],
       switchForm: 0, interact: false,
     };
   }
@@ -166,6 +168,12 @@ export class InputManager {
         this.keyJustPressed('artifact0'),
         this.keyJustPressed('artifact1'),
         this.keyJustPressed('artifact2'),
+      ],
+      hotbar: [
+        this.keyJustPressed('hotbar0'),
+        this.keyJustPressed('hotbar1'),
+        this.keyJustPressed('hotbar2'),
+        this.keyJustPressed('hotbar3'),
       ],
       switchForm,
       interact: this.keyJustPressed('interact'),
@@ -195,6 +203,7 @@ export class InputManager {
       attack: pad.buttons[0]?.pressed || pad.buttons[7]?.pressed, // A / RT
       dodge: jp(1) || jp(5), // B / RB
       artifact: [jp(2), jp(3), jp(6)], // X, Y, LT
+      hotbar: [false, false, false, false], // hotbar 1–4 é teclado (E17.3b)
       switchForm,
       interact: jp(4), // LB
     };
