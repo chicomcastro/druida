@@ -717,7 +717,7 @@ export class SettlementManager {
     const PAL_THEMES = ['vau_arpo', 'vau_couro', 'tavern', 'market', 'home'];
     huts.forEach(([x, z, ry], hi) => {
       const px = alignAxis(x, 5), pz = alignAxis(z, 5);
-      const dp = this._spun(px, pz, ry, 0, 3.0); // à frente da escada
+      const dp = this._spun(px, pz, ry, 0, 2.0); // na FRENTE do deck (ADR 0127) — não flutua sobre a água
       this._houseDoor(w, dp.x, dp.z, PAL_THEMES[hi] ?? 'home');
     });
     // Passarelas de tábua: da BASE DA ESCADA de cada casa até o centro, em
@@ -789,10 +789,14 @@ export class SettlementManager {
     // Barris de seiva na junção das passarelas (ADR 0084).
     this._barrel(w, 1.6, 1);
     this._barrel(w, -1.6, -1.2);
-    // Lanternas de musgo (verde-água) — a marca da vila.
     this._fishTable(w, 4, -3); // mesa de limpar peixe (worker em _workers, ADR 0123)
-    // Lanternas de musgo com a luz voltada ao centro/passarelas (ADR 0122).
-    for (const [x, z] of [[0, -1], [-6, -6], [8, -5], [-4, 6], [8, 7]]) this._lantern(w, x, z, 0x6affc8, 0, 0);
+    // Lanternas de musgo (verde-água): uma no CANTO EXTERNO do deck de cada
+    // palafita (sobre a plataforma sólida, fora das passarelas), luz p/ o centro
+    // (ADR 0127). Antes caíam no meio das passarelas.
+    for (const [hx, hz] of [[-8, -4], [6, -8], [-2, 8], [10, 4], [-9, 6]]) {
+      const len = Math.hypot(hx, hz) || 1;
+      this._lantern(w, hx + (hx / len) * 1.8, hz + (hz / len) * 1.8, 0x6affc8, 0, 0);
+    }
     this._fireLight(w, 0, -1, 0x6affc8, 0.9);
   }
 
@@ -911,7 +915,11 @@ export class SettlementManager {
     // Braseiros de contenção (brasa laranja) — a defesa da vila contra a praga.
     this._fire(w, -3, 2, 0xff7a2a, 1.2);
     this._fire(w, 4, 4, 0xff7a2a, 0);
-    for (const [x, z] of [[-6, 12], [8, -10]]) this._lantern(w, x, z, 0xffb46a, 0, 0); // luz p/ o centro (ADR 0122)
+    // Postes de brasa ladeando a praça/corredor (ADR 0127): antes só havia 2 nas
+    // quinas, invisíveis do centro. Luz voltada ao miolo da vila.
+    for (const [x, z] of [[2.5, -5], [-2.5, 3.5], [2.5, 5.5], [-2.5, -3], [-6, 12], [8, -10]]) {
+      this._lantern(w, x, z, 0xffb46a, 0, 0);
+    }
     // Torre de vigia (ADR 0084): a assinatura de Cinzafolha — os lenhadores
     // vigiam a floresta corrompida do alto, com lanterna acesa.
     const tower = new THREE.Group();
@@ -1081,6 +1089,11 @@ export class SettlementManager {
     this._woodpile(w, -5, -1, Math.PI / 2);
     this._barrel(w, 3, -6);
     this._furRack(w, 6, 2); // bastidor de curtir peles (worker em _workers, ADR 0123)
+    // Postes de gelo ao redor da chama azul (ADR 0127): o Degelo não tinha
+    // lanternas visíveis. Luz fria voltada ao centro do abrigo.
+    for (const [x, z] of [[2.5, 2.5], [-2.5, -2.5], [2.5, -2.5], [-2.5, 3]]) {
+      this._lantern(w, x, z, 0x9fdcff, 0, 0);
+    }
     // Trilhas de laje ligando as tendas à chama azul (ADR 0080/0083).
     this._streets(w, [
       [-4, 3, -2, 3], [-2, 3, -2, 0], [3, -3, 2, -3], [2, -3, 2, 0],
