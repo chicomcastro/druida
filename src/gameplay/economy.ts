@@ -1,6 +1,7 @@
 import { C } from '../core/ecs/components.js';
 import { generateItem } from './loot.js';
 import { generateConsumable } from './consumables.js';
+import { repDiscount, shopSettlement } from './reputation.js';
 
 /**
  * Economia do grupo: essência compartilhada e estoque do mercador (extraído de
@@ -46,14 +47,18 @@ export function rerollShop(game) {
   const price = { common: 12, rare: 30, unique: 70 };
   // Lojas de interior (ADR 0094): armeiro só vende armas, armaduraria só peças.
   const bias = game._interiorBias?.[game.activeShopKey] ?? null;
+  // Desconto por reputação da vila (ADR 0108): 0/5/10% conforme os marcos.
+  const settlement = shopSettlement(game.activeShopKey);
+  const disc = settlement ? repDiscount(game, settlement) : 0;
+  const tag = (p) => Math.max(1, Math.round(p * (1 - disc)));
   game.shopStock = [];
   // Estoque maior (ADR 0104): 5 equipamentos + 2 poções (cura pequena e grande).
   for (let i = 0; i < 5; i++) {
     const it = generateItem(lvl, bias);
-    game.shopStock.push({ item: it, price: Math.round((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
+    game.shopStock.push({ item: it, price: tag((price[it.rarity] ?? 12) * (1 + (lvl - 1) * 0.15)) });
   }
-  game.shopStock.push({ item: generateConsumable('heal_s', lvl), price: Math.round(8 * (1 + (lvl - 1) * 0.1)) });
-  game.shopStock.push({ item: generateConsumable('heal_l', lvl), price: Math.round(18 * (1 + (lvl - 1) * 0.1)) });
+  game.shopStock.push({ item: generateConsumable('heal_s', lvl), price: tag(8 * (1 + (lvl - 1) * 0.1)) });
+  game.shopStock.push({ item: generateConsumable('heal_l', lvl), price: tag(18 * (1 + (lvl - 1) * 0.1)) });
   if (game._shopStocks) game._shopStocks[game.activeShopKey ?? 'hub'] = game.shopStock;
   return game.shopStock;
 }

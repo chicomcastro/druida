@@ -109,7 +109,10 @@ export class WorldMap {
       ctx.globalAlpha = known ? 0.9 : 0.35;
       ctx.fillStyle = '#eaf3e6';
       ctx.font = '11px system-ui';
-      ctx.fillText(known ? pt.label : '???', px + 9, pz + 4);
+      // Reputação por vila (ADR 0108): estrelas ao lado do nome (marco = assentamento).
+      const rep = known ? (this.game.reputation?.[pt.key] ?? 0) : 0;
+      const stars = rep > 0 ? '  ' + '★'.repeat(Math.min(3, Math.ceil(rep / 2))) : '';
+      ctx.fillText(known ? pt.label + stars : '???', px + 9, pz + 4);
       ctx.globalAlpha = 1;
     }
 

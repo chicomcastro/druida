@@ -59,6 +59,7 @@ import { useConsumable as _useConsumable, useHotbarSlot as _useHotbarSlot } from
 import { QuestManager } from '../gameplay/quests.js';
 import { SideQuestManager } from '../gameplay/sidequests.js';
 import { registerBoonHooks } from '../gameplay/boons.js';
+import { registerReputationHooks } from '../gameplay/reputation.js';
 import { Telemetry } from '../gameplay/telemetry.js';
 
 /**
@@ -82,6 +83,7 @@ export class Game {
   shopStock: any[] | null;
   lore: { found: Set<string> };
   boons: Record<string, string>;
+  reputation: Record<string, number>;
   systems: Array<(g: any, dt: number) => void>;
   dt: number;
   paused: boolean;
@@ -107,6 +109,7 @@ export class Game {
     this.shopStock = null; // estoque do mercador (lazy)
     this.lore = { found: new Set() }; // codex de lore descoberta
     this.boons = {}; // dons dos santuários escolhidos (ADR 0050)
+    this.reputation = {}; // reputação por vila (ADR 0108)
     this._scheduled = [];
     this._assignedPads = new Set();
     this.dt = 1 / 60;
@@ -116,6 +119,7 @@ export class Game {
     bindGameEvents(this);
     registerEliteEffects(this); // afixos Volátil/Sanguessuga (ADR 0045)
     registerBoonHooks(this); // dons dos santuários (ADR 0050)
+    registerReputationHooks(this); // reputação por vila (ADR 0108)
 
     this.inDungeon = false;
     this.lightPool = new LightPool(this); // luzes pontuais com culling (ADR 0065)
