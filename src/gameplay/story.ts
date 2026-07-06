@@ -11,16 +11,18 @@ import { FORM_ORDER } from './forms.js';
  * santuários e o NPC do hub são entidades Interactable criadas pelo mundo.
  */
 
-// Posições-chave no eixo -Z, cada uma dentro do anel do bioma correspondente.
-// Marcos da campanha posicionados DENTRO das regiões orgânicas de cada bioma
-// (ADR 0110): cada santuário fica na área da sua vila, não mais numa coluna −Z.
+// Marcos da campanha dentro das regiões orgânicas de cada bioma (ADR 0110), mas
+// cada santuário fica AFASTADO da sua vila e numa direção distinta (ADR 0118):
+// buscá-lo é uma jornada à parte — o jogador escolhe entre ir à cidade ou ao
+// santuário, em vez de encontrar os dois no mesmo lugar. Coords validadas por
+// distância à cidade e margem de interior do bioma (scan em scripts).
 export const LANDMARKS = {
   npc: { x: 0, z: -14 },
-  sanctuary_wolf: { x: 0, z: -40, form: 'wolf', biome: 'Clareira Viva' },
-  sanctuary_bear: { x: 65, z: -62, form: 'bear', biome: 'Pântano' },         // região do Vau
-  miniboss: { x: 78, z: -52 },                                              // Pântano
-  sanctuary_raven: { x: -130, z: 33, form: 'raven', biome: 'Bosque Cinza' }, // região de Cinzafolha
-  sanctuary_frog: { x: 118, z: 140, form: 'frog', biome: 'Picos Gélidos' },  // região do Degelo
+  sanctuary_wolf: { x: -40, z: -69, form: 'wolf', biome: 'Clareira Viva' },   // NO da Clareira, longe do hub
+  sanctuary_bear: { x: 177, z: -33, form: 'bear', biome: 'Pântano' },         // fundo NE do Pântano
+  miniboss: { x: 78, z: -52 },                                              // Pântano (perto da vila)
+  sanctuary_raven: { x: -210, z: -49, form: 'raven', biome: 'Bosque Cinza' }, // N do Bosque, longe de Cinzafolha
+  sanctuary_frog: { x: 66, z: 247, form: 'frog', biome: 'Picos Gélidos' },     // sul dos Picos, longe do Degelo
   boss: { x: 0, z: -245 },                                                  // mancha do Coração
 };
 
@@ -34,12 +36,12 @@ const STEPS = [
     desc: 'A podridão já chegou à Clareira. Abata as criaturas corrompidas ao redor da vila para reacender a Seiva e provar que ainda é um Druida.',
   },
   {
-    id: 'find_wolf', objective: 'Desperte o Santuário do Lobo, aqui na Clareira',
-    desc: 'A primeira Forma Ancestral dorme num santuário na própria Clareira. Desperte o Lobo — a caça e a velocidade — e aprenda a receber um Dom.',
+    id: 'find_wolf', objective: 'Ache o Santuário do Lobo, escondido na Clareira',
+    desc: 'A primeira Forma Ancestral dorme num santuário na Clareira, mas longe da vila — a noroeste, mata adentro. Siga até ele, desperte o Lobo (a caça e a velocidade) e aprenda a receber um Dom.',
   },
   {
     id: 'find_bear', objective: 'Vá ao Pântano e desperte o Santuário do Urso',
-    desc: 'No Pântano Apodrecido resiste o Vau das Palafitas. Perto dele, o Santuário do Urso concede a resistência que os combates adiante vão exigir.',
+    desc: 'No Pântano Apodrecido resiste o Vau das Palafitas — mas o Santuário do Urso fica bem adentro do brejo, longe da vila: buscá-lo é uma jornada à parte. Ele concede a resistência que os combates adiante vão exigir.',
   },
   {
     id: 'slay_miniboss', objective: 'Derrote a Árvore-Carniça no Pântano',
@@ -47,11 +49,11 @@ const STEPS = [
   },
   {
     id: 'find_raven', objective: 'Encontre o Santuário do Corvo no Bosque Cinza',
-    desc: 'Em Cinzafolha, os lenhadores queimam o que caminha. O Santuário do Corvo, entre as árvores mortas, dá olhos para ver o que a fumaça esconde.',
+    desc: 'Em Cinzafolha, os lenhadores queimam o que caminha. O Santuário do Corvo, porém, fica longe da vila, fundo no bosque morto — outra jornada. Entre as árvores mortas, ele dá olhos para ver o que a fumaça esconde.',
   },
   {
     id: 'find_frog', objective: 'Encontre o Santuário do Sapo nos Picos Gélidos',
-    desc: 'O Abrigo do Degelo guarda a trilha antiga. O Santuário do Sapo, preso no gelo, escuta a água — até a que dorme congelada — e abre o caminho ao Coração.',
+    desc: 'O Abrigo do Degelo guarda a trilha antiga, mas o Santuário do Sapo dorme longe dali, mais fundo nos Picos. Preso no gelo, ele escuta a água — até a que dorme congelada — e abre o caminho ao Coração.',
   },
   {
     id: 'confront', objective: 'Vá ao Coração Corrompido e enfrente O Apodrecedor',
