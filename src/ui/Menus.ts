@@ -14,6 +14,7 @@ import { RECIPES, canCook, cook, craftLevel, ensureCraft, craftXpForLevel } from
 import { INGREDIENTS, ingredientCount, pouchList, addIngredient } from '../gameplay/ingredients.js';
 import { sellIngredient, INGREDIENT_SELL } from '../gameplay/economy.js';
 import { FOOD_BASES } from '../gameplay/consumables.js';
+import { CROPS, seedList, plotState, plotProgress, plotReady, plantPlot, harvestPlot } from '../gameplay/farming.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -116,7 +117,8 @@ for (const nodes of Object.values(SKILL_TREES)) for (const n of nodes) ALL_NODE_
 export class Menus {
   game: any;
   main: any; pause: any; inv: any;
-  shop: any; stash: any; controls: any; skills: any; kitchen: any; tip: any;
+  shop: any; stash: any; controls: any; skills: any; kitchen: any; farm: any; tip: any;
+  _farmPlot: any;
   _rebinding: string | null;
   _selSlot: string;
   _hoverItem: any;
@@ -136,11 +138,12 @@ export class Menus {
     this.controls = this._make('menu-controls');
     this.skills = this._make('menu-skills');
     this.kitchen = this._make('menu-kitchen');
+    this.farm = this._make('menu-farm');
     this._rebinding = null;
     this._selSlot = 'weapon'; // slot equipado selecionado p/ encantar
     this.tip = document.createElement('div');
     this.tip.id = 'tip';
-    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls, this.skills, this.kitchen, this.tip);
+    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls, this.skills, this.kitchen, this.farm, this.tip);
 
     addEventListener('keydown', (e) => {
       if (game.menuMain) return; // bloqueia até iniciar
@@ -173,6 +176,11 @@ export class Menus {
       // Cozinha aberta (E19.2): E/Esc fecha.
       if (this.kitchen.classList.contains('show')) {
         if (['Escape', 'KeyE', 'KeyF'].includes(e.code)) this.toggleKitchen();
+        return;
+      }
+      // Canteiro aberto (E20.2): E/Esc fecha.
+      if (this.farm.classList.contains('show')) {
+        if (['Escape', 'KeyE', 'KeyF'].includes(e.code)) this.toggleFarm();
         return;
       }
       // Mochila aberta (E18.2): 1–9 atribui o item sob o cursor à hotbar.
@@ -507,6 +515,74 @@ export class Menus {
         this.refreshKitchen();
       };
     });
+  }
+
+  // --- Plantação (E20.2) ---------------------------------------------------
+  openFarm(plotId) {
+    if (this.game.paused) return;
+    this._farmPlot = plotId;
+    this.farm.classList.add('show');
+    this.game.paused = true;
+    this.refreshFarm();
+  }
+
+  toggleFarm() {
+    if (this.farm.classList.contains('show')) { this.farm.classList.remove('show'); this.game.paused = false; }
+    else if (this._farmPlot) this.openFarm(this._farmPlot);
+  }
+
+  refreshFarm() {
+    const plotId = this._farmPlot;
+    const st = plotState(this.game, plotId);
+    let body: string;
+    if (!st) {
+      // Canteiro vazio: escolher uma semente da despensa para plantar.
+      const seeds = seedList(this.game);
+      body = seeds.length
+        ? `<p class="sub">Escolha o que semear neste canteiro:</p>
+           <div class="sk-tracks" style="grid-template-columns:1fr">${seeds.map((s) => `
+             <div class="sk-node">
+               <span class="ico">${s.crop.seedIcon}</span>
+               <div class="body"><div class="nm">${s.crop.seedName} <span class="lv">×${s.count}</span></div>
+                 <div class="ds"><span class="ing ok">${s.crop.icon} rende ${s.crop.yieldQty} ${CROPS[s.crop.id].name}</span></div></div>
+               <button class="buy" data-plant="${s.crop.id}" title="Plantar">🌱</button>
+             </div>`).join('')}</div>`
+        : '<p class="sub">Sem sementes. Compre no mercador ou colha no mundo.</p>';
+    } else {
+      const crop = CROPS[st.crop];
+      const prog = plotProgress(this.game, plotId);
+      const ready = plotReady(this.game, plotId);
+      body = `<div class="sk-node">
+        <span class="ico">${crop?.icon ?? '🌱'}</span>
+        <div class="body">
+          <div class="nm">${crop?.name ?? st.crop} ${ready ? '<span class="lv" style="color:#9fe06a">maduro!</span>' : ''}</div>
+          <div class="ds"><span style="display:inline-block;width:180px;height:8px;background:rgba(10,18,10,.85);border-radius:4px;overflow:hidden;vertical-align:middle"><i style="display:block;height:100%;width:${(prog * 100).toFixed(0)}%;background:linear-gradient(90deg,#7ac86a,#9fe06a)"></i></span> ${(prog * 100).toFixed(0)}%</div>
+        </div>
+        ${ready ? `<button class="buy" data-harvest="1" title="Colher">🧺</button>` : ''}
+      </div>
+      ${ready ? '' : '<p class="sub">Volte quando estiver maduro para colher.</p>'}`;
+    }
+
+    this.farm.innerHTML = `<div class="panel" style="min-width:min(560px,92vw)">
+      <span class="close" id="cf-close">✕ (E)</span>
+      <h2>🌱 Canteiro</h2>
+      ${body}
+    </div>`;
+    this.farm.querySelector('#cf-close').onclick = () => this.toggleFarm();
+    this.farm.querySelectorAll('.buy[data-plant]').forEach((el: any) => {
+      el.onclick = () => {
+        if (plantPlot(this.game, plotId, el.dataset.plant)) {
+          this.game.emit('objective', { text: `🌱 Plantado: ${CROPS[el.dataset.plant].name}!` });
+        }
+        this.refreshFarm();
+      };
+    });
+    const hv: any = this.farm.querySelector('.buy[data-harvest]');
+    if (hv) hv.onclick = () => {
+      const crop = harvestPlot(this.game, plotId);
+      if (crop) this.game.emit('objective', { text: `🧺 Colhido: ${crop.yieldQty}× ${crop.name}! (na despensa)` });
+      this.refreshFarm();
+    };
   }
 
   // --- Inventário / Equipamento / Encantamento -----------------------------

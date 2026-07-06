@@ -609,18 +609,9 @@ export class SettlementManager {
     this._fire(w, 5, 5, 0xff9a4a, 1.1);
     this._smokeAt(w, 5, 1.6, 5);
     this._flagAt(w, -3.2, -23.2, 0x6cba5a); // estandarte no portão sul
-    // Jardins de ervas (canteiros com brotos), na praça.
-    for (const [gx, gz, gw, gd] of [[-5, 5, 3.2, 1.8], [5, -5, 1.8, 3.2]]) {
-      const bed = mesh(new THREE.BoxGeometry(gw, 0.3, gd), 0x4a3424, { tex: 'dirt', trx: 3, try: 2 });
-      bed.position.set(gx, 0.15, gz);
-      w.add(bed);
-      for (let i = 0; i < 5; i++) {
-        const sprout = mesh(new THREE.BoxGeometry(0.22, 0.5, 0.22), i % 2 ? 0x7ac86a : 0x9fe06a);
-        const along = -1.2 + i * 0.6;
-        sprout.position.set(gx + (gw > gd ? along : 0), 0.55, gz + (gw > gd ? 0 : along));
-        w.add(sprout);
-      }
-    }
+    // Jardins de ervas: agora canteiros funcionais (E20.2). Os dois canteiros
+    // da praça viram entidades interativas 'plot' construídas pelo FarmManager
+    // (semear → crescer → colher). Mantemos só as pegadas para o validador.
     // Props de rua (ADR 0084): barris e lenha na praça, varais nos anéis.
     this._barrel(w, -5, -4);
     this._barrel(w, -5.8, -4.3);
