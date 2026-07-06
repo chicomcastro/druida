@@ -119,4 +119,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0113](0113-colisores-cenario-banca.md) | Objetos de cenário sólidos + banca fora das ruas | Aceito |
 | [0114](0114-descricoes-campanha.md) | Descrições da campanha no HUD | Aceito |
 | [0115](0115-postes-nos-caminhos-mercado-frente.md) | Postes atrelados aos caminhos + mercado como casa | Aceito |
+| [0116](0116-lanternas-direcionais-arterias-fix-colisao.md) | Lanternas direcionais, postes nas artérias e fix de colisão | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
