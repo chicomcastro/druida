@@ -115,4 +115,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0109](0109-mundo-organico.md) | Mundo orgânico (biomas não-circulares) | Aceito |
 | [0110](0110-progressao-aberta-level-scaling.md) | Progressão aberta: level-scaling + marcos nas regiões | Aceito |
 | [0111](0111-clareira-em-torno-da-arvore.md) | Clareira em torno da Carvalho-Mãe (2 anéis + via em anel) | Aceito |
+| [0112](0112-wiki-ilustrada.md) | Wiki ilustrada (capturas do jogo) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
