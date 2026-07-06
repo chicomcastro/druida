@@ -3,13 +3,12 @@ import { makeGame, addPlayer } from './helpers.js';
 import { C } from '../src/core/ecs/components.js';
 import { InteriorManager } from '../src/world/InteriorManager.js';
 import { interactionSystem } from '../src/systems/interaction.js';
-import { FAMILIES, family } from '../src/data/families.js';
+import { FAMILIES, family, familiesOf } from '../src/data/families.js';
 import { LORE, revealLore } from '../src/data/lore.js';
 import { INTERIOR_THEMES } from '../src/data/interiors.js';
 
 describe('Famílias e rixa (ADR 0095)', () => {
-  it('há duas famílias e cada fofoca acusa a outra', () => {
-    expect(Object.keys(FAMILIES)).toEqual(['fenwick', 'aldren']);
+  it('a Clareira tem duas famílias e cada fofoca acusa a outra', () => {
     expect(FAMILIES.fenwick.gossip).toMatch(/Aldren/);
     expect(FAMILIES.aldren.gossip).toMatch(/Fenwick/);
     expect(family('fenwick')?.name).toBe('Fenwick');
@@ -25,6 +24,34 @@ describe('Famílias e rixa (ADR 0095)', () => {
     expect(INTERIOR_THEMES.armor.family).toBe('aldren');
     expect(INTERIOR_THEMES.weapons.loreId).toBe('l13');
     expect(INTERIOR_THEMES.leader.loreId).toBe('l15');
+  });
+});
+
+describe('Rixas das vilas 2–4 (ADR 0107)', () => {
+  it('cada uma das 4 vilas tem exatamente duas famílias rivais', () => {
+    for (const s of ['circulo_carvalho', 'vau_palafitas', 'cinzafolha', 'abrigo_degelo']) {
+      const pair = familiesOf(s);
+      expect(pair.length).toBe(2);
+      // a fofoca de cada família cita o sobrenome da outra
+      expect(pair[0].gossip).toMatch(new RegExp(pair[1].name));
+      expect(pair[1].gossip).toMatch(new RegExp(pair[0].name));
+    }
+  });
+
+  it('cada família nova tem uma loja com viés e um fragmento do codex', () => {
+    const shops = [
+      ['vau_arpo', 'vison', 'weapon', 'l16'], ['vau_couro', 'canico', 'armor', 'l17'],
+      ['cinza_serra', 'cerne', 'weapon', 'l18'], ['cinza_forno', 'brasa', 'armor', 'l19'],
+      ['degelo_trilha', 'cairn', 'weapon', 'l20'], ['degelo_pasto', 'velo', 'armor', 'l21'],
+    ];
+    for (const [theme, fam, bias, lore] of shops) {
+      const t = INTERIOR_THEMES[theme];
+      expect(t.service).toBe('shop');
+      expect(t.family).toBe(fam);
+      expect(t.shopBias).toBe(bias);
+      expect(t.loreId).toBe(lore);
+      expect(LORE.some((l) => l.id === lore)).toBe(true);
+    }
   });
 });
 

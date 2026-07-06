@@ -20,6 +20,13 @@ export const LORE = [
   { id: 'l13', title: 'A Rixa do Riacho', text: 'Fenwick e Aldren partilham um riacho: a forja precisa da água, os campos também. Há três gerações discutem de quem é a nascente — e de quem é a culpa quando ela seca.' },
   { id: 'l14', title: 'O Segredo do Moinho', text: 'A verdade que ninguém diz em voz alta: foi a Corrupção que envenenou a nascente, não a forja nem o moinho. As duas famílias brigam por uma água que o Apodrecedor já havia amaldiçoado.' },
   { id: 'l15', title: 'O Nó de Duas Cordas', text: 'A anciã Maroa guarda um velho costume: quando Fenwick e Aldren se casavam, atavam duas cordas num só nó. Reatá-lo talvez valha mais que qualquer arbitragem.' },
+  // Rixas das vilas 2–4 (ADR 0107): intro (fofoca) + segredo (destrava a quest).
+  { id: 'l16', title: 'A Rixa da Água Escura', text: 'No Vau, os Vison dos arpões e os Caniço dos filtros brigam pela água do brejo há tantas cheias que ninguém lembra quem afundou o quê primeiro.' },
+  { id: 'l17', title: 'O Que Sobe do Lodo', text: 'A verdade do Vau: não são os filtros nem os barcos. É a Corrupção subindo do Coração pelo leito do brejo que turva a água. Os dois lados guerreiam contra o mesmo inimigo, de costas um pro outro.' },
+  { id: 'l18', title: 'A Rixa da Cinza', text: 'Em Cinzafolha, os Cerne que serram acusam os Brasa que queimam, e vice-versa. Cada família jura que salva o bosque do jeito certo — e que a outra o condena.' },
+  { id: 'l19', title: 'A Podridão que Anda', text: 'O segredo de Cinzafolha: a podridão se espalha mais rápido que qualquer serra ou forno. Serrar e queimar não competem — só juntos alcançam a Corrupção. Brigando, os dois perdem para ela.' },
+  { id: 'l20', title: 'A Rixa da Encosta', text: 'No Degelo, os Cairn da trilha e os Velo do rebanho disputam a mesma encosta: pedras sagradas de um lado, pasto do outro, e um só caminho estreito no gelo.' },
+  { id: 'l21', title: 'Por Que o Rebanho Foge', text: 'A verdade do Degelo: o rebanho não derruba os cairns por capricho — foge da podridão que sobe do Coração, o mesmo degelo corrompido que afrouxa as pedras. Bicho e marco caem pela mesma causa.' },
 ];
 
 /**

@@ -681,7 +681,8 @@ export class SettlementManager {
       w.fp(hut.position.x, hut.position.z, 5, 5, `palafita ${x},${z}`);
     }
     // Portas entráveis (ADR 0097, E7): cada palafita vira um serviço.
-    const PAL_THEMES = ['market', 'tavern', 'leader', 'home', 'home'];
+    // Rixa do Vau (ADR 0107): duas famílias rivais + mercado + taverna.
+    const PAL_THEMES = ['vau_arpo', 'vau_couro', 'tavern', 'market', 'home'];
     huts.forEach(([x, z, ry], hi) => {
       const px = alignAxis(x, 5), pz = alignAxis(z, 5);
       const dp = this._spun(px, pz, ry, 0, 3.0); // à frente da escada
@@ -833,7 +834,8 @@ export class SettlementManager {
     }
     this._flagAt(w, 1.8, -16.2, 0xc8a06a); // estandarte no portão sul
     // Portas entráveis (ADR 0097, E7): as cabanas viram serviços da vila.
-    const LEN_THEMES = ['market', 'tavern', 'leader'];
+    // Rixa de Cinzafolha (ADR 0107): serraria × forno + taverna (mercador é ao ar livre).
+    const LEN_THEMES = ['cinza_serra', 'cinza_forno', 'tavern'];
     cabins.forEach(([x, z, ry], ci) => {
       const swap = Math.abs(Math.round(ry / (Math.PI / 2))) % 2 === 1;
       const px = alignAxis(x, swap ? 4 : 6), pz = alignAxis(z, swap ? 6 : 4);
@@ -984,7 +986,8 @@ export class SettlementManager {
     w.fp(-5, -1, 1.9, 1.9, 'lenha');
     w.fp(3, -6, 1, 1, 'barril');
     // Portas entráveis (ADR 0097, E7): as tendas viram serviços do abrigo.
-    const DEG_THEMES = ['market', 'tavern', 'leader', 'home', 'home'];
+    // Rixa do Degelo (ADR 0107): trilha × rebanho + mercado + taverna.
+    const DEG_THEMES = ['degelo_trilha', 'degelo_pasto', 'tavern', 'market', 'home'];
     tents.forEach(([x, z], ti) => {
       const a = snap90(Math.atan2(-x, -z)); // entrada voltada ao centro
       const dx = x + Math.sin(a) * 2.9, dz = z + Math.cos(a) * 2.9;
