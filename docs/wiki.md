@@ -66,6 +66,9 @@ jogador (`Game.regionLevel`), com um leve acento por bioma — dá para explorar
 qualquer região em qualquer ordem. Os santuários da campanha ficam **dentro das
 regiões** das suas vilas (trilha opcional pelo mundo aberto).
 
+<p align="center"><img src="img/mundo-mapa.jpg" width="420" alt="Mapa-mundi orgânico" /></p>
+<sub>Mapa-mundi: regiões orgânicas por bioma (não-circulares) com as 4 vilas, santuários e o Coração.</sub>
+
 Cada bioma tem: tabela de spawn + packs (ADR 0045), **hazard** ambiental
 (§10), **fauna** (§10), clima dia/noite (ADR 0049), purificação visível ao
 avançar a campanha (ADR 0044) e uma **masmorra** temática (§11).
@@ -81,6 +84,9 @@ regional (estoque próprio), moradores com falas e **portas entráveis** (§5).
 | Vau das Palafitas | `palafitas` | Pântano | palafita sobre estacas | píer de pesca + lagoa |
 | Cinzafolha | `lenhadores` | Bosque Cinza | cabana de tronco | paliçada + torre de vigia + serraria |
 | Abrigo do Degelo | `degelo` | Picos | tenda de pele | cairns + muro de gelo + chama azul |
+
+<p align="center"><img src="img/vila-clareira.jpg" width="480" alt="Círculo do Carvalho" /></p>
+<sub>Círculo do Carvalho: a vila cresce em anel ao redor da Carvalho-Mãe, com via em anel e espigões (ADR 0111).</sub>
 
 **Moradores** (ADR 0081): modelo voxel variado por hash (túnica, capuz, cabelo,
 avental, mochila, **tom de pele e barba** — ADR 0103). Anciãos usam capa/cajado
@@ -139,6 +145,15 @@ muda velocidade, cadência e o ataque básico. Modelos voxel em
 | Urso (`bear`) | 6 | 0.8 | 0.70 | patada | quadrúpede robusto: orelhas redondas |
 | Corvo (`raven`) | 7 | **1.8** | 0.40 | bicada | ave: asas, bico |
 | Sapo (`frog`) | 8 | 1.1 | 0.55 | língua | anfíbio agachado: olhos saltados |
+
+<p align="center">
+  <img src="img/forma-druida.png" width="150" alt="Druida" />
+  <img src="img/forma-lobo.png" width="150" alt="Lobo" />
+  <img src="img/forma-urso.png" width="150" alt="Urso" />
+  <img src="img/forma-corvo.png" width="150" alt="Corvo" />
+  <img src="img/forma-sapo.png" width="150" alt="Sapo" />
+</p>
+<sub>Modelos voxel do Druida e das 4 formas ancestrais (vitrine `showcase.html`).</sub>
 
 **Critério de desbloqueio** (ADR 0050 · `src/gameplay/story.ts`): despertar o
 **Santuário** da forma, no bioma correspondente, no passo certo da campanha —
@@ -211,6 +226,15 @@ Inventário 5×10; **paperdoll anatômico**; ícones ilustrados (ADR 0090).
 | `bogbrute` | Atoladiço | melee | **veneno** | Pântano |
 | `ashwraith` | Espectro de Cinza | melee veloz | **atordoa** | Bosque Cinza |
 | `frostfang` | Presa-Gélida | melee matilha | **congela** | Picos |
+
+<p align="center">
+  <img src="img/inimigo-rotboar.png" width="150" alt="Javali Apodrecido" />
+  <img src="img/inimigo-shadecrow.png" width="150" alt="Corvo-Sombra" />
+  <img src="img/inimigo-husk.png" width="150" alt="Casca Oca" />
+  <img src="img/chefe-rotlord.png" width="150" alt="O Apodrecedor" />
+  <img src="img/chefe-mirelord.png" width="150" alt="Senhor do Lodo" />
+</p>
+<sub>Alguns inimigos e dois chefes (O Apodrecedor e o Senhor do Lodo) — silhuetas próprias.</sub>
 
 **Elites** (ADR 0045): qualquer comum pode ser promovido — Veloz, Pétreo,
 Volátil (explode), Sanguessuga (leech). Corpo maior + gema + recompensa maior.
