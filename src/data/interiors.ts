@@ -98,6 +98,15 @@ export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
     floor: 0x3a3226, wall: 0x4a4030, accent: 0xffd27a, robe: 0xb8863f, trim: 0x5a4633,
     lines: ['Tudo que a estrada pede, tenho aqui. Dê uma olhada.'],
   },
+  garden: {
+    id: 'garden', name: '🌱 Casa do Jardineiro', npc: 'Fiora, a Jardineira', role: 'jardineiro',
+    service: 'shop', shopBias: null, shopKind: 'garden',
+    floor: 0x2e3a24, wall: 0x3f4a30, accent: 0x9fe06a, robe: 0x5a8f3f, trim: 0xcfe0a0,
+    lines: [
+      'Semente boa vira horta cheia. Leve das minhas.',
+      'Erva, cenoura, cogumelo — planta no canteiro e volta pra colher.',
+    ],
+  },
   home: {
     id: 'home', name: '🏠 Moradia', npc: 'Morador', role: 'moradia',
     service: 'talk',

@@ -41,12 +41,25 @@ describe('SettlementManager — vilas 2–4 vivas (E7)', () => {
     new SettlementManager(g);
     const doors = [...g.world.query(C.Transform, C.Interactable)]
       .filter(([, , i]: any) => i.kind === 'house');
-    // Clareira (9) + palafitas (5) + lenhadores (3) + degelo (5) = 22.
+    // Clareira (9) + palafitas (5) + lenhadores (4) + degelo (5) = 23.
     expect(doors.length).toBeGreaterThanOrEqual(20);
     const themes = new Set(doors.map(([, , i]: any) => i.interiorTheme));
     expect(themes.has('market')).toBe(true);
     expect(themes.has('tavern')).toBe(true);
     expect(themes.has('leader')).toBe(true);
+  });
+
+  it('todas as 4 vilas têm uma casa do jardineiro (garden) que vende sementes (E21.3)', () => {
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    const gardenDoors = [...g.world.query(C.Transform, C.Interactable)]
+      .filter(([, , i]: any) => i.kind === 'house' && i.interiorTheme === 'garden');
+    // Uma casa de jardineiro por vila (4 vilas).
+    expect(gardenDoors.length).toBe(4);
+    // O tema garden é uma loja de categoria 'garden'.
+    expect(INTERIOR_THEMES.garden.service).toBe('shop');
+    expect(INTERIOR_THEMES.garden.shopKind).toBe('garden');
+    void sm;
   });
 
   it('mercado geral é loja sem viés (vende de tudo)', () => {
