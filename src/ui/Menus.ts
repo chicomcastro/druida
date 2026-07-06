@@ -9,7 +9,7 @@ import { BOONS, chooseBoon } from '../gameplay/boons.js';
 import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
 import { SKILL_TREES, canLearn, learn, respec, nodeText, ensureSkillState } from '../gameplay/skills.js';
 import { ACTIVE_SKILL_TREE, canUnlock, unlock, isUnlocked, respecActive, ensureActiveSkills } from '../gameplay/skillTree.js';
-import { ensureHotbar, assignSkill, clearSlot, autoFillHotbar, skillSlots } from '../gameplay/hotbar.js';
+import { ensureHotbar, assignSkill, assignForm, clearSlot, autoFillHotbar, sameEntry } from '../gameplay/hotbar.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -338,20 +338,20 @@ export class Menus {
 
     // Árvore de SKILLS ATIVAS (E17, ADR 0124): cada nó libera uma habilidade.
     ensureActiveSkills(this.game);
-    const hbSlots = ensureHotbar(this.game); // 9 slots (E17.5)
-    // As formas ocupam a faixa a partir do índice 4; skills usam o resto.
-    const formCount = form?.list?.length ?? 1;
-    const assignable = skillSlots(formCount);
+    const hbSlots = ensureHotbar(this.game); // 9 entradas tipadas (E18)
+    const ALL_SLOTS = [0, 1, 2, 3, 4, 5, 6, 7, 8]; // hotbar livre: qualquer slot
+    // Botões de slot 1–9 para uma entrada; destaca o slot atual.
+    const slotButtons = (entry: any) => `<div class="sk-slots">${ALL_SLOTS.map((i) =>
+      `<button class="slot${sameEntry(hbSlots[i], entry) ? ' on' : ''}" data-assign='${JSON.stringify(entry)}' data-slot="${i}" title="Atribuir à tecla ${i + 1}">${i + 1}</button>`,
+    ).join('')}</div>`;
     const branches = Object.entries(ACTIVE_SKILL_TREE).map(([branch, nodes]) => {
       const rows = (nodes as any[]).map((node) => {
         const has = isUnlocked(this.game, node.id);
         const unlockable = canUnlock(this.game, node.id);
         const reqLocked = node.req && !isUnlocked(this.game, node.req);
         // Atribuição à hotbar: só para skills já liberadas. Um botão por slot
-        // livre de forma, destacando o atual; clicar de novo desatribui.
-        const slots = has ? `<div class="sk-slots">${assignable.map((i) =>
-          `<button class="slot${hbSlots[i] === node.ability ? ' on' : ''}" data-assign="${node.ability}" data-slot="${i}" title="Atribuir à tecla ${i + 1}">${i + 1}</button>`,
-        ).join('')}</div>` : '';
+        // (1–9), destacando o atual; clicar de novo desatribui.
+        const slots = has ? slotButtons({ k: 'skill', id: node.ability }) : '';
         return `<div class="sk-node${reqLocked && !has ? ' locked' : ''}">
           <span class="ico">${SK_BRANCH_ICON[branch] ?? '✦'}</span>
           <div class="body">
@@ -365,14 +365,27 @@ export class Menus {
       return `<div class="sk-track"><h3>${SK_BRANCH_ICON[branch] ?? '✦'} ${SK_BRANCH_NAME[branch] ?? branch}</h3>${rows}</div>`;
     }).join('');
 
+    // Formas na hotbar (E18): cada forma desbloqueada pode ir em qualquer slot.
+    const FORM_ICON = { humanoid: '🧙', wolf: '🐺', bear: '🐻', raven: '🐦‍⬛', frog: '🐸' };
+    const formRows = (form?.list ?? []).map((fm) => `<div class="sk-node">
+      <span class="ico">${FORM_ICON[fm] ?? '🐾'}</span>
+      <div class="body">
+        <div class="nm">${FORMS[fm]?.name ?? fm}</div>
+        ${slotButtons({ k: 'form', id: fm })}
+      </div>
+    </div>`).join('');
+    const formsSection = formRows
+      ? `<div class="sk-track"><h3>🐾 Formas</h3>${formRows}</div>` : '';
+
     this.skills.innerHTML = `<div class="panel" style="min-width:min(760px,92vw)">
       <span class="close" id="sk-close">✕ (K)</span>
       <h2>🌟 Talentos</h2>
       <p class="sub">Pontos disponíveis: <b>${pr.skillPoints ?? 0}</b> · trilhas destacadas seguem sua arma/forma ativa. Especialize usando cada arma e forma.</p>
       <h3 style="margin:6px 0 4px;color:#9fe06a">✦ Habilidades ativas</h3>
-      <p class="sub">Libere magias e atribua a qualquer tecla livre da hotbar (<b>1–9</b>). As formas ocupam as teclas logo após as skills; o resto é seu. Cada ramo tem seu efeito visual.</p>
+      <p class="sub">Libere magias e atribua a <b>qualquer</b> tecla da hotbar (1–9). Skills, formas, poções e equipamentos convivem na mesma barra — monte do seu jeito. Cada ramo tem seu efeito visual.</p>
       <div class="sk-tracks">${branches}</div>
       <button class="btn" id="sk-respec-active" style="text-align:center;margin:8px 0 16px">↺ Redistribuir habilidades (grátis)</button>
+      ${formsSection ? `<h3 style="margin:6px 0 4px;color:#cfe6c0">🐾 Formas na hotbar</h3><div class="sk-tracks">${formsSection}</div>` : ''}
       <h3 style="margin:6px 0 4px;color:#ffd56a">⚔️ Passivas por arma/forma</h3>
       <div class="sk-tracks">${tracks}</div>
       <button class="btn" id="sk-respec" style="text-align:center;margin-top:14px">↺ Redistribuir passivas (grátis)</button>
@@ -386,17 +399,18 @@ export class Menus {
     });
     this.skills.querySelectorAll('.buy[data-skill]').forEach((el: any) => {
       el.onclick = () => {
-        // Ao liberar, auto-equipa no 1º slot livre de forma — conveniência.
-        if (unlock(this.game, el.dataset.skill)) { autoFillHotbar(this.game, assignable); this.refreshSkills(); }
+        // Ao liberar, auto-equipa no 1º slot vago — conveniência.
+        if (unlock(this.game, el.dataset.skill)) { autoFillHotbar(this.game); this.refreshSkills(); }
       };
     });
     this.skills.querySelectorAll('.slot[data-assign]').forEach((el: any) => {
       el.onclick = () => {
         const slot = +el.dataset.slot;
-        const ab = el.dataset.assign;
+        const entry = JSON.parse(el.dataset.assign);
         const hb = ensureHotbar(this.game);
-        if (hb[slot] === ab) clearSlot(this.game, slot); // clicar de novo desatribui
-        else assignSkill(this.game, slot, ab);
+        if (sameEntry(hb[slot], entry)) clearSlot(this.game, slot); // clicar de novo desatribui
+        else if (entry.k === 'form') assignForm(this.game, slot, entry.id);
+        else assignSkill(this.game, slot, entry.id);
         this.refreshSkills();
       };
     });

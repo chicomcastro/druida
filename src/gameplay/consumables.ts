@@ -56,6 +56,17 @@ export function useHotbarSlot(game, id, slot: number): boolean {
   return true;
 }
 
+/** Usa 1 consumível da mochila pelo **nome** do grupo (hotbar livre, E18). */
+export function useConsumableNamed(game, id, name: string): boolean {
+  const inv = game.world.get(id, C.Inventory);
+  const item = (inv?.items ?? []).find((it) => it?.type === 'consumable' && it.name === name);
+  if (!item) return false;
+  if (!useConsumable(game, id, item)) return false;
+  const i = inv.items.indexOf(item);
+  if (i >= 0) inv.items.splice(i, 1);
+  return true;
+}
+
 /** Aplica o efeito de um consumível ao jogador. Retorna true se consumido. */
 export function useConsumable(game, id, item: ConsumableItem): boolean {
   if (!item || item.type !== 'consumable') return false;

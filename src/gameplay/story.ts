@@ -1,6 +1,7 @@
 import { C } from '../core/ecs/components.js';
 import { dist } from '../utils/math.js';
 import { FORM_ORDER } from './forms.js';
+import { seedForms } from './hotbar.js';
 
 /**
  * Campanha do Druida: uma sequência de passos (quests) que guia o jogador
@@ -148,6 +149,8 @@ export class StoryManager {
         f.list = FORM_ORDER.filter((k) => f.list.includes(k) || k === form);
       }
     }
+    // Coloca a nova forma na hotbar livre (E18), no 1º slot vago.
+    seedForms(this.game, [form]);
     this.game.emit('formUnlocked', { form });
   }
 

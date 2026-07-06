@@ -56,6 +56,7 @@ import { bindGameEvents } from './gameEvents.js';
 import { spawnEnemyByKey as _spawnEnemyByKey, spawnBossFight as _spawnBossFight, spawnMiniBoss as _spawnMiniBoss, spawnBossByKey as _spawnBossByKey, scaleEnemy, registerEliteEffects } from '../gameplay/spawn.js';
 import { partyEssence as _partyEssence, spendEssence as _spendEssence, giveItem as _giveItem, rerollShop as _rerollShop, setActiveShop as _setActiveShop } from '../gameplay/economy.js';
 import { useConsumable as _useConsumable, useHotbarSlot as _useHotbarSlot } from '../gameplay/consumables.js';
+import { seedForms } from '../gameplay/hotbar.js';
 import { QuestManager } from '../gameplay/quests.js';
 import { SideQuestManager } from '../gameplay/sidequests.js';
 import { registerBoonHooks } from '../gameplay/boons.js';
@@ -205,6 +206,9 @@ export class Game {
     const loadout = this.world.get(id, C.Loadout);
     const form = this.world.get(id, C.Form);
     form.list = ['humanoid', 'wolf']; // começa com Lobo desbloqueado
+    // Semeia as formas na hotbar livre (E18) — teclas 5, 6 por padrão, mas
+    // remapeáveis. Só o P1 monta a barra do grupo (game.progress).
+    if (index === 0) seedForms(this, form.list);
     // Equipamento inicial: arma corpo-a-corpo (foco do jogo).
     this.equip(id, generateItem(1, 'weapon', 100 + index, null, 'melee'));
     this.equip(id, generateItem(1, 'artifact', 200 + index), 0);

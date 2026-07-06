@@ -2,7 +2,7 @@ import { C } from '../core/ecs/components.js';
 import { FORMS } from '../gameplay/forms.js';
 import { xpForLevel } from '../gameplay/progression.js';
 import { isTouchDevice } from './TouchControls.js';
-import { ensureHotbar, FORM_SLOT_START as HB_FORM_START } from '../gameplay/hotbar.js';
+import { ensureHotbar } from '../gameplay/hotbar.js';
 import { abilityBranch } from '../gameplay/skillTree.js';
 
 /**
@@ -69,6 +69,8 @@ const css = `
 #hud-hotbar .hb{width:44px;height:44px;border-radius:9px;border:2px solid rgba(255,255,255,.16);background:linear-gradient(160deg,rgba(20,32,18,.9),rgba(8,14,8,.9));position:relative;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4)}
 #hud-hotbar .hb.empty{opacity:.4}
 #hud-hotbar .hb.form{border-color:rgba(159,224,106,.28)}
+#hud-hotbar .hb.potion{border-color:rgba(255,120,150,.28)}
+#hud-hotbar .hb.equip{border-color:rgba(255,213,106,.3)}
 #hud-hotbar .hb.active{border-color:#ffd56a;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 0 12px rgba(255,213,106,.5)}
 #hud-hotbar .hb .ic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.8))}
 #hud-hotbar .hb .k{position:absolute;top:1px;left:3px;font-size:9px;font-weight:800;color:#ffd56a;text-shadow:0 1px 2px #000;z-index:2}
@@ -98,6 +100,18 @@ const css = `
 
 const FORM_ICON = { humanoid: '🧙', wolf: '🐺', bear: '🐻', raven: '🐦‍⬛', frog: '🐸' };
 const BRANCH_ICON = { natureza: '🌿', chama: '🔥', gelo: '❄️', tempestade: '🌩️', feras: '🐺', vida: '💚' };
+
+/** Ícone de um equipamento do hotbar (por uid): ⚔️ arma, 🛡️ armadura (E18). */
+function EQUIP_ICON(inv, loadout, uid) {
+  const pool = [
+    ...(inv?.items ?? []),
+    loadout?.weapon,
+    ...Object.values(loadout?.armor ?? {}),
+  ].filter(Boolean);
+  const it = pool.find((i) => i?.uid === uid);
+  if (!it) return '📦';
+  return it.type === 'weapon' ? '⚔️' : it.type === 'armor' ? '🛡️' : '📦';
+}
 
 export class Hud {
   game: any;
@@ -198,10 +212,10 @@ export class Hud {
   }
 
   /**
-   * Hotbar estilo Minecraft (E17.5). 9 células unificadas: cada slot é uma
-   * FORMA (faixa contígua a partir de FORM_SLOT_START, na ordem de form.list) ou
-   * uma HABILIDADE atribuída — o resto fica vazio. Reconstrói o DOM só quando o
-   * layout muda; cooldown e destaque da forma atual são atualizados por frame.
+   * Hotbar livre (E18). 9 células, cada uma uma entrada tipada: skill (ícone do
+   * ramo + cooldown), forma (ícone + destaque da atual), poção (🧪 + contagem) ou
+   * equipamento (⚔️/🛡️). Reconstrói o DOM só quando o layout muda; cooldown,
+   * forma ativa e contagem de poção são atualizados por frame.
    */
   _updateHotbar() {
     const { game } = this;
@@ -211,47 +225,52 @@ export class Hud {
     }
     const hb = ensureHotbar(game);
     const form = pid != null ? game.world.get(pid, C.Form) : null;
-    const forms = form?.list ?? ['humanoid'];
+    const inv = pid != null ? game.world.get(pid, C.Inventory) : null;
+    const loadout = pid != null ? game.world.get(pid, C.Loadout) : null;
 
-    // Um slot é de forma se cai na faixa das formas desbloqueadas.
-    const formOf = (s) => (s >= HB_FORM_START && s - HB_FORM_START < forms.length
-      ? forms[s - HB_FORM_START] : null);
-
-    // Assinatura de layout: para cada slot, forma ou skill.
-    const sig = Array.from({ length: 9 }, (_, s) => formOf(s) ? `f:${formOf(s)}` : `s:${hb[s] ?? ''}`).join('|');
+    // Assinatura de layout: tipo:id de cada slot.
+    const sig = hb.map((e) => (e ? `${e.k}:${e.id}` : '-')).join('|');
     if (sig !== this._hotbarKey) {
       this._hotbarKey = sig;
-      this.hotbarEl.innerHTML = Array.from({ length: 9 }, (_, s) => {
-        const fm = formOf(s);
-        if (fm) {
-          return `<div class="hb form" data-form="${fm}"><span class="k">${s + 1}</span>`
-            + `<span class="ic">${FORM_ICON[fm] ?? '🧙'}</span></div>`;
+      this.hotbarEl.innerHTML = hb.map((e, s) => {
+        const key = `<span class="k">${s + 1}</span>`;
+        if (!e) return `<div class="hb empty">${key}</div>`;
+        if (e.k === 'skill') {
+          const icon = BRANCH_ICON[abilityBranch(String(e.id)) ?? ''] ?? '✦';
+          return `<div class="hb skill">${key}<span class="ic">${icon}</span><div class="cd"></div></div>`;
         }
-        const ab = hb[s];
-        const icon = ab ? (BRANCH_ICON[abilityBranch(ab) ?? ''] ?? '✦') : '';
-        const empty = ab ? '' : ' empty';
-        return `<div class="hb skill${empty}" data-skill="${s}"><span class="k">${s + 1}</span>`
-          + `<span class="ic">${icon}</span><div class="cd"></div></div>`;
+        if (e.k === 'form') {
+          return `<div class="hb form" data-form="${e.id}">${key}<span class="ic">${FORM_ICON[e.id] ?? '🧙'}</span></div>`;
+        }
+        if (e.k === 'potion') {
+          return `<div class="hb potion">${key}<span class="ic">🧪</span><span class="n"></span></div>`;
+        }
+        // equip
+        const eqIcon = EQUIP_ICON(inv, loadout, e.id);
+        return `<div class="hb equip">${key}<span class="ic">${eqIcon}</span></div>`;
       }).join('');
     }
 
-    // Atualização por frame: cooldown das skills + forma ativa destacada.
+    // Atualização por frame: cooldown, forma ativa, contagem de poção.
     const cds = pid != null ? game.world.get(pid, C.Cooldowns) : null;
     const cells = this.hotbarEl.children;
     for (let s = 0; s < 9; s++) {
+      const e = hb[s];
       const cell = cells[s];
-      if (!cell) continue;
-      const fm = formOf(s);
-      if (fm) {
-        cell.classList.toggle('active', fm === form?.current);
-        continue;
+      if (!cell || !e) continue;
+      if (e.k === 'skill') {
+        const cd = cell.querySelector('.cd');
+        const remain = cds ? (cds.map[e.id] ?? 0) : 0;
+        const total = game.abilityCooldown(String(e.id)) || 1;
+        if (cd) cd.style.transform = `scaleY(${Math.max(0, Math.min(1, remain / total))})`;
+      } else if (e.k === 'form') {
+        cell.classList.toggle('active', e.id === form?.current);
+      } else if (e.k === 'potion') {
+        const n = cell.querySelector('.n');
+        const count = inv ? ((inv.items ?? []).filter((it) => it?.type === 'consumable' && it.name === e.id).length) : 0;
+        if (n) n.textContent = count;
+        cell.classList.toggle('empty', count === 0);
       }
-      const ab = hb[s];
-      const cd = cell.querySelector('.cd');
-      if (!cd) continue;
-      const remain = ab && cds ? (cds.map[ab] ?? 0) : 0;
-      const total = ab ? (game.abilityCooldown(ab) || 1) : 1;
-      cd.style.transform = `scaleY(${Math.max(0, Math.min(1, remain / total))})`;
     }
   }
 
