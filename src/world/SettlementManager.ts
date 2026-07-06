@@ -523,9 +523,10 @@ export class SettlementManager {
       const rx = Math.abs(dx) > RING ? Math.sign(dx) * RING : dx;
       const rz = Math.abs(dz) > RING ? Math.sign(dz) * RING : dz;
       spurs.push([dx, dz, rx, dz], [rx, dz, rx, rz]);
-      // Poste ao LADO da porta (offset lateral p/ não cair na laje do espigão).
+      // Poste ao LADO da porta (offset lateral p/ não cair na laje), com a luz
+      // voltada para a porta/caminho (ADR 0116).
       const lp = this._spun(hg.position.x, hg.position.z, ry, 1.7, (o.d ?? 4) / 2 + 0.7);
-      lampSpots.push([lp.x, lp.z]);
+      lampSpots.push([lp.x, lp.z, dpos.x, dpos.z]);
       if (i % 2 === 0) {
         const c = this._spun(hg.position.x, hg.position.z, ry, (o.w ?? 6) / 2 - 0.55, -1.0);
         this._smokeAt(w, c.x, 0.35 + (o.h ?? 3.0) + 2.3, c.z); // topo da chaminé
@@ -570,8 +571,12 @@ export class SettlementManager {
     this._barrel(w, -5, -4);
     this._barrel(w, -5.8, -4.3);
     this._woodpile(w, 5, 3, Math.PI / 2);
-    this._clothesline(w, 16, 6, 0x6cba5a);
+    this._clothesline(w, 17, 7, 0x6cba5a); // no vão fora do anexo da casa 1 (ADR 0116)
     this._clothesline(w, -16, 6, 0xb89b5a);
+    // Varais entram no validador de pegadas (ADR 0085/0116): postes largos não
+    // podem invadir casas/anexos — foi assim que um deles colava na casa 1.
+    w.fp(17, 7, 2.8, 0.9, 'varal leste');
+    w.fp(-16, 6, 2.8, 0.9, 'varal oeste');
     // Menires gêmeos no portão sul (limiar entre a vila e o mundo selvagem).
     for (const mx of [-3, 3]) {
       const menhir = mesh(new THREE.BoxGeometry(1, 3.2, 1), 0x6a6a72, { tex: 'stone', trx: 1, try: 3 });
@@ -579,12 +584,16 @@ export class SettlementManager {
       w.add(menhir);
       w.collider(mx, -24, 0.8);
     }
-    // Lanternas: uma por porta (acumuladas no laço acima), + poste no fim do
-    // espigão do mercado e ao lado do portão sul (ADR 0115). Ladeiam os
-    // caminhos, sem cair sobre as lajes.
-    lampSpots.push([14.5, 13]); // fim do espigão do mercado (à frente da banca)
-    lampSpots.push([2.2, -20]); // portão sul
-    for (const [x, z] of lampSpots) this._lantern(w, x, z, 0xd8ffa0);
+    // Lanternas: uma por porta (acumuladas no laço) + postes nas ARTÉRIAS
+    // principais (via em anel e corredor sul) e no mercado, todas com a luz
+    // voltada para o caminho (ADR 0116). [x, z, faceX, faceZ].
+    for (const [cx, cz] of [[8.5, 8.5], [-8.5, 8.5], [8.5, -8.5], [-8.5, -8.5]]) {
+      lampSpots.push([cx, cz, 0, 0]); // quinas do anel, luz para o centro da praça
+    }
+    lampSpots.push([2.2, -13, 0, -13], [-2.2, -17, 0, -17]); // flanqueando o corredor sul
+    lampSpots.push([14.5, 13, 12, 15]); // fim do espigão do mercado, luz p/ a banca
+    lampSpots.push([2.2, -20.5, 0, -20.5]); // portão sul
+    for (const [x, z, fx, fz] of lampSpots) this._lantern(w, x, z, 0xd8ffa0, fx, fz);
   }
 
   /** Vau das Palafitas: lagoa, casas sobre estacas, passarelas e juncos. */
@@ -1119,22 +1128,28 @@ export class SettlementManager {
 
   // --- Detalhes com luz/brilho ----------------------------------------------
 
-  /** Poste de lanterna em escala MCD (ADR 0075): mastro quadrado alto,
-   * braço e caixa de lanterna pendurada que pulsa. */
-  _lantern(w, x, z, color) {
+  /** Poste de lanterna em escala MCD (ADR 0075): mastro quadrado alto, braço e
+   * caixa de lanterna pendurada que pulsa. O braço/luz apontam para (faceX,faceZ)
+   * — normalmente o caminho (ADR 0116); sem alvo, aponta para +x (retrocompat). */
+  _lantern(w, x, z, color, faceX = x + 1, faceZ = z) {
+    // Ângulo tal que o offset local +x caia na direção do alvo (rotation.y).
+    const a = Math.atan2(-(faceZ - z), (faceX - x));
+    const ca = Math.cos(a), sa = Math.sin(a);
+    const off = (d) => ({ x: x + ca * d, z: z - sa * d }); // local (d,0,0) sob rotation.y=a
     const pole = mesh(new THREE.BoxGeometry(0.18, 3.1, 0.18), 0x3a2c20, { shadow: false, tex: 'log', trx: 1, try: 3 });
     pole.position.set(x, 1.55, z);
     const arm = mesh(new THREE.BoxGeometry(0.72, 0.14, 0.14), 0x3a2c20, { shadow: false });
-    arm.position.set(x + 0.3, 3.0, z);
+    const ap = off(0.3); arm.position.set(ap.x, 3.0, ap.z); arm.rotation.y = a;
+    const cp = off(0.55);
     const cap = mesh(new THREE.BoxGeometry(0.4, 0.1, 0.4), 0x2c211a, { shadow: false });
-    cap.position.set(x + 0.55, 2.86, z);
+    cap.position.set(cp.x, 2.86, cp.z);
     const lantern = mesh(new THREE.BoxGeometry(0.3, 0.38, 0.3), color, { emissive: color, emissiveIntensity: 1.0, rough: 0.4 });
-    lantern.position.set(x + 0.55, 2.6, z);
+    lantern.position.set(cp.x, 2.6, cp.z);
     w.add(pole, arm, cap, lantern);
     w.collider(x, z, 0.25); // mastro sólido (ADR 0113)
     this._flames.push({ mesh: lantern, base: 1.0, amp: 0.35, speed: 3.1, seed: x * 7 + z });
-    // Lanternas também entram no pool (ADR 0065): luz firme e curta.
-    const p = w.world(x + 0.55, z);
+    // Lanternas também entram no pool (ADR 0065): luz firme e curta, na caixa.
+    const p = w.world(cp.x, cp.z);
     this.game.lightPool?.register(p.x, 2.6, p.z, color, 8, 0.2);
   }
 
