@@ -153,5 +153,5 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E13 Missões/campanha | 🚧 planejado (descrições melhores) | — |
 | E14 Mapa-mundi das vilas | 🚧 planejado (legibilidade + localização) | — |
 | E15 Vilas evoluídas | 🚧 planejado (espaçamento, ruas, Clareira em torno da árvore) | — |
-| E16 Mundo orgânico + progressão aberta | 🚧 E16.1 mapa orgânico entregue (ADR 0109); E16.2 level-scaling + reposicionar marcos a seguir | — |
+| E16 Mundo orgânico + progressão aberta | ✅ entregue (E16.1 mapa orgânico — ADR 0109; E16.2 level-scaling + marcos nas regiões + Clareira maior/vilas ao interior — ADR 0110) | — |
 | E17 Hotbar 1–9 + skills | 🚧 planejado (redesenhar skill tree em skills ativas, depois hotbar) | — |

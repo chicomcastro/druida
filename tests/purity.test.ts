@@ -98,7 +98,7 @@ describe('mundo vivo — vento e pinheiros (ADR 0055)', () => {
     const g = makeGame();
     const wm = new WorldManager(g);
     g.worldManager = wm;
-    g.groupCenter = { x: 0, z: 190 }; // anel dos picos
+    g.groupCenter = { x: 120, z: 150 }; // região dos Picos (Abrigo do Degelo)
     for (let i = 0; i < 300; i++) wm.update(0.1);
     const pines = wm.props.filter((p) => p.type === 'pine');
     expect(pines.length).toBeGreaterThan(0);

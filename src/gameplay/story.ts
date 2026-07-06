@@ -12,14 +12,16 @@ import { FORM_ORDER } from './forms.js';
  */
 
 // Posições-chave no eixo -Z, cada uma dentro do anel do bioma correspondente.
+// Marcos da campanha posicionados DENTRO das regiões orgânicas de cada bioma
+// (ADR 0110): cada santuário fica na área da sua vila, não mais numa coluna −Z.
 export const LANDMARKS = {
   npc: { x: 0, z: -14 },
   sanctuary_wolf: { x: 0, z: -40, form: 'wolf', biome: 'Clareira Viva' },
-  sanctuary_bear: { x: 0, z: -82, form: 'bear', biome: 'Pântano' },
-  miniboss: { x: 26, z: -74 },
-  sanctuary_raven: { x: 0, z: -138, form: 'raven', biome: 'Bosque Cinza' },
-  sanctuary_frog: { x: 0, z: -192, form: 'frog', biome: 'Picos Gélidos' },
-  boss: { x: 0, z: -245 },
+  sanctuary_bear: { x: 65, z: -62, form: 'bear', biome: 'Pântano' },         // região do Vau
+  miniboss: { x: 78, z: -52 },                                              // Pântano
+  sanctuary_raven: { x: -130, z: 33, form: 'raven', biome: 'Bosque Cinza' }, // região de Cinzafolha
+  sanctuary_frog: { x: 118, z: 140, form: 'frog', biome: 'Picos Gélidos' },  // região do Degelo
+  boss: { x: 0, z: -245 },                                                  // mancha do Coração
 };
 
 const STEPS = [
