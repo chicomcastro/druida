@@ -10,6 +10,9 @@ import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
 import { SKILL_TREES, canLearn, learn, respec, nodeText, ensureSkillState } from '../gameplay/skills.js';
 import { ACTIVE_SKILL_TREE, canUnlock, unlock, isUnlocked, respecActive, ensureActiveSkills } from '../gameplay/skillTree.js';
 import { ensureHotbar, assignSkill, assignForm, assignPotion, assignEquip, clearSlot, autoFillHotbar, sameEntry, pruneHotbar } from '../gameplay/hotbar.js';
+import { RECIPES, canCook, cook, craftLevel, ensureCraft, craftXpForLevel } from '../gameplay/recipes.js';
+import { INGREDIENTS, ingredientCount, pouchList } from '../gameplay/ingredients.js';
+import { FOOD_BASES } from '../gameplay/consumables.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -87,6 +90,11 @@ const css = `
 .sk-slots .slot{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.16);background:rgba(20,32,18,.7);color:#cfe6c0;font-size:11px;font-weight:800;cursor:pointer;line-height:1;padding:0}
 .sk-slots .slot:hover{border-color:#9fe06a}
 .sk-slots .slot.on{border-color:#ffd56a;background:linear-gradient(160deg,#3a3216,#241d0d);color:#ffd56a;box-shadow:0 0 8px rgba(255,213,106,.35)}
+.ings{display:flex;flex-wrap:wrap;gap:6px}
+.ing{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid rgba(255,255,255,.16);background:rgba(20,32,18,.6)}
+.ing.ok{color:#cfe6c0}
+.ing.no{color:#ff9a9a;border-color:rgba(255,120,120,.3)}
+.sk-node .ds .ing{margin-right:4px}
 #tip{position:fixed;z-index:60;pointer-events:none;display:none;max-width:240px;background:linear-gradient(165deg,#152315,#0a130c);border:1px solid rgba(159,224,106,.4);border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.45;box-shadow:0 12px 32px rgba(0,0,0,.6);color:#eaf3e6;font-family:system-ui,sans-serif}
 #tip b{font-size:13px}
 #tip .up{color:#8affa0}#tip .down{color:#ff8a8a}
@@ -107,7 +115,7 @@ for (const nodes of Object.values(SKILL_TREES)) for (const n of nodes) ALL_NODE_
 export class Menus {
   game: any;
   main: any; pause: any; inv: any;
-  shop: any; stash: any; controls: any; skills: any; tip: any;
+  shop: any; stash: any; controls: any; skills: any; kitchen: any; tip: any;
   _rebinding: string | null;
   _selSlot: string;
   _hoverItem: any;
@@ -126,11 +134,12 @@ export class Menus {
     this.stash = this._make('menu-stash');
     this.controls = this._make('menu-controls');
     this.skills = this._make('menu-skills');
+    this.kitchen = this._make('menu-kitchen');
     this._rebinding = null;
     this._selSlot = 'weapon'; // slot equipado selecionado p/ encantar
     this.tip = document.createElement('div');
     this.tip.id = 'tip';
-    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls, this.skills, this.tip);
+    document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls, this.skills, this.kitchen, this.tip);
 
     addEventListener('keydown', (e) => {
       if (game.menuMain) return; // bloqueia até iniciar
@@ -158,6 +167,11 @@ export class Menus {
       // Talentos (ADR 0093): K abre/fecha; Esc fecha.
       if (this.skills.classList.contains('show')) {
         if (['Escape', 'KeyK'].includes(e.code)) this.toggleSkills();
+        return;
+      }
+      // Cozinha aberta (E19.2): E/Esc fecha.
+      if (this.kitchen.classList.contains('show')) {
+        if (['Escape', 'KeyE', 'KeyF'].includes(e.code)) this.toggleKitchen();
         return;
       }
       // Mochila aberta (E18.2): 1–9 atribui o item sob o cursor à hotbar.
@@ -420,6 +434,76 @@ export class Menus {
         else if (entry.k === 'form') assignForm(this.game, slot, entry.id);
         else assignSkill(this.game, slot, entry.id);
         this.refreshSkills();
+      };
+    });
+  }
+
+  // --- Cozinha (E19.2) ------------------------------------------------------
+  openKitchen() {
+    if (this.game.paused) return;
+    this.kitchen.classList.add('show');
+    this.game.paused = true;
+    this.refreshKitchen();
+  }
+
+  toggleKitchen() {
+    if (this.kitchen.classList.contains('show')) { this.kitchen.classList.remove('show'); this.game.paused = false; }
+    else this.openKitchen();
+  }
+
+  refreshKitchen() {
+    const c = ensureCraft(this.game);
+    const lvl = craftLevel(this.game);
+    const nextXp = craftXpForLevel(lvl + 1);
+    const curXp = craftXpForLevel(lvl);
+    const pct = nextXp > curXp ? Math.max(0, Math.min(1, (c.xp - curXp) / (nextXp - curXp))) : 1;
+
+    const rows = RECIPES.map((r) => {
+      const okLvl = lvl >= r.level;
+      const cookable = canCook(this.game, r);
+      const inputs = Object.entries(r.inputs).map(([id, q]) => {
+        const have = ingredientCount(this.game, id);
+        const def = INGREDIENTS[id];
+        return `<span class="ing ${have >= q ? 'ok' : 'no'}">${def?.icon ?? '•'} ${def?.name ?? id} ${have}/${q}</span>`;
+      }).join('');
+      const food = FOOD_BASES[r.food];
+      return `<div class="sk-node${okLvl ? '' : ' locked'}">
+        <span class="ico">${food?.icon ?? '🍲'}</span>
+        <div class="body">
+          <div class="nm">${r.name} ${okLvl ? '' : `<span class="lv">🔒 Craft ${r.level}</span>`}</div>
+          <div class="ds">${inputs}</div>
+        </div>
+        <button class="buy" data-cook="${r.id}" ${cookable ? 'title="Cozinhar"' : 'disabled'}>🍳</button>
+      </div>`;
+    }).join('');
+
+    const despensa = pouchList(this.game);
+    const desp = despensa.length
+      ? despensa.map((p) => `<span class="ing ok">${p.def.icon} ${p.def.name} ${p.count}</span>`).join('')
+      : '<span class="sub">Despensa vazia — cace ingredientes ou colha no mundo.</span>';
+
+    this.kitchen.innerHTML = `<div class="panel" style="min-width:min(680px,92vw)">
+      <span class="close" id="ck-close">✕ (E)</span>
+      <h2>🍲 Cozinha</h2>
+      <p class="sub">Nível de Craft: <b>${lvl}</b> · XP ${c.xp}/${nextXp}
+        <span style="display:inline-block;width:120px;height:6px;background:rgba(10,18,10,.85);border-radius:3px;vertical-align:middle;overflow:hidden;margin-left:6px"><i style="display:block;height:100%;width:${(pct * 100).toFixed(0)}%;background:linear-gradient(90deg,#e8b23a,#ffd56a)"></i></span></p>
+      <h3 style="margin:6px 0 4px;color:#ffb84a">Receitas</h3>
+      <div class="sk-tracks" style="grid-template-columns:1fr">${rows}</div>
+      <h3 style="margin:12px 0 4px;color:#9fe06a">Despensa</h3>
+      <div class="ings">${desp}</div>
+    </div>`;
+
+    this.kitchen.querySelector('#ck-close').onclick = () => this.toggleKitchen();
+    this.kitchen.querySelectorAll('.buy[data-cook]').forEach((el: any) => {
+      el.onclick = () => {
+        const id = this._playerId();
+        const food = cook(this.game, el.dataset.cook);
+        if (food && id != null) {
+          this.game.world.get(id, C.Inventory).items.push(food);
+          this.game.emit('cast', {});
+          this.game.emit('objective', { text: `🍳 Cozinhou: ${food.name}! (na mochila)` });
+        }
+        this.refreshKitchen();
       };
     });
   }
