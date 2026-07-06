@@ -117,4 +117,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0111](0111-clareira-em-torno-da-arvore.md) | Clareira em torno da Carvalho-Mãe (2 anéis + via em anel) | Aceito |
 | [0112](0112-wiki-ilustrada.md) | Wiki ilustrada (capturas do jogo) | Aceito |
 | [0113](0113-colisores-cenario-banca.md) | Objetos de cenário sólidos + banca fora das ruas | Aceito |
+| [0114](0114-descricoes-campanha.md) | Descrições da campanha no HUD | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

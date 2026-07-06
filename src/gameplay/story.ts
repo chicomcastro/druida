@@ -25,15 +25,42 @@ export const LANDMARKS = {
 };
 
 const STEPS = [
-  { id: 'talk', objective: 'Fale com a Guardiã do Carvalho-Mãe' },
-  { id: 'purify_clearing', objective: 'Purifique a Clareira: devolva 8 criaturas corrompidas à terra', kills: 8 },
-  { id: 'find_wolf', objective: 'Desperte o Santuário do Lobo, aqui na Clareira' },
-  { id: 'find_bear', objective: 'Vá ao Pântano e desperte o Santuário do Urso' },
-  { id: 'slay_miniboss', objective: 'Derrote a Árvore-Carniça no Pântano' },
-  { id: 'find_raven', objective: 'Encontre o Santuário do Corvo no Bosque Cinza' },
-  { id: 'find_frog', objective: 'Encontre o Santuário do Sapo nos Picos Gélidos' },
-  { id: 'confront', objective: 'Vá ao Coração Corrompido e enfrente O Apodrecedor' },
-  { id: 'victory', objective: 'A floresta respira de novo. Você venceu!' },
+  {
+    id: 'talk', objective: 'Fale com a Guardiã do Carvalho-Mãe',
+    desc: 'Você acordou depois de muito tempo. A Guardiã espera ao pé da árvore-mãe, no centro da vila — ela sabe por que a floresta está apodrecendo.',
+  },
+  {
+    id: 'purify_clearing', objective: 'Purifique a Clareira: devolva 8 criaturas corrompidas à terra', kills: 8,
+    desc: 'A podridão já chegou à Clareira. Abata as criaturas corrompidas ao redor da vila para reacender a Seiva e provar que ainda é um Druida.',
+  },
+  {
+    id: 'find_wolf', objective: 'Desperte o Santuário do Lobo, aqui na Clareira',
+    desc: 'A primeira Forma Ancestral dorme num santuário na própria Clareira. Desperte o Lobo — a caça e a velocidade — e aprenda a receber um Dom.',
+  },
+  {
+    id: 'find_bear', objective: 'Vá ao Pântano e desperte o Santuário do Urso',
+    desc: 'No Pântano Apodrecido resiste o Vau das Palafitas. Perto dele, o Santuário do Urso concede a resistência que os combates adiante vão exigir.',
+  },
+  {
+    id: 'slay_miniboss', objective: 'Derrote a Árvore-Carniça no Pântano',
+    desc: 'Uma árvore ancestral virou Carniça: raízes que estrangulam, casca que sangra seiva negra. Derrube-a antes que engula o vau.',
+  },
+  {
+    id: 'find_raven', objective: 'Encontre o Santuário do Corvo no Bosque Cinza',
+    desc: 'Em Cinzafolha, os lenhadores queimam o que caminha. O Santuário do Corvo, entre as árvores mortas, dá olhos para ver o que a fumaça esconde.',
+  },
+  {
+    id: 'find_frog', objective: 'Encontre o Santuário do Sapo nos Picos Gélidos',
+    desc: 'O Abrigo do Degelo guarda a trilha antiga. O Santuário do Sapo, preso no gelo, escuta a água — até a que dorme congelada — e abre o caminho ao Coração.',
+  },
+  {
+    id: 'confront', objective: 'Vá ao Coração Corrompido e enfrente O Apodrecedor',
+    desc: 'No centro da podridão pulsa um coração que já foi semente. Lá está O Apodrecedor — um Druida que quis trancar a morte. Silencie-o para a floresta renascer.',
+  },
+  {
+    id: 'victory', objective: 'A floresta respira de novo. Você venceu!',
+    desc: 'O Coração voltou a ser semente. A Corrupção recua e o verde retorna — o mundo continua aberto para você explorar.',
+  },
 ];
 
 export const NPC_LINES = [
@@ -61,6 +88,8 @@ export class StoryManager {
 
   current() { return STEPS[this.step]; }
   objective() { return this.current().objective; }
+  /** Descrição/contexto do passo atual (ADR 0114) — para o diário/HUD. */
+  description() { return this.current().desc ?? ''; }
 
   advance() {
     this.step = Math.min(STEPS.length - 1, this.step + 1);

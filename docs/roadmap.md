@@ -150,7 +150,7 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E10 Santuário do Lobo | ✅ entregue (Lobo = 1ª forma, na Clareira + Dons) — ADR 0106 | — |
 | E11 Rixa nas vilas 2–4 | ✅ entregue (famílias + arco em todas as vilas — ADR 0107; reputação por vila com desconto — ADR 0108) | — |
 | E12 Wiki ilustrada | ✅ entregue (fotos de formas/inimigos/chefes/vila/mapa na wiki — ADR 0112) | — |
-| E13 Missões/campanha | 🚧 planejado (descrições melhores) | — |
+| E13 Missões/campanha | ✅ entregue (descrições de contexto por passo no HUD — ADR 0114) | — |
 | E14 Mapa-mundi das vilas | 🚧 planejado (legibilidade + localização) | — |
 | E15 Vilas evoluídas | 🚧 Clareira recentrada na Carvalho-Mãe (2 anéis + via em anel — ADR 0111); layout interno das vilas 2–4 a seguir | — |
 | E16 Mundo orgânico + progressão aberta | ✅ entregue (E16.1 mapa orgânico — ADR 0109; E16.2 level-scaling + marcos nas regiões + Clareira maior/vilas ao interior — ADR 0110) | — |
