@@ -67,10 +67,12 @@ function buildMerchant(game, pos) {
   const sx = alignTo(pos.x, 4), sz = alignTo(pos.z, 3); // pegada 4×3 da banca
   const g = buildVoxelModel('merchant');
   g.position.set(sx, 0, sz);
+  g.rotation.y = Math.PI; // encara a vila (balcão vira −Z, lado do espigão) — ADR 0115
   game.renderer.add(g);
   // Banca-estrutura (mesh próprio: não balança com o idle do NPC).
   const stall = buildMerchantStall();
   stall.position.set(sx, 0, sz);
+  stall.rotation.y = Math.PI; // balcão de frente para o caminho que chega do sul
   game.renderer.add(stall);
   const id = game.world.createEntity();
   game.world.add(id, C.Transform, Transform(sx, sz));

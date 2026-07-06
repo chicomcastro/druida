@@ -497,7 +497,10 @@ export class SettlementManager {
     // no externo. Mercado geral fica na banca externa (landmarks).
     const HOUSE_THEMES = ['weapons', 'armor', 'tavern', 'leader', 'hall', 'home', 'home', 'home', 'home'];
     // Espigões de porta (ADR 0083): da porta de cada casa até a via em anel.
+    // E um poste de luz ao lado de cada porta — a iluminação segue os caminhos
+    // (ADR 0115), em vez de espalhada aleatoriamente.
     const spurs: number[][] = [];
+    const lampSpots: number[][] = [];
     huts.forEach(([x, z, o], i) => {
       const ry = snap90(Math.atan2(-x, -z)); // porta olha o centro, no grid voxel
       const hg = this._house(w, x, z, ry, {
@@ -520,6 +523,9 @@ export class SettlementManager {
       const rx = Math.abs(dx) > RING ? Math.sign(dx) * RING : dx;
       const rz = Math.abs(dz) > RING ? Math.sign(dz) * RING : dz;
       spurs.push([dx, dz, rx, dz], [rx, dz, rx, rz]);
+      // Poste ao LADO da porta (offset lateral p/ não cair na laje do espigão).
+      const lp = this._spun(hg.position.x, hg.position.z, ry, 1.7, (o.d ?? 4) / 2 + 0.7);
+      lampSpots.push([lp.x, lp.z]);
       if (i % 2 === 0) {
         const c = this._spun(hg.position.x, hg.position.z, ry, (o.w ?? 6) / 2 - 0.55, -1.0);
         this._smokeAt(w, c.x, 0.35 + (o.h ?? 3.0) + 2.3, c.z); // topo da chaminé
@@ -573,9 +579,11 @@ export class SettlementManager {
       w.add(menhir);
       w.collider(mx, -24, 0.8);
     }
-    // Lanternas de vagalumes: nas quinas FORA da via em anel, ao lado do
-    // corredor sul e junto às casas — nunca no meio de um caminho.
-    const lampSpots = [[9, 9], [-9, 9], [9, -9], [-9, -9], [3, 13], [13, 6], [-13, 6], [3, -13], [19, 6], [-19, 6]];
+    // Lanternas: uma por porta (acumuladas no laço acima), + poste no fim do
+    // espigão do mercado e ao lado do portão sul (ADR 0115). Ladeiam os
+    // caminhos, sem cair sobre as lajes.
+    lampSpots.push([14.5, 13]); // fim do espigão do mercado (à frente da banca)
+    lampSpots.push([2.2, -20]); // portão sul
     for (const [x, z] of lampSpots) this._lantern(w, x, z, 0xd8ffa0);
   }
 
