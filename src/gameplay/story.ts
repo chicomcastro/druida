@@ -18,12 +18,12 @@ import { FORM_ORDER } from './forms.js';
 // distância à cidade e margem de interior do bioma (scan em scripts).
 export const LANDMARKS = {
   npc: { x: 0, z: -14 },
-  sanctuary_wolf: { x: -45, z: -78, form: 'wolf', biome: 'Clareira Viva' },   // NO da Clareira, longe do hub
-  sanctuary_bear: { x: 213, z: -42, form: 'bear', biome: 'Pântano' },         // fundo leste do Pântano
-  miniboss: { x: 112, z: -70 },                                             // Pântano (perto da vila)
-  sanctuary_raven: { x: -250, z: -39, form: 'raven', biome: 'Bosque Cinza' }, // N do Bosque, longe de Cinzafolha
-  sanctuary_frog: { x: 90, z: 268, form: 'frog', biome: 'Picos Gélidos' },     // sul dos Picos, longe do Degelo
-  boss: { x: 0, z: -280 },                                                  // mancha do Coração
+  sanctuary_wolf: { x: -65, z: -113, form: 'wolf', biome: 'Clareira Viva' },  // fundo NO da Clareira
+  sanctuary_bear: { x: 302, z: -164, form: 'bear', biome: 'Pântano' },        // fundo leste do Pântano
+  miniboss: { x: 150, z: -95 },                                             // Pântano (perto da vila)
+  sanctuary_raven: { x: -348, z: -7, form: 'raven', biome: 'Bosque Cinza' },  // fundo oeste do Bosque
+  sanctuary_frog: { x: 110, z: 319, form: 'frog', biome: 'Picos Gélidos' },    // fundo sul dos Picos
+  boss: { x: 0, z: -315 },                                                  // mancha do Coração
 };
 
 const STEPS = [

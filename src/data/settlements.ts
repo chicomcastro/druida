@@ -126,8 +126,8 @@ export const SETTLEMENTS: SettlementDef[] = [
     tagline: 'vila dos coletores de seiva',
     theme: 'palafitas',
     biome: 'pantano',
-    x: 140,
-    z: -95,
+    x: 180,
+    z: -120,
     radius: 20,
     mapColor: '#8fb04a',
     arrival: [
@@ -209,8 +209,8 @@ export const SETTLEMENTS: SettlementDef[] = [
     tagline: 'vila dos lenhadores',
     theme: 'lenhadores',
     biome: 'bosque_cinza',
-    x: -200,
-    z: 48,
+    x: -235,
+    z: 58,
     radius: 20,
     mapColor: '#c8a06a',
     arrival: [
