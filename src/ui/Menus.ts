@@ -9,7 +9,7 @@ import { BOONS, chooseBoon } from '../gameplay/boons.js';
 import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
 import { SKILL_TREES, canLearn, learn, respec, nodeText, ensureSkillState } from '../gameplay/skills.js';
 import { ACTIVE_SKILL_TREE, canUnlock, unlock, isUnlocked, respecActive, ensureActiveSkills } from '../gameplay/skillTree.js';
-import { ensureHotbar, assignSkill, assignForm, clearSlot, autoFillHotbar, sameEntry } from '../gameplay/hotbar.js';
+import { ensureHotbar, assignSkill, assignForm, assignPotion, assignEquip, clearSlot, autoFillHotbar, sameEntry, pruneHotbar } from '../gameplay/hotbar.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -110,6 +110,7 @@ export class Menus {
   shop: any; stash: any; controls: any; skills: any; tip: any;
   _rebinding: string | null;
   _selSlot: string;
+  _hoverItem: any;
   constructor(game) {
     this.game = game;
     // Despertar de santuário oferece a escolha de um dom (ADR 0050).
@@ -157,6 +158,13 @@ export class Menus {
       // Talentos (ADR 0093): K abre/fecha; Esc fecha.
       if (this.skills.classList.contains('show')) {
         if (['Escape', 'KeyK'].includes(e.code)) this.toggleSkills();
+        return;
+      }
+      // Mochila aberta (E18.2): 1–9 atribui o item sob o cursor à hotbar.
+      if (this.inv.classList.contains('show')) {
+        if (['Escape', 'KeyB', 'Tab'].includes(e.code)) { e.preventDefault(); this.toggleInventory(); return; }
+        const m = /^Digit([1-9])$/.exec(e.code);
+        if (m && this._hoverItem) { e.preventDefault(); this._assignItemToSlot(this._hoverItem, +m[1] - 1); }
         return;
       }
       const mapOpen = this.game.worldMap?.wrap.style.display === 'flex';
@@ -466,7 +474,7 @@ export class Menus {
           <div id="iv-detail">${this._detailHtml(sel.label, sel.item)}</div>
         </div>
         <div>
-          <div class="lbl" style="margin-bottom:4px">Mochila (5×10) — clique equipa/usa · direito desmonta (+✦)</div>
+          <div class="lbl" style="margin-bottom:4px">Mochila (5×10) — clique equipa/usa · direito desmonta (+✦) · passe o mouse e tecle 1–9 p/ pôr na hotbar</div>
           <div class="ggrid" id="iv-items">${bag}</div>
         </div>
       </div>
@@ -477,12 +485,21 @@ export class Menus {
       const i = +el.dataset.i;
       el.onclick = () => { this._hideTip(); this._equipFromBag(id, i); };
       el.oncontextmenu = (e) => { e.preventDefault(); this._hideTip(); this._salvage(id, i); };
+      // Hover marca o item para atribuir à hotbar com as teclas 1–9 (E18.2).
+      // addEventListener p/ não colidir com o onmouseenter do tooltip (_bindTip).
+      el.addEventListener('mouseenter', () => { this._hoverItem = inv.items[i]; });
+      el.addEventListener('mouseleave', () => { if (this._hoverItem === inv.items[i]) this._hoverItem = null; });
       this._bindTip(el, inv.items[i], loadout);
     });
     this.inv.querySelectorAll('.gslot[data-slot]').forEach((el: any) => {
       el.onclick = () => { this._selSlot = el.dataset.slot; this.refreshInventory(); };
       const eq = EQ.find((q) => q.key === el.dataset.slot);
-      if (eq?.item) this._bindTip(el, eq.item, null);
+      // Também dá pra atribuir o que está equipado (p/ voltar a ele depois).
+      if (eq?.item) {
+        el.addEventListener('mouseenter', () => { this._hoverItem = eq.item; });
+        el.addEventListener('mouseleave', () => { if (this._hoverItem === eq.item) this._hoverItem = null; });
+        this._bindTip(el, eq.item, null);
+      }
     });
     this.inv.querySelectorAll('.mini[data-ench]').forEach((el: any) => {
       el.onclick = () => this._invest(id, el.dataset.slot, +el.dataset.ench);
@@ -586,6 +603,7 @@ export class Menus {
     inv.items.splice(i, 1);
     this.game.equip(id, item);
     this.game.emit('itemEquipped', { id, item });
+    this._pruneEquipEntries(id);
     this.refreshInventory();
   }
 
@@ -595,7 +613,30 @@ export class Menus {
     if (!item) return;
     inv.items.splice(i, 1);
     inv.essence += salvageValue(item);
+    this._pruneEquipEntries(id);
     this.refreshInventory();
+  }
+
+  /** Atribui um item (equip/poção) da mochila a um slot da hotbar (E18.2). */
+  _assignItemToSlot(item, slot) {
+    if (!item) return;
+    if (item.type === 'consumable') assignPotion(this.game, slot, item.name);
+    else if (item.type === 'weapon' || item.type === 'armor') assignEquip(this.game, slot, item.uid);
+    else return; // artefatos (dons) seguem em U/I/O
+    this.game.emit('cast', {}); // blip de confirmação
+    this.refreshInventory();
+  }
+
+  /** Remove da hotbar equipamentos que não são mais possuídos (mochila+equipado). */
+  _pruneEquipEntries(id) {
+    const inv = this.game.world.get(id, C.Inventory);
+    const lo = this.game.world.get(id, C.Loadout);
+    const owned = new Set<number>();
+    for (const it of inv?.items ?? []) if (it?.uid != null) owned.add(it.uid);
+    if (lo?.weapon?.uid != null) owned.add(lo.weapon.uid);
+    for (const a of Object.values(lo?.armor ?? {})) if ((a as any)?.uid != null) owned.add((a as any).uid);
+    for (const a of lo?.artifacts ?? []) if (a?.uid != null) owned.add(a.uid);
+    pruneHotbar(this.game, { ownedUids: owned });
   }
 
   // --- Mercador ------------------------------------------------------------
