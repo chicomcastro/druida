@@ -10,7 +10,8 @@ import { Sap } from '../src/core/ecs/components.js';
 import { applyEquipment } from '../src/gameplay/equip.js';
 import { serialize, apply, setupAutosave } from '../src/gameplay/save.js';
 import { bindGameEvents } from '../src/core/gameEvents.js';
-import { partyEssence, spendEssence, giveItem, rerollShop } from '../src/gameplay/economy.js';
+import { partyEssence, spendEssence, giveItem, rerollShop, sellIngredient, INGREDIENT_SELL } from '../src/gameplay/economy.js';
+import { addIngredient, ingredientCount } from '../src/gameplay/ingredients.js';
 import * as THREE from 'three';
 import { buildMesh } from '../src/entities/meshes.js';
 import { MODELS, modelUrl } from '../src/entities/modelRegistry.js';
@@ -439,6 +440,17 @@ describe('Economia (essência + mercador)', () => {
     expect(giveItem(game, item)).toBe(true);
     const p1 = [...world.query(C.PlayerControlled, C.Inventory)].find((t: any) => t[1].index === 0);
     expect(world.get(p1![0], C.Inventory).items).toContain(item);
+  });
+
+  it('sellIngredient consome 1 da despensa e credita essência ao P1', () => {
+    const { game, world } = makeGame([0, 0]);
+    addIngredient(game, 'erva', 2);
+    expect(sellIngredient(game, 'erva')).toBe(true);
+    expect(ingredientCount(game, 'erva')).toBe(1);
+    const p1 = [...world.query(C.PlayerControlled, C.Inventory)].find((t: any) => t[1].index === 0);
+    expect(world.get(p1![0], C.Inventory).essence).toBe(INGREDIENT_SELL);
+    game.progress.ingredients.erva = 0;
+    expect(sellIngredient(game, 'erva')).toBe(false); // sem estoque, não vende
   });
 
   it('rerollShop gera estoque com preço (equip + poções + ingredientes + comida)', () => {

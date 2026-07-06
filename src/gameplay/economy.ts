@@ -1,7 +1,7 @@
 import { C } from '../core/ecs/components.js';
 import { generateItem } from './loot.js';
 import { generateConsumable, generateFood, FOOD_BASES } from './consumables.js';
-import { INGREDIENTS } from './ingredients.js';
+import { INGREDIENTS, consumeIngredients } from './ingredients.js';
 import { repDiscount, shopSettlement } from './reputation.js';
 
 /**
@@ -26,6 +26,18 @@ export function spendEssence(game, amount) {
     const take = Math.min(inv.essence, left);
     inv.essence -= take;
     left -= take;
+  }
+  return true;
+}
+
+/** Preço de venda de 1 ingrediente (E19.4). */
+export const INGREDIENT_SELL = 2;
+
+/** Vende 1 ingrediente da despensa, creditando essência ao P1. */
+export function sellIngredient(game, id: string, price = INGREDIENT_SELL): boolean {
+  if (!consumeIngredients(game, { [id]: 1 })) return false;
+  for (const [pid, pc] of game.world.query(C.PlayerControlled)) {
+    if (pc.index === 0) { game.world.get(pid, C.Inventory).essence += price; return true; }
   }
   return true;
 }

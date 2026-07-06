@@ -12,6 +12,7 @@ import { ACTIVE_SKILL_TREE, canUnlock, unlock, isUnlocked, respecActive, ensureA
 import { ensureHotbar, assignSkill, assignForm, assignPotion, assignEquip, clearSlot, autoFillHotbar, sameEntry, pruneHotbar } from '../gameplay/hotbar.js';
 import { RECIPES, canCook, cook, craftLevel, ensureCraft, craftXpForLevel } from '../gameplay/recipes.js';
 import { INGREDIENTS, ingredientCount, pouchList, addIngredient } from '../gameplay/ingredients.js';
+import { sellIngredient, INGREDIENT_SELL } from '../gameplay/economy.js';
 import { FOOD_BASES } from '../gameplay/consumables.js';
 
 /**
@@ -593,9 +594,15 @@ export class Menus {
   /** Slot quadrado com ícone e raridade na borda (grade RPG — ADR 0072). */
   _gslot(item, { tag = '', sel = false, data = '', price = null, extra = '' }: any = {}) {
     const ICON = { weapon: '⚔️', armor: '🛡️', artifact: '🌿', consumable: '🧪' };
-    // Ícone ilustrado (ADR 0090); emoji como fallback headless/sem canvas.
-    const url = item ? itemIconURL(item) : '';
-    const glyph = url ? `<img class="ic" src="${url}" alt="">` : (item ? (ICON[item.type] ?? '🌿') : '');
+    // Comida (E19) tem ícone próprio (emoji da receita), não o frasco genérico.
+    let glyph;
+    if (item?.buff?.icon) {
+      glyph = `<span class="ic" style="font-size:26px;display:flex;align-items:center;justify-content:center">${item.buff.icon}</span>`;
+    } else {
+      // Ícone ilustrado (ADR 0090); emoji como fallback headless/sem canvas.
+      const url = item ? itemIconURL(item) : '';
+      glyph = url ? `<img class="ic" src="${url}" alt="">` : (item ? (ICON[item.type] ?? '🌿') : '');
+    }
     const border = item ? `style="border-color:${RCOLOR[item.rarity]}"` : '';
     const cls = `gslot${item ? '' : ' empty'}${sel ? ' sel' : ''}${extra ? ' ' + extra : ''}`;
     return `<div class="${cls}" ${border} ${data}>${glyph}
@@ -743,12 +750,19 @@ export class Menus {
       }
       return this._gslot(s.item, { data: `data-buy="${i}"`, price: s.price });
     }).join('');
+    // Vender ingredientes da despensa (E19.4): chips com botão de venda.
+    const despensa = pouchList(this.game);
+    const sellRow = despensa.length
+      ? despensa.map((p) => `<button class="ing ok" data-sell="${p.def.id}" style="cursor:pointer" title="Vender 1 por ${INGREDIENT_SELL}✦">${p.def.icon} ${p.def.name} ${p.count} · +${INGREDIENT_SELL}✦</button>`).join('')
+      : '<span class="sub">Despensa vazia.</span>';
     this.shop.innerHTML = `<div class="panel">
       <span class="close" id="sh-close">✕ (E/Esc)</span>
       <h2>🪙 Mercador</h2>
       <p class="sub">"Pegue o que a floresta mandou — e deixe a essência." · Grupo: <b>${essence}</b> ✦</p>
       <div class="ggrid" style="grid-template-columns:repeat(4,54px)">${slots}</div>
-      <button class="btn" id="sh-reroll" style="text-align:center;margin-top:14px" ${essence >= 5 ? '' : 'disabled'}>🔄 Renovar estoque (5 ✦)</button>
+      <button class="btn" id="sh-reroll" style="text-align:center;margin:12px 0" ${essence >= 5 ? '' : 'disabled'}>🔄 Renovar estoque (5 ✦)</button>
+      <h3 style="margin:4px 0;color:#ffb84a">Vender ingredientes</h3>
+      <div class="ings">${sellRow}</div>
     </div>`;
     this.shop.querySelectorAll('.gslot[data-buy]').forEach((el: any) => {
       const i = +el.dataset.buy;
@@ -762,6 +776,14 @@ export class Menus {
     };
     this.shop.querySelectorAll('.gslot[data-buy]').forEach((el: any) => {
       el.onclick = () => { this._hideTip(); this._buy(+el.dataset.buy); };
+    });
+    this.shop.querySelectorAll('[data-sell]').forEach((el: any) => {
+      el.onclick = () => {
+        if (sellIngredient(this.game, el.dataset.sell)) {
+          this.game.emit('purchase', {});
+          this.refreshShop();
+        }
+      };
     });
   }
 
