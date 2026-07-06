@@ -6,7 +6,7 @@ import { castAbility } from '../gameplay/abilities/index.js';
 import { evalCombo } from '../gameplay/combo.js';
 import { COMBO } from '../gameplay/combo.js';
 import { skillBonus, gainProficiency } from '../gameplay/skills.js';
-import { hotbarAbility } from '../gameplay/hotbar.js';
+import { hotbarAbility, FORM_SLOT_START } from '../gameplay/hotbar.js';
 
 /**
  * Traduz o Intent (preenchido a partir do input) em movimento, mira, ataque,
@@ -132,15 +132,29 @@ export function playerControlSystem(game, dt) {
       if (art) castAbility(game, id, art.ability, aimAngle, { slot: i, item: art });
     }
 
-    // Hotbar de habilidades (teclas 1–4, E17.3b) ----------------------
-    // Conjura a habilidade ativa atribuída ao slot (skillTree/hotbar). É só do
-    // P1 por ora — a hotbar mora em game.progress (party) e os slots 5–9 seguem
-    // como formas (migração completa no E17.5).
+    // Hotbar unificado (teclas 1–9, E17.5) ----------------------------
+    // Cada slot é uma FORMA (faixa contígua a partir de FORM_SLOT_START, na
+    // ordem de form.list) ou uma HABILIDADE atribuída. Forma → troca (com toggle
+    // de volta ao humanoide); habilidade → conjura. Só do P1 (hotbar em
+    // game.progress). O d-pad do gamepad segue trocando forma via switchForm.
     if (intent.hotbar) {
       for (let s = 0; s < intent.hotbar.length; s++) {
         if (!intent.hotbar[s]) continue;
-        const ab = hotbarAbility(game, s);
-        if (ab) castAbility(game, id, ab, aimAngle, { slot: s, hotbar: true });
+        const fi = s - FORM_SLOT_START;
+        if (fi >= 0 && fi < form.list.length) {
+          const wanted = form.list[fi];
+          if (wanted && wanted !== form.current) {
+            form.current = wanted;
+            form.swapFlash = 0.35;
+            game.emit('formSwap', { id, form: wanted, x: tr.x, z: tr.z });
+          } else if (wanted === form.current && wanted !== 'humanoid') {
+            form.current = 'humanoid';
+            form.swapFlash = 0.35;
+          }
+        } else {
+          const ab = hotbarAbility(game, s);
+          if (ab) castAbility(game, id, ab, aimAngle, { slot: s, hotbar: true });
+        }
       }
     }
   }

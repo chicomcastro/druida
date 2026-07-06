@@ -118,7 +118,7 @@ export class InputManager {
       attack: a.attack || b.attack,
       dodge: a.dodge || b.dodge,
       artifact: [0, 1, 2].map((i) => a.artifact[i] || b.artifact[i]),
-      hotbar: [0, 1, 2, 3].map((i) => a.hotbar[i] || b.hotbar[i]),
+      hotbar: [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => a.hotbar[i] || b.hotbar[i]),
       switchForm: b.switchForm || a.switchForm,
       interact: a.interact || b.interact,
     };
@@ -143,7 +143,7 @@ export class InputManager {
     return {
       moveX: 0, moveZ: 0, aimX: 0, aimZ: 0, hasAim: false,
       attack: false, dodge: false, artifact: [false, false, false],
-      hotbar: [false, false, false, false],
+      hotbar: [false, false, false, false, false, false, false, false, false],
       switchForm: 0, interact: false,
     };
   }
@@ -151,8 +151,9 @@ export class InputManager {
   _keyboardInput() {
     const mx = (this._anyKey(this.bindings.right) ? 1 : 0) - (this._anyKey(this.bindings.left) ? 1 : 0);
     const mz = (this._anyKey(this.bindings.down) ? 1 : 0) - (this._anyKey(this.bindings.up) ? 1 : 0);
-    let switchForm = 0;
-    for (let i = 0; i < 5; i++) if (this.keyJustPressed(`form${i}`)) switchForm = i + 1;
+    // Formas agora moram no hotbar (E17.5): as teclas 1–9 disparam o slot, que
+    // pode ser forma ou habilidade — o playerControl resolve. switchForm fica só
+    // para o d-pad do gamepad.
     return {
       moveX: mx,
       moveZ: mz,
@@ -174,8 +175,13 @@ export class InputManager {
         this.keyJustPressed('hotbar1'),
         this.keyJustPressed('hotbar2'),
         this.keyJustPressed('hotbar3'),
+        this.keyJustPressed('hotbar4'),
+        this.keyJustPressed('hotbar5'),
+        this.keyJustPressed('hotbar6'),
+        this.keyJustPressed('hotbar7'),
+        this.keyJustPressed('hotbar8'),
       ],
-      switchForm,
+      switchForm: 0,
       interact: this.keyJustPressed('interact'),
     };
   }
@@ -203,7 +209,7 @@ export class InputManager {
       attack: pad.buttons[0]?.pressed || pad.buttons[7]?.pressed, // A / RT
       dodge: jp(1) || jp(5), // B / RB
       artifact: [jp(2), jp(3), jp(6)], // X, Y, LT
-      hotbar: [false, false, false, false], // hotbar 1–4 é teclado (E17.3b)
+      hotbar: [false, false, false, false, false, false, false, false, false], // hotbar é teclado; d-pad troca forma
       switchForm,
       interact: jp(4), // LB
     };

@@ -156,6 +156,7 @@ export class TouchControls {
     return {
       moveX: 0, moveZ: 0, aimX: 0, aimZ: 0, hasAim: false, aimIsWorldPoint: false,
       attack: false, dodge: false, artifact: [false, false, false],
+      hotbar: [false, false, false, false, false, false, false, false, false],
       switchForm: 0, interact: false,
     };
   }
