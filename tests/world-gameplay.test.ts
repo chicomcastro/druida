@@ -14,9 +14,9 @@ describe('WorldManager', () => {
   it('biomeAt: regiões orgânicas ancoradas nas vilas (ADR 0109)', () => {
     // Cada centro de vila cai no seu próprio bioma (âncora exata).
     expect(biomeAt(0, 0)).toBe('clareira'); // Círculo do Carvalho
-    expect(biomeAt(62, -48)).toBe('pantano'); // Vau das Palafitas
-    expect(biomeAt(-128, 30)).toBe('bosque_cinza'); // Cinzafolha
-    expect(biomeAt(120, 140)).toBe('picos'); // Abrigo do Degelo
+    expect(biomeAt(90, -72)).toBe('pantano'); // Vau das Palafitas
+    expect(biomeAt(-160, 38)).toBe('bosque_cinza'); // Cinzafolha
+    expect(biomeAt(140, 165)).toBe('picos'); // Abrigo do Degelo
     // A mancha do Coração é uma região própria ao sul.
     expect(biomeAt(0, -225)).toBe('coracao');
     // Determinístico e não puramente radial: dois pontos no mesmo raio podem

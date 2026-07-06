@@ -113,4 +113,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0107](0107-rixas-vilas-2-4.md) | Rixa das famílias nas vilas 2–4 | Aceito |
 | [0108](0108-reputacao-por-vila.md) | Reputação por vila (desconto por ajudar) | Aceito |
 | [0109](0109-mundo-organico.md) | Mundo orgânico (biomas não-circulares) | Aceito |
+| [0110](0110-progressao-aberta-level-scaling.md) | Progressão aberta: level-scaling + marcos nas regiões | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

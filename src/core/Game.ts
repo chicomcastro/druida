@@ -311,8 +311,13 @@ export class Game {
   }
 
   regionLevel() {
+    // Mundo aberto com level-scaling (ADR 0110): o conteúdo acompanha o NÍVEL DO
+    // JOGADOR em qualquer região — dá pra ir a qualquer lugar em qualquer ordem,
+    // sem gate por raio/bioma. Um leve acento por bioma (0–2) mantém a textura
+    // temática (o Coração pesa um pouco mais) sem travar o acesso.
     const b = BIOMES[this.worldManager?.currentBiome ?? 'clareira'];
-    return Math.max(1, Math.round((this.progress.level + (b?.level ?? 1)) / 2));
+    const accent = Math.max(0, Math.round(((b?.level ?? 1) - 1) / 4)); // 0..2
+    return Math.max(1, this.progress.level + accent);
   }
 
   currentBiomeName() {

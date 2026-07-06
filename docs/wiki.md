@@ -48,17 +48,23 @@ Controles. Suporte a toque (tablet) e gamepad no P1.
 
 ## 3. Mundo & biomas
 Fonte: `src/data/biomes.ts` · `biomeAt` em `src/world/WorldManager.ts`. O mundo é
-**orgânico** (ADR 0109): cada bioma é uma região de Voronoi ao redor da sua vila
-(âncora), com fronteiras deformadas por ruído — sem ordem radial. O Coração é uma
-mancha própria ao sul. O "nível" abaixo é a assinatura/dificuldade-tema do bioma.
+**orgânico** (ADR 0109/0110): cada bioma é uma região de **Voronoi ponderado** ao
+redor da sua vila (âncora), com fronteiras deformadas por ruído — sem ordem
+radial. A **Clareira tem peso maior** (zona inicial ampla) e as vilas 2–4 ficam
+bem no interior dos seus biomas. O Coração é uma mancha própria ao sul.
 
 | Bioma | Chave | Nível-tema | Âncora (vila) | Clima/assinatura |
 |---|---|---|---|---|
-| Clareira Viva | `clareira` | 1 | Círculo do Carvalho (0,0) | verde, vagalumes; hub |
-| Pântano Apodrecido | `pantano` | 3 | Vau das Palafitas (62,−48) | lodo, esporos |
-| Bosque Cinza | `bosque_cinza` | 5 | Cinzafolha (−128,30) | cinza, brasas |
-| Picos Gélidos | `picos` | 7 | Abrigo do Degelo (120,140) | neve, gelo |
+| Clareira Viva | `clareira` | 1 | Círculo do Carvalho (0,0) · peso 1,25 | verde, vagalumes; hub |
+| Pântano Apodrecido | `pantano` | 3 | Vau das Palafitas (90,−72) | lodo, esporos |
+| Bosque Cinza | `bosque_cinza` | 5 | Cinzafolha (−160,38) | cinza, brasas |
+| Picos Gélidos | `picos` | 7 | Abrigo do Degelo (140,165) | neve, gelo |
 | Coração Corrompido | `coracao` | 9 | mancha (0,−225) | podridão roxa; sem fauna |
+
+**Progressão aberta** (ADR 0110): o desafio faz **level-scaling** com o nível do
+jogador (`Game.regionLevel`), com um leve acento por bioma — dá para explorar
+qualquer região em qualquer ordem. Os santuários da campanha ficam **dentro das
+regiões** das suas vilas (trilha opcional pelo mundo aberto).
 
 Cada bioma tem: tabela de spawn + packs (ADR 0045), **hazard** ambiental
 (§10), **fauna** (§10), clima dia/noite (ADR 0049), purificação visível ao

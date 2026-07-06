@@ -29,7 +29,7 @@ describe('BlockGround (ADR 0063)', () => {
     g.update();
     expect((g._pools.grass as any).count).toBeGreaterThan(0); // pantano também usa grass
     // Nos picos, neve domina.
-    const gp = new BlockGround(stubGame({ groupCenter: { x: 0, z: 190 } }));
+    const gp = new BlockGround(stubGame({ groupCenter: { x: 120, z: 150 } }));
     gp.update();
     expect((gp._pools.snow as any).count).toBeGreaterThan(1000);
     // No Coração, veios de lava emergem entre a pedra (ADR 0064).

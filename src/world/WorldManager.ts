@@ -17,19 +17,28 @@ import { canopyGeo, pineGeo, rockGeo, mergeBoxes } from './voxelGeo.js';
  * descartados ao se distanciar — pseudo-streaming. Ver docs/adr/0008 e 0109.
  */
 
-// Âncora de cada bioma = centro da vila daquele bioma (data-driven).
-export const BIOME_ANCHORS = SETTLEMENTS.map((s) => ({ biome: s.biome, x: s.x, z: s.z }));
+// Peso de cada bioma no Voronoi ponderado (ADR 0110): peso maior = região maior.
+// A Clareira (bioma inicial) domina o centro, virando uma zona de exploração
+// ampla antes de avançar; as vilas 2–4 ficam bem no interior dos seus biomas.
+const BIOME_WEIGHT = { clareira: 1.25, pantano: 1, bosque_cinza: 1, picos: 1, coracao: 1 };
+
+// Âncora de cada bioma = centro da vila daquele bioma (data-driven), com peso.
+export const BIOME_ANCHORS = SETTLEMENTS.map((s) => ({
+  biome: s.biome, x: s.x, z: s.z, weight: BIOME_WEIGHT[s.biome] ?? 1,
+}));
 
 // Mancha do Coração Corrompido (bioma final), fora do alcance das vilas.
 export const CORACAO_BLOB = { x: 0, z: -225, r: 90 };
 
-// Deformação das fronteiras: amplitude (u) e frequência do domain warp.
-const WARP_AMP = 24;
+// Deformação das fronteiras: amplitude (u) e frequência do domain warp. Amplitude
+// contida para não desestabilizar os centros das vilas no Voronoi ponderado.
+const WARP_AMP = 18;
 const WARP_FREQ = 0.012;
 
 /**
  * Bioma em (x,z): warpa a posição por ruído e devolve o bioma da âncora mais
- * próxima — ou `coracao` se cair na mancha do Coração. Determinístico e puro.
+ * próxima por **distância ponderada** (dist/peso) — ou `coracao` se cair na
+ * mancha do Coração. Determinístico e puro.
  */
 export function biomeAt(x, z) {
   const wx = x + valueNoise2(x * WARP_FREQ + 11.3, z * WARP_FREQ - 4.1) * WARP_AMP;
@@ -38,7 +47,7 @@ export function biomeAt(x, z) {
   let best = BIOME_ANCHORS[0].biome, bd = Infinity;
   for (const a of BIOME_ANCHORS) {
     const dx = wx - a.x, dz = wz - a.z;
-    const d = dx * dx + dz * dz;
+    const d = Math.sqrt(dx * dx + dz * dz) / a.weight;
     if (d < bd) { bd = d; best = a.biome; }
   }
   return best;
