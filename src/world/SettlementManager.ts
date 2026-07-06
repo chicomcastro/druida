@@ -557,9 +557,9 @@ export class SettlementManager {
       }
     }
     // Props de rua (ADR 0084): barris e lenha na praça, varais nos anéis.
-    this._barrel(w, -6, 6);
-    this._barrel(w, -6.8, 6.4);
-    this._woodpile(w, 6, 3, Math.PI / 2);
+    this._barrel(w, -5, -4);
+    this._barrel(w, -5.8, -4.3);
+    this._woodpile(w, 5, 3, Math.PI / 2);
     this._clothesline(w, 16, 6, 0x6cba5a);
     this._clothesline(w, -16, 6, 0xb89b5a);
     // Menires gêmeos no portão sul (limiar entre a vila e o mundo selvagem).
@@ -569,8 +569,9 @@ export class SettlementManager {
       w.add(menhir);
       w.collider(mx, -24, 0.8);
     }
-    // Lanternas de vagalumes: cantos do anel + entre as casas + portão.
-    const lampSpots = [[RING, RING], [-RING, RING], [RING, -RING], [-RING, -RING], [0, 13], [13, 6], [-13, 6], [0, -13], [19, 6], [-19, 6]];
+    // Lanternas de vagalumes: nas quinas FORA da via em anel, ao lado do
+    // corredor sul e junto às casas — nunca no meio de um caminho.
+    const lampSpots = [[9, 9], [-9, 9], [9, -9], [-9, -9], [3, 13], [13, 6], [-13, 6], [3, -13], [19, 6], [-19, 6]];
     for (const [x, z] of lampSpots) this._lantern(w, x, z, 0xd8ffa0);
   }
 
