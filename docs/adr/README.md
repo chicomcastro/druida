@@ -110,4 +110,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0104](0104-interiores-mobiliados-loja.md) | Polish: interiores mobiliados + loja com mais itens | Aceito |
 | [0105](0105-brilho-interiores-rosto-player-wiki.md) | Interiores mais claros, rosto do Druida e wiki viva | Aceito |
 | [0106](0106-santuario-do-lobo.md) | Santuário do Lobo: a primeira Forma Ancestral | Aceito |
+| [0107](0107-rixas-vilas-2-4.md) | Rixa das famílias nas vilas 2–4 | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

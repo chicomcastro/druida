@@ -78,6 +78,29 @@ describe('Side quests por triggers (ADR 0096)', () => {
     expect(active.find((q) => q.id === 'feud')?.desc).toBe(SIDE_QUESTS[0].steps[0].desc);
   });
 
+  it('feuds das vilas 2–4: desbloqueiam pelo segredo e completam pelos dois NPCs', () => {
+    const cases = [
+      { id: 'feud_vau', lore: 'l17', a: 'vau_arpo', b: 'vau_couro', essence: 55 },
+      { id: 'feud_cinza', lore: 'l19', a: 'cinza_serra', b: 'cinza_forno', essence: 60 },
+      { id: 'feud_degelo', lore: 'l21', a: 'degelo_pasto', b: 'degelo_trilha', essence: 65 },
+    ];
+    for (const c of cases) {
+      const g = makeGame();
+      const pid = addPlayer(g, 0);
+      const sq = new SideQuestManager(g);
+      const e0 = essenceOf(g, pid);
+      expect(sq.states[c.id].status).toBe('locked');
+      revealLore(g, c.lore);
+      expect(sq.states[c.id].status).toBe('active');
+      g.emit('talkedNpc', { npc: c.a });
+      expect(sq.states[c.id].step).toBe(1);
+      g.emit('talkedNpc', { npc: c.b });
+      expect(sq.states[c.id].status).toBe('done');
+      expect(essenceOf(g, pid)).toBe(e0 + c.essence);
+      expect(g.events.some((e) => e.e === 'questCompleted' && e.p.id === c.id)).toBe(true);
+    }
+  });
+
   it('serialize/restore preserva estado e gatilhos', () => {
     const g = makeGame();
     addPlayer(g, 0);
