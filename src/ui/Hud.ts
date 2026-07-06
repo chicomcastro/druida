@@ -2,7 +2,7 @@ import { C } from '../core/ecs/components.js';
 import { FORMS } from '../gameplay/forms.js';
 import { xpForLevel } from '../gameplay/progression.js';
 import { isTouchDevice } from './TouchControls.js';
-import { ensureHotbar } from '../gameplay/hotbar.js';
+import { ensureHotbar, FORM_SLOT_START as HB_FORM_START } from '../gameplay/hotbar.js';
 import { abilityBranch } from '../gameplay/skillTree.js';
 
 /**
@@ -68,8 +68,6 @@ const css = `
 #hud-hotbar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:6}
 #hud-hotbar .hb{width:44px;height:44px;border-radius:9px;border:2px solid rgba(255,255,255,.16);background:linear-gradient(160deg,rgba(20,32,18,.9),rgba(8,14,8,.9));position:relative;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4)}
 #hud-hotbar .hb.empty{opacity:.4}
-/* Separador visual entre a fileira de skills (1–4) e as formas (5–9). */
-#hud-hotbar .hb.sep{margin-left:12px}
 #hud-hotbar .hb.form{border-color:rgba(159,224,106,.28)}
 #hud-hotbar .hb.active{border-color:#ffd56a;box-shadow:inset 0 2px 6px rgba(0,0,0,.5),0 0 12px rgba(255,213,106,.5)}
 #hud-hotbar .hb .ic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.8))}
@@ -132,7 +130,7 @@ export class Hud {
       <div id="hud-hotbar"></div>
       <div id="hud-combo"><div class="track"><div class="zone"></div><div class="fill"></div></div><div class="cnt"></div></div>
       <div id="hud-victory"><h1>A Floresta Renasce</h1><p>Você purificou o Coração Corrompido e derrotou O Apodrecedor. A natureza respira de novo, Druida.</p><p style="opacity:.6;font-size:13px">Continue explorando o mundo livremente.</p></div>
-      <div id="hud-hint">WASD andar · J atacar · Shift esquivar · E falar<br>5–9 formas · U/I/O dons · Q poção · B mochila · M mapa · T voltar ao Carvalho</div>`;
+      <div id="hud-hint">WASD andar · J atacar · Shift esquivar · E falar<br>1–9 hotbar (formas + skills) · U/I/O dons · Q/R poção · B mochila · M mapa · T voltar ao Carvalho</div>`;
     document.body.appendChild(this.root);
     // Touch não tem teclado: as dicas de atalho só confundem (ADR 0068).
     if (isTouchDevice()) {
@@ -200,11 +198,10 @@ export class Hud {
   }
 
   /**
-   * Hotbar estilo Minecraft (E17.3b). 9 células:
-   *  - 1–4: habilidades ativas atribuídas (game.progress.hotbar), com cooldown.
-   *  - 5–9: formas do P1 (a atual fica destacada).
-   * Reconstrói o DOM só quando a atribuição/formas mudam; o cooldown e o
-   * destaque da forma atual são atualizados por frame sem recriar nós.
+   * Hotbar estilo Minecraft (E17.5). 9 células unificadas: cada slot é uma
+   * FORMA (faixa contígua a partir de FORM_SLOT_START, na ordem de form.list) ou
+   * uma HABILIDADE atribuída — o resto fica vazio. Reconstrói o DOM só quando o
+   * layout muda; cooldown e destaque da forma atual são atualizados por frame.
    */
   _updateHotbar() {
     const { game } = this;
@@ -216,42 +213,45 @@ export class Hud {
     const form = pid != null ? game.world.get(pid, C.Form) : null;
     const forms = form?.list ?? ['humanoid'];
 
-    // Assinatura de layout: skills nos 4 slots + lista de formas.
-    const sig = hb.slice(0, 4).join(',') + '|' + forms.join(',');
+    // Um slot é de forma se cai na faixa das formas desbloqueadas.
+    const formOf = (s) => (s >= HB_FORM_START && s - HB_FORM_START < forms.length
+      ? forms[s - HB_FORM_START] : null);
+
+    // Assinatura de layout: para cada slot, forma ou skill.
+    const sig = Array.from({ length: 9 }, (_, s) => formOf(s) ? `f:${formOf(s)}` : `s:${hb[s] ?? ''}`).join('|');
     if (sig !== this._hotbarKey) {
       this._hotbarKey = sig;
-      const skillCells = [0, 1, 2, 3].map((s) => {
+      this.hotbarEl.innerHTML = Array.from({ length: 9 }, (_, s) => {
+        const fm = formOf(s);
+        if (fm) {
+          return `<div class="hb form" data-form="${fm}"><span class="k">${s + 1}</span>`
+            + `<span class="ic">${FORM_ICON[fm] ?? '🧙'}</span></div>`;
+        }
         const ab = hb[s];
         const icon = ab ? (BRANCH_ICON[abilityBranch(ab) ?? ''] ?? '✦') : '';
         const empty = ab ? '' : ' empty';
         return `<div class="hb skill${empty}" data-skill="${s}"><span class="k">${s + 1}</span>`
           + `<span class="ic">${icon}</span><div class="cd"></div></div>`;
-      });
-      const formCells = [0, 1, 2, 3, 4].map((f) => {
-        const fm = forms[f];
-        const first = f === 0 ? ' sep' : '';
-        if (!fm) return `<div class="hb form empty${first}"><span class="k">${f + 5}</span></div>`;
-        return `<div class="hb form${first}" data-form="${fm}"><span class="k">${f + 5}</span>`
-          + `<span class="ic">${FORM_ICON[fm] ?? '🧙'}</span></div>`;
-      });
-      this.hotbarEl.innerHTML = skillCells.concat(formCells).join('');
+      }).join('');
     }
 
     // Atualização por frame: cooldown das skills + forma ativa destacada.
     const cds = pid != null ? game.world.get(pid, C.Cooldowns) : null;
     const cells = this.hotbarEl.children;
-    for (let s = 0; s < 4; s++) {
+    for (let s = 0; s < 9; s++) {
+      const cell = cells[s];
+      if (!cell) continue;
+      const fm = formOf(s);
+      if (fm) {
+        cell.classList.toggle('active', fm === form?.current);
+        continue;
+      }
       const ab = hb[s];
-      const cd = cells[s]?.querySelector('.cd');
+      const cd = cell.querySelector('.cd');
       if (!cd) continue;
       const remain = ab && cds ? (cds.map[ab] ?? 0) : 0;
       const total = ab ? (game.abilityCooldown(ab) || 1) : 1;
       cd.style.transform = `scaleY(${Math.max(0, Math.min(1, remain / total))})`;
-    }
-    for (let f = 0; f < 5; f++) {
-      const cell = cells[4 + f];
-      if (!cell) continue;
-      cell.classList.toggle('active', forms[f] && forms[f] === form?.current);
     }
   }
 

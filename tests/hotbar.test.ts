@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { unlock } from '../src/gameplay/skillTree.js';
 import {
   HOTBAR_SIZE, ensureHotbar, hotbarAbility, assignSkill, clearSlot,
-  autoFillHotbar, pruneHotbar,
+  autoFillHotbar, pruneHotbar, FORM_SLOT_START, isFormSlot, skillSlots,
 } from '../src/gameplay/hotbar.js';
 
 function makeGame(points = 0): any {
@@ -72,5 +72,33 @@ describe('Hotbar 1–9 (E17.3)', () => {
     g.progress.activeSkills = {}; // respec bruto
     pruneHotbar(g);
     expect(ensureHotbar(g).every((s) => s === null)).toBe(true);
+  });
+
+  it('autoFill respeita os slots permitidos (evita faixa de forma)', () => {
+    const g = withSkills();
+    const allowed = skillSlots(2); // 2 formas → [0,1,2,3,6,7,8]
+    const placed = autoFillHotbar(g, allowed);
+    expect(placed).toBe(2);
+    const hb = ensureHotbar(g);
+    // nada caiu nos slots de forma (4 e 5)
+    expect(hb[4]).toBe(null);
+    expect(hb[5]).toBe(null);
+    for (let s = 0; s < HOTBAR_SIZE; s++) if (hb[s]) expect(allowed).toContain(s);
+  });
+});
+
+describe('faixa de forma vs. skill no hotbar (E17.5)', () => {
+  it('isFormSlot cobre a faixa contígua a partir de FORM_SLOT_START', () => {
+    // 2 formas ocupam os slots 4 e 5.
+    expect(isFormSlot(3, 2)).toBe(false);
+    expect(isFormSlot(FORM_SLOT_START, 2)).toBe(true);
+    expect(isFormSlot(FORM_SLOT_START + 1, 2)).toBe(true);
+    expect(isFormSlot(FORM_SLOT_START + 2, 2)).toBe(false);
+  });
+
+  it('skillSlots devolve todos os slots fora da faixa de forma', () => {
+    expect(skillSlots(2)).toEqual([0, 1, 2, 3, 6, 7, 8]);
+    expect(skillSlots(0)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(skillSlots(5)).toEqual([0, 1, 2, 3]);
   });
 });

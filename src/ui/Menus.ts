@@ -9,7 +9,7 @@ import { BOONS, chooseBoon } from '../gameplay/boons.js';
 import { REBINDABLE, keyLabel } from '../core/input/bindings.js';
 import { SKILL_TREES, canLearn, learn, respec, nodeText, ensureSkillState } from '../gameplay/skills.js';
 import { ACTIVE_SKILL_TREE, canUnlock, unlock, isUnlocked, respecActive, ensureActiveSkills } from '../gameplay/skillTree.js';
-import { ensureHotbar, assignSkill, clearSlot, autoFillHotbar } from '../gameplay/hotbar.js';
+import { ensureHotbar, assignSkill, clearSlot, autoFillHotbar, skillSlots } from '../gameplay/hotbar.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -169,7 +169,7 @@ export class Menus {
       else if (e.code === 'KeyK' && !mapOpen && !this.pause.classList.contains('show') && !this.inv.classList.contains('show')) { e.preventDefault(); this.toggleSkills(); }
       else if (e.code === 'KeyT' && !this.game.paused) this.game.recallToHub();
       // Cinto de poções (ADR 0091): Q usa a 1ª poção, R a 2ª. A fileira numérica
-      // 1–9 agora é a hotbar de habilidades (1–4) + formas (5–9), E17.3b.
+      // 1–9 é a hotbar unificada (formas + habilidades atribuíveis), E17.5.
       else if (e.code === 'KeyQ' && !this.game.paused && !this.inv.classList.contains('show')) {
         this.game.useHotbarSlot(0);
       } else if (e.code === 'KeyR' && !this.game.paused && !this.inv.classList.contains('show')) {
@@ -338,15 +338,18 @@ export class Menus {
 
     // Árvore de SKILLS ATIVAS (E17, ADR 0124): cada nó libera uma habilidade.
     ensureActiveSkills(this.game);
-    const hbSlots = ensureHotbar(this.game); // 9 slots; 1–4 são atribuíveis (E17.3b)
+    const hbSlots = ensureHotbar(this.game); // 9 slots (E17.5)
+    // As formas ocupam a faixa a partir do índice 4; skills usam o resto.
+    const formCount = form?.list?.length ?? 1;
+    const assignable = skillSlots(formCount);
     const branches = Object.entries(ACTIVE_SKILL_TREE).map(([branch, nodes]) => {
       const rows = (nodes as any[]).map((node) => {
         const has = isUnlocked(this.game, node.id);
         const unlockable = canUnlock(this.game, node.id);
         const reqLocked = node.req && !isUnlocked(this.game, node.req);
-        // Atribuição à hotbar: só para skills já liberadas. 4 botões (1–4)
-        // destacando o slot atual; clicar de novo no mesmo slot desatribui.
-        const slots = has ? `<div class="sk-slots">${[0, 1, 2, 3].map((i) =>
+        // Atribuição à hotbar: só para skills já liberadas. Um botão por slot
+        // livre de forma, destacando o atual; clicar de novo desatribui.
+        const slots = has ? `<div class="sk-slots">${assignable.map((i) =>
           `<button class="slot${hbSlots[i] === node.ability ? ' on' : ''}" data-assign="${node.ability}" data-slot="${i}" title="Atribuir à tecla ${i + 1}">${i + 1}</button>`,
         ).join('')}</div>` : '';
         return `<div class="sk-node${reqLocked && !has ? ' locked' : ''}">
@@ -367,7 +370,7 @@ export class Menus {
       <h2>🌟 Talentos</h2>
       <p class="sub">Pontos disponíveis: <b>${pr.skillPoints ?? 0}</b> · trilhas destacadas seguem sua arma/forma ativa. Especialize usando cada arma e forma.</p>
       <h3 style="margin:6px 0 4px;color:#9fe06a">✦ Habilidades ativas</h3>
-      <p class="sub">Libere magias e atribua às teclas <b>1–4</b> da hotbar (5–9 são as formas). Cada ramo tem seu efeito visual.</p>
+      <p class="sub">Libere magias e atribua a qualquer tecla livre da hotbar (<b>1–9</b>). As formas ocupam as teclas logo após as skills; o resto é seu. Cada ramo tem seu efeito visual.</p>
       <div class="sk-tracks">${branches}</div>
       <button class="btn" id="sk-respec-active" style="text-align:center;margin:8px 0 16px">↺ Redistribuir habilidades (grátis)</button>
       <h3 style="margin:6px 0 4px;color:#ffd56a">⚔️ Passivas por arma/forma</h3>
@@ -383,8 +386,8 @@ export class Menus {
     });
     this.skills.querySelectorAll('.buy[data-skill]').forEach((el: any) => {
       el.onclick = () => {
-        // Ao liberar, auto-equipa no 1º slot livre (1–4) — conveniência.
-        if (unlock(this.game, el.dataset.skill)) { autoFillHotbar(this.game); this.refreshSkills(); }
+        // Ao liberar, auto-equipa no 1º slot livre de forma — conveniência.
+        if (unlock(this.game, el.dataset.skill)) { autoFillHotbar(this.game, assignable); this.refreshSkills(); }
       };
     });
     this.skills.querySelectorAll('.slot[data-assign]').forEach((el: any) => {

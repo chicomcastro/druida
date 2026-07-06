@@ -15,6 +15,27 @@ import { ABILITIES } from './abilities/index.js';
 
 export const HOTBAR_SIZE = 9;
 
+/**
+ * Slots 1–9 (E17.5): as formas do jogador ocupam slots contíguos a partir do
+ * índice 4 (teclas 5, 6, …), na ordem de `form.list`. Os demais slots ficam
+ * livres para habilidades. Assim as teclas de forma continuam onde estavam e as
+ * skills se espalham pelos slots vagos (incluindo 7–9 no começo do jogo), sem
+ * mudar o formato de save (o hotbar segue um array de ids de habilidade).
+ */
+export const FORM_SLOT_START = 4;
+
+/** Um slot é de forma se cai na faixa ocupada pelas formas desbloqueadas. */
+export function isFormSlot(slot: number, formCount: number): boolean {
+  return slot >= FORM_SLOT_START && slot < FORM_SLOT_START + formCount;
+}
+
+/** Slots utilizáveis por habilidades, dada a quantidade de formas ativas. */
+export function skillSlots(formCount: number): number[] {
+  const out: number[] = [];
+  for (let s = 0; s < HOTBAR_SIZE; s++) if (!isFormSlot(s, formCount)) out.push(s);
+  return out;
+}
+
 /** Garante os 9 slots no progresso (save antigo não tinha). */
 export function ensureHotbar(game): (string | null)[] {
   const p = game.progress;
@@ -62,12 +83,14 @@ export function clearSlot(game, slot: number): boolean {
  * conveniência para quando o jogador libera uma skill nova (auto-equipar).
  * Não desloca o que já está posto. Devolve quantas colocou.
  */
-export function autoFillHotbar(game): number {
+export function autoFillHotbar(game, allowed?: number[]): number {
   const hb = ensureHotbar(game);
+  const slots = allowed ?? Array.from({ length: HOTBAR_SIZE }, (_, i) => i);
   const already = new Set(hb.filter(Boolean));
   const pending = unlockedAbilities(game).filter((a) => !already.has(a));
   let placed = 0;
-  for (let i = 0; i < HOTBAR_SIZE && pending.length; i++) {
+  for (const i of slots) {
+    if (!pending.length) break;
     if (!hb[i]) { hb[i] = pending.shift()!; placed++; }
   }
   if (placed) game.emit?.('hotbarChanged', { slot: -1, abilityId: null });
