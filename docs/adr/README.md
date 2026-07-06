@@ -139,4 +139,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0133](0133-hotbar-equip-potion-inventario.md) | Hotbar livre: equipar/poção pelo inventário + swap-back (E18.2) | Aceito |
 | [0134](0134-comida-buffs-temporarios.md) | Comida & buffs temporários (E18.3) | Aceito |
 | [0135](0135-culinaria-fundacao.md) | Culinária: ingredientes, receitas e fundação do Craft (E19.1) | Aceito |
+| [0136](0136-cozinha-bancada.md) | Cozinha: bancada, painel de craft e nível (E19.2) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
