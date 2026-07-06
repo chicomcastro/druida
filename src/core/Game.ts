@@ -28,6 +28,7 @@ import { PurityManager } from '../world/PurityManager.js';
 import { DayNightManager } from '../world/DayNightManager.js';
 import { PoiManager } from '../world/PoiManager.js';
 import { ForageManager } from '../world/ForageManager.js';
+import { FarmManager } from '../world/FarmManager.js';
 import { EventManager } from '../world/EventManager.js';
 import { DungeonManager } from '../world/DungeonManager.js';
 import { InteriorManager } from '../world/InteriorManager.js';
@@ -73,7 +74,7 @@ export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
   world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
-  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; sideQuests: any; dayNight: any; telemetry: any; poi: any; forage: any; events: any; dungeon: any; interiors: any; fauna: any; hazards: any; story: any; loop: any;
+  worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; sideQuests: any; dayNight: any; telemetry: any; poi: any; forage: any; farm: any; events: any; dungeon: any; interiors: any; fauna: any; hazards: any; story: any; loop: any;
   inDungeon: boolean;
   meal: any; // bônus temporário da refeição da taverna (ADR 0094)
   // Estado.
@@ -133,6 +134,7 @@ export class Game {
     this.terrain = new TerrainFeatures(this); // falésias nas bordas de bioma (ADR 0064)
     this.poi = new PoiManager(this);
     this.forage = new ForageManager(this); // nós de coleta por bioma (ADR 0137)
+    this.farm = new FarmManager(this); // canteiros de plantação na vila (ADR 0142)
     this.events = new EventManager(this);
     this.dungeon = new DungeonManager(this);
     this.interiors = new InteriorManager(this); // interiores das casas (ADR 0094)
@@ -177,6 +179,7 @@ export class Game {
       (g) => g.purity.update(),
       (g) => g.poi.update(),
       (g, dt) => g.forage.update(dt),
+      (g, dt) => g.farm.update(dt),
       (g, dt) => g.events.update(dt),
       (g, dt) => g.dungeon.update(dt),
       (g, dt) => g.interiors.update(dt),
