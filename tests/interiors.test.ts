@@ -164,7 +164,7 @@ describe('Loja com viés de estoque (ADR 0094)', () => {
     const g = makeGame();
     g.activeShopKey = 'hub';
     rerollShop(g);
-    expect(g.shopStock.length).toBe(7); // 5 equipamentos + 2 poções (ADR 0104)
+    expect(g.shopStock.length).toBe(11); // 5 equip + 2 poções + 3 ingredientes + 1 comida (ADR 0104/0138)
   });
 });
 
