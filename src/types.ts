@@ -93,6 +93,8 @@ export interface ConsumableItem extends ItemBase {
   magnitude: number;
   duration?: number;
   stack?: number;
+  /** Comida (E18.3): buff temporário concedido ao consumir. */
+  buff?: { kind: 'dmg' | 'speed' | 'taken'; pct: number; dur: number; icon: string; color: number };
 }
 
 export type Item = WeaponItem | ArmorItem | ArtifactItem | ConsumableItem;
