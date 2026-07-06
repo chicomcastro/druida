@@ -48,6 +48,7 @@ const css = `
 #hud-hint{position:absolute;bottom:12px;right:12px;text-align:right;font-size:11.5px;opacity:.6;line-height:1.55;text-shadow:0 1px 2px #000}
 #hud-objective{position:absolute;top:14px;left:14px;max-width:310px;background:linear-gradient(160deg,rgba(14,26,16,.9),rgba(6,12,8,.84));border:1px solid rgba(255,213,106,.3);border-left:3px solid #ffd56a;border-radius:10px;padding:8px 12px;font-size:13px;text-shadow:0 1px 2px #000;box-shadow:0 6px 18px rgba(0,0,0,.4);animation:hud-slide .4s ease}
 #hud-objective .t{font-size:9.5px;letter-spacing:.14em;opacity:.65;text-transform:uppercase;color:#ffd56a}
+#hud-objective .d{font-size:11px;opacity:.72;margin-top:3px;line-height:1.4;font-style:italic}
 #hud-save{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:12px;background:rgba(8,16,10,.8);border:1px solid rgba(159,224,106,.3);border-radius:8px;padding:4px 12px;opacity:0;transition:opacity .35s;text-shadow:0 1px 2px #000}
 #hud-prompt{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:linear-gradient(160deg,rgba(14,26,16,.94),rgba(6,12,8,.9));border:1px solid rgba(159,224,106,.4);border-radius:10px;padding:9px 16px;font-size:14px;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 #hud-dialogue{position:absolute;bottom:140px;left:50%;transform:translateX(-50%);width:min(620px,80vw);background:linear-gradient(160deg,rgba(10,20,12,.96),rgba(5,10,7,.94));border:1px solid rgba(159,224,106,.45);border-radius:12px;padding:15px 20px;font-size:15px;line-height:1.5;display:none;box-shadow:0 12px 36px rgba(0,0,0,.6);backdrop-filter:blur(4px)}
@@ -98,7 +99,7 @@ export class Hud {
   game: any;
   root: any;
   playersEl: any; biomeEl: any; lvlEl: any; xpEl: any;
-  bossEl: any; objEl: any; promptEl: any;
+  bossEl: any; objEl: any; objDescEl: any; promptEl: any;
   dialogueEl: any; victoryEl: any; toastEl: any; saveEl: any;
   panels: Map<number, any>;
   hotbarEl: any; _hotbarKey: string;
@@ -115,7 +116,7 @@ export class Hud {
     this.root.id = 'hud-root';
     this.root.innerHTML = `
       <div id="hud-top"><div class="biome"></div><div class="lvl"></div><div id="hud-xp"><i></i></div></div>
-      <div id="hud-objective"><div class="t">Objetivo</div><div class="o"></div></div>
+      <div id="hud-objective"><div class="t">Objetivo</div><div class="o"></div><div class="d"></div></div>
       <div id="hud-boss"><div class="nm"></div><div class="bar"><i></i></div></div>
       <div id="hud-players"></div>
       <div id="hud-prompt"></div>
@@ -133,6 +134,7 @@ export class Hud {
       (this.root.querySelector('#hud-hint') as HTMLElement).style.display = 'none';
     }
     this.objEl = this.root.querySelector('#hud-objective .o');
+    this.objDescEl = this.root.querySelector('#hud-objective .d');
     this.promptEl = this.root.querySelector('#hud-prompt');
     this.dialogueEl = this.root.querySelector('#hud-dialogue');
     this.victoryEl = this.root.querySelector('#hud-victory');
@@ -295,6 +297,7 @@ export class Hud {
       let txt = game.story.objective();
       if (step.id === 'purify_clearing') txt += ` (${game.story.kills}/${step.kills})`;
       this.objEl.textContent = txt;
+      if (this.objDescEl) this.objDescEl.textContent = game.story.description?.() ?? '';
     }
 
     // Prompt de interação.
