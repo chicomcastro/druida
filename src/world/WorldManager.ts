@@ -20,7 +20,7 @@ import { canopyGeo, pineGeo, rockGeo, mergeBoxes } from './voxelGeo.js';
 // Peso de cada bioma no Voronoi ponderado (ADR 0110): peso maior = região maior.
 // A Clareira (bioma inicial) domina o centro, virando uma zona de exploração
 // ampla antes de avançar; as vilas 2–4 ficam bem no interior dos seus biomas.
-const BIOME_WEIGHT = { clareira: 1.25, pantano: 1, bosque_cinza: 1, picos: 1, coracao: 1 };
+const BIOME_WEIGHT = { clareira: 1.3, pantano: 1, bosque_cinza: 1, picos: 1, coracao: 1 };
 
 // Âncora de cada bioma = centro da vila daquele bioma (data-driven), com peso.
 export const BIOME_ANCHORS = SETTLEMENTS.map((s) => ({
@@ -28,7 +28,8 @@ export const BIOME_ANCHORS = SETTLEMENTS.map((s) => ({
 }));
 
 // Mancha do Coração Corrompido (bioma final), fora do alcance das vilas.
-export const CORACAO_BLOB = { x: 0, z: -225, r: 90 };
+// Ampliada e empurrada ao sul junto com os biomas maiores (ADR 0119).
+export const CORACAO_BLOB = { x: 0, z: -285, r: 110 };
 
 // Deformação das fronteiras: amplitude (u) e frequência do domain warp. Amplitude
 // contida para não desestabilizar os centros das vilas no Voronoi ponderado.
