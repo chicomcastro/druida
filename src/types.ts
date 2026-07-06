@@ -228,5 +228,7 @@ export interface SaveV1 {
   boons?: Record<string, string>;
   /** Reputação por vila (ADR 0108): settlementId -> pontos. Opcional. */
   reputation?: Record<string, number>;
+  /** Buffs temporários ativos (ADR 0134/E19): salvos p/ resumir. Opcional. */
+  buffs?: any[];
   players: PlayerSnapshot[];
 }

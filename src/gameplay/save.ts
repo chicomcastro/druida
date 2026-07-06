@@ -53,6 +53,7 @@ export function serialize(game): SaveV1 {
     sideQuests: game.sideQuests?.serialize() ?? null,
     boons: game.boons ?? {},
     reputation: game.reputation ?? {},
+    buffs: (game.buffs ?? []).map((b) => ({ ...b })),
     players,
   };
 }
@@ -60,6 +61,7 @@ export function serialize(game): SaveV1 {
 export function apply(game, data: SaveV1 | null | undefined): boolean {
   if (!data || data.v !== 1) return false;
   game.progress = { ...data.progress };
+  game.buffs = Array.isArray(data.buffs) ? data.buffs.map((b) => ({ ...b })) : [];
   game.story.step = data.story.step ?? 0;
   game.story.kills = data.story.kills ?? 0;
   game.story._spawned = { ...(data.story.spawned ?? {}) };

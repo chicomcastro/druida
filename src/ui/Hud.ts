@@ -253,7 +253,10 @@ export class Hud {
           return `<div class="hb form" data-form="${e.id}">${key}<span class="ic">${FORM_ICON[e.id] ?? '🧙'}</span></div>`;
         }
         if (e.k === 'potion') {
-          return `<div class="hb potion">${key}<span class="ic">🧪</span><span class="n"></span></div>`;
+          // Ícone certo por item (E19): comida mostra seu emoji; poção, 🧪.
+          const sample = (inv?.items ?? []).find((it) => it?.type === 'consumable' && it.name === e.id);
+          const icon = sample?.buff?.icon ?? '🧪';
+          return `<div class="hb potion">${key}<span class="ic">${icon}</span><span class="n"></span></div>`;
         }
         // equip
         const eqIcon = EQUIP_ICON(inv, loadout, e.id);
