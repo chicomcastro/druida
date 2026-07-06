@@ -1,6 +1,7 @@
 import { C } from '../core/ecs/components.js';
 import { LANDMARKS } from '../gameplay/story.js';
 import { SETTLEMENTS } from '../data/settlements.js';
+import { BIOMES, BIOME_ORDER } from '../data/biomes.js';
 import { biomeAt } from '../world/WorldManager.js';
 
 /**
@@ -15,13 +16,13 @@ const POINTS = [
   // Assentamentos (cidades temáticas): o hub é sempre visível; as demais vilas
   // aparecem/permitem viagem quando exploradas. Ver ADR 0041.
   ...SETTLEMENTS.map((s) => ({
-    key: s.id, x: s.x, z: s.z, label: s.name, color: s.mapColor, always: s.id === 'circulo_carvalho',
+    key: s.id, x: s.x, z: s.z, label: s.name, color: s.mapColor, always: s.id === 'circulo_carvalho', village: true,
   })),
-  { key: 'sanctuary_wolf', x: LANDMARKS.sanctuary_wolf.x, z: LANDMARKS.sanctuary_wolf.z, label: 'Santuário do Lobo', color: '#8fd0ff' },
-  { key: 'sanctuary_bear', x: LANDMARKS.sanctuary_bear.x, z: LANDMARKS.sanctuary_bear.z, label: 'Santuário do Urso', color: '#ff9a5a' },
-  { key: 'sanctuary_raven', x: LANDMARKS.sanctuary_raven.x, z: LANDMARKS.sanctuary_raven.z, label: 'Santuário do Corvo', color: '#9a7aff' },
-  { key: 'sanctuary_frog', x: LANDMARKS.sanctuary_frog.x, z: LANDMARKS.sanctuary_frog.z, label: 'Santuário do Sapo', color: '#6affb0' },
-  { key: 'boss', x: LANDMARKS.boss.x, z: LANDMARKS.boss.z, label: 'Coração Corrompido', color: '#ff3030' },
+  { key: 'sanctuary_wolf', x: LANDMARKS.sanctuary_wolf.x, z: LANDMARKS.sanctuary_wolf.z, label: 'Santuário do Lobo', color: '#8fd0ff', village: false },
+  { key: 'sanctuary_bear', x: LANDMARKS.sanctuary_bear.x, z: LANDMARKS.sanctuary_bear.z, label: 'Santuário do Urso', color: '#ff9a5a', village: false },
+  { key: 'sanctuary_raven', x: LANDMARKS.sanctuary_raven.x, z: LANDMARKS.sanctuary_raven.z, label: 'Santuário do Corvo', color: '#9a7aff', village: false },
+  { key: 'sanctuary_frog', x: LANDMARKS.sanctuary_frog.x, z: LANDMARKS.sanctuary_frog.z, label: 'Santuário do Sapo', color: '#6affb0', village: false },
+  { key: 'boss', x: LANDMARKS.boss.x, z: LANDMARKS.boss.z, label: 'Coração Corrompido', color: '#ff3030', village: false },
 ];
 
 // Cor de cada bioma no mapa (regiões orgânicas, ADR 0109).
@@ -29,6 +30,26 @@ const BIOME_MAP_COLOR = {
   clareira: '#3e6b3a', pantano: '#40492f', bosque_cinza: '#4a4036',
   picos: '#8aa0b0', coracao: '#2a1f2a',
 };
+
+/** Legenda do mapa (E14): swatch de cada bioma (nome + nível sugerido) e a
+ *  chave dos marcadores — vila (losango) vs santuário/chefe (círculo). */
+function legendHtml() {
+  const biomes = BIOME_ORDER.map((b) => {
+    const c = (BIOME_MAP_COLOR[b] ?? '#3e6b3a');
+    return `<span style="display:inline-flex;align-items:center;gap:5px;margin:2px 8px 2px 0">
+      <span style="width:12px;height:12px;border-radius:2px;background:${c};border:1px solid rgba(255,255,255,.3)"></span>
+      ${BIOMES[b].name} <span style="opacity:.55">· Nv ${BIOMES[b].level}</span></span>`;
+  }).join('');
+  const markers = `
+    <span style="display:inline-flex;align-items:center;gap:5px;margin:2px 8px 2px 0">
+      <span style="width:11px;height:11px;background:#eaf3e6;transform:rotate(45deg);border:1px solid #04080522"></span> Vila</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;margin:2px 8px 2px 0">
+      <span style="width:11px;height:11px;border-radius:50%;background:#eaf3e6"></span> Santuário / Chefe</span>`;
+  return `<div style="max-width:78vmin;margin-top:12px;font-size:12px;line-height:1.7;display:flex;flex-wrap:wrap;justify-content:center;
+      background:rgba(8,14,9,.55);border:1px solid rgba(159,224,106,.25);border-radius:10px;padding:8px 12px">
+      <div style="width:100%;font-weight:700;color:#9fe06a;margin-bottom:2px">Biomas</div>${biomes}
+      <div style="width:100%;font-weight:700;color:#9fe06a;margin:4px 0 2px">Marcadores</div>${markers}</div>`;
+}
 
 export class WorldMap {
   game: any;
@@ -43,6 +64,7 @@ export class WorldMap {
     wrap.style.cssText = 'position:fixed;inset:0;z-index:25;display:none;align-items:center;justify-content:center;background:rgba(4,8,5,.9);font-family:system-ui,sans-serif;color:#eaf3e6;flex-direction:column';
     wrap.innerHTML = `<div style="font-size:22px;font-weight:700;margin-bottom:8px;color:#9fe06a">🗺️ Mapa do Mundo</div>
       <canvas width="${PX}" height="${PX}" style="max-width:78vmin;max-height:78vmin;border-radius:50%;border:2px solid rgba(159,224,106,.4);cursor:crosshair"></canvas>
+      ${legendHtml()}
       <div style="opacity:.7;font-size:13px;margin-top:10px">Clique num marco descoberto para viajar · M / Esc para fechar</div>`;
     document.body.appendChild(wrap);
     this.wrap = wrap;
@@ -113,9 +135,21 @@ export class WorldMap {
       const known = this._travelable(pt);
       ctx.globalAlpha = known ? 1 : 0.28;
       ctx.fillStyle = pt.color;
-      ctx.beginPath();
-      ctx.arc(px, pz, 6, 0, Math.PI * 2);
-      ctx.fill();
+      // Vilas = losango (assentamento); santuários/chefe = círculo (E14).
+      if (pt.village) {
+        ctx.save();
+        ctx.translate(px, pz);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillRect(-5.5, -5.5, 11, 11);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(234,243,230,.9)';
+        ctx.strokeRect(-5.5, -5.5, 11, 11);
+        ctx.restore();
+      } else {
+        ctx.beginPath();
+        ctx.arc(px, pz, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.globalAlpha = known ? 0.9 : 0.35;
       ctx.fillStyle = '#eaf3e6';
       ctx.font = '11px system-ui';
