@@ -61,6 +61,7 @@ export class SettlementManager {
       builders[s.theme](wrap(g, s, this, rng), rng);
       game.renderer.add(g);
       for (const v of s.villagers) this._buildVillager(s, v);
+      this._ambientVillagers(s); // moradores passivos extras — vida própria (ADR 0121)
       if (s.merchant) this._buildMerchant(s);
     }
     // Aviso em dev: nenhuma estrutura pode nascer dentro de outra (ADR 0085).
@@ -439,6 +440,28 @@ export class SettlementManager {
       game.world.add(id, C.Interactable, {
         kind: 'villager', prompt: `E — Conversar com ${v.name}`, range: 3, used: false, lines: v.lines,
       });
+    }
+  }
+
+  /**
+   * Moradores passivos extras (ADR 0121): dão vida à vila sem papel na história.
+   * Nascem nos PONTOS MÉDIOS entre moradores já existentes (ordenados por ângulo
+   * ao redor do centro) — pontos na faixa de circulação, longe das casas e do
+   * landmark central. Passeiam como os demais e têm falas de ambiente.
+   */
+  _ambientVillagers(s) {
+    const base = (s.villagers ?? []).filter((v) => !v.elder && Number.isFinite(v.x));
+    if (base.length < 2) return;
+    const sorted = [...base].sort((a, b) => Math.atan2(a.z, a.x) - Math.atan2(b.z, b.x));
+    const names = AMBIENT_NAMES[s.theme] ?? AMBIENT_NAMES.druida;
+    const lines = AMBIENT_LINES[s.theme] ?? AMBIENT_LINES.druida;
+    let made = 0;
+    for (let i = 0; i < sorted.length && made < 4; i++) {
+      const a = sorted[i], b = sorted[(i + 1) % sorted.length];
+      const x = (a.x + b.x) / 2, z = (a.z + b.z) / 2;
+      if (Math.hypot(x, z) < 4.5) continue; // não cai sobre o landmark central
+      this._buildVillager(s, { name: names[made % names.length], x, z, lines });
+      made++;
     }
   }
 
@@ -1205,6 +1228,20 @@ function mesh(geo, color, opts: any = {}) {
   m.receiveShadow = true;
   return m;
 }
+
+/** Nomes e falas de moradores passivos (ADR 0121): cor local, sem papel na trama. */
+const AMBIENT_NAMES = {
+  druida: ['Morador Feto', 'Moradora Sálvia', 'Menino Trevo', 'Anciã Folha'],
+  palafitas: ['Pescador Limo', 'Remadora Vaza', 'Menina Concha', 'Velho Cardume'],
+  lenhadores: ['Rachador Toco', 'Carvoeira Fumo', 'Aprendiz Farpa', 'Serrador Nó'],
+  degelo: ['Pastor Gelo', 'Tecelã Lã', 'Batedor Nevasca', 'Velha Cardo'],
+};
+const AMBIENT_LINES = {
+  druida: ['A Seiva anda mais forte por aqui.', 'Não passe do portão à noite, viajante.'],
+  palafitas: ['A maré da seiva subiu cedo hoje.', 'Cuidado nas passarelas, ficam escorregadias.'],
+  lenhadores: ['A floresta range diferente desde a praga.', 'Mantemos as brasas acesas, sempre.'],
+  degelo: ['O degelo abre trilhas que o gelo escondia.', 'Chegue perto da chama, forasteiro.'],
+};
 
 /** Cores das vestes por tema (morador comum, ancião, cinto e cajado). */
 const VILLAGER_PALETTES = {

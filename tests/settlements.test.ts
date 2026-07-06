@@ -33,7 +33,23 @@ describe('SettlementManager', () => {
     const villagers = inters.filter((k) => k === 'villager');
     const givers = inters.filter((k) => k === 'quest_giver');
     const total = SETTLEMENTS.reduce((n, s) => n + s.villagers.length, 0);
-    expect(villagers.length + givers.length).toBe(total);
+    // Moradores passivos extras (ADR 0121): pontos médios entre moradores, longe
+    // do centro — conta determinística, replicada aqui para o total bater.
+    const ambientCount = (s: any) => {
+      const base = s.villagers.filter((v: any) => !v.elder && Number.isFinite(v.x));
+      if (base.length < 2) return 0;
+      const sorted = [...base].sort((a: any, b: any) => Math.atan2(a.z, a.x) - Math.atan2(b.z, b.x));
+      let made = 0;
+      for (let i = 0; i < sorted.length && made < 4; i++) {
+        const a = sorted[i], b = sorted[(i + 1) % sorted.length];
+        if (Math.hypot((a.x + b.x) / 2, (a.z + b.z) / 2) < 4.5) continue;
+        made++;
+      }
+      return made;
+    };
+    const ambient = SETTLEMENTS.reduce((n, s) => n + ambientCount(s), 0);
+    expect(ambient).toBeGreaterThan(0);
+    expect(villagers.length + givers.length).toBe(total + ambient);
     expect(givers.length).toBe(SETTLEMENTS.filter((s) => s.quest).length);
     // Mercadores regionais (fora o hub, que usa o dos landmarks).
     expect(inters.filter((k) => k === 'merchant').length).toBe(SETTLEMENTS.filter((s) => s.merchant).length);
