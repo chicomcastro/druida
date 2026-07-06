@@ -473,27 +473,28 @@ export class SettlementManager {
 
   /** Vila druida (hub): cabanas de teto vivo, jardins, lanternas e menires. */
   _buildDruida(w, rng) {
-    // Casas em anel, deixando o sul (−Z) aberto — é o caminho da campanha.
-    // Teto vivo de musgo com cumeeira de palha; porta voltada ao centro.
-    // 9 casas variadas (ADR 0080): padrão 6×4, casinhas 4×4, sobrado e alas
-    // anexas — a vila lê como um povoado de verdade, não um acampamento.
+    // Círculo do Carvalho (ADR 0111): a vila cresce em DOIS ANÉIS ao redor da
+    // Carvalho-Mãe (centro, 0,0), com uma via em anel encerrando a praça da
+    // árvore e espigões radiais até cada casa. O sul (−Z) fica aberto: é o
+    // limiar da campanha. Anel interno = serviços; anel externo = moradias.
+    const RING = 7; // raio da via em anel ao redor da árvore
     const huts: [number, number, any][] = [
-      [-14, -2, {}],
-      [14, -4, { annex: true }],
-      [-9, 10, { roof: 0x4c7a34 }],
-      [9, 11, {}],
-      [0, 16, { roof: 0x8a7a3a }],
-      [-15, 4, { tall: true, h: 4.4, roof: 0x4c7a34 }],
-      [15, 5, { w: 4, d: 4, h: 2.6, roof: 0x8a7a3a }],
-      [-7, 19, { annex: true }],
-      [7, 19, { w: 4, d: 4, roof: 0x4c7a34 }],
+      // Anel interno (r≈13): as 6 casas de serviço, viradas para a árvore.
+      [7, 12, {}],
+      [13, 0, { annex: true }],
+      [7, -12, { roof: 0x8a7a3a }],
+      [-7, -12, {}],
+      [-13, 0, { tall: true, h: 4.4, roof: 0x4c7a34 }],
+      [-7, 12, { annex: true }],
+      // Anel externo (r≈22): moradias, nos vãos do anel interno.
+      [0, 22, { roof: 0x4c7a34 }],
+      [19, 11, { w: 4, d: 4, roof: 0x8a7a3a }],
+      [-19, 11, { w: 4, d: 4, roof: 0x4c7a34 }],
     ];
-    // Interiores acessíveis (ADR 0094, E5): cada casa é uma loja/serviço com
-    // propósito. Mercado geral fica na banca externa; aqui vão as lojas
-    // especializadas, a taverna, a liderança, o salão e moradias.
+    // Interiores acessíveis (ADR 0094, E5): serviços no anel interno, moradias
+    // no externo. Mercado geral fica na banca externa (landmarks).
     const HOUSE_THEMES = ['weapons', 'armor', 'tavern', 'leader', 'hall', 'home', 'home', 'home', 'home'];
-    // Espigões de porta (ADR 0083): cada casa ganha um caminho da SUA porta
-    // até a artéria mais próxima — nenhuma porta dá no nada.
+    // Espigões de porta (ADR 0083): da porta de cada casa até a via em anel.
     const spurs: number[][] = [];
     huts.forEach(([x, z, o], i) => {
       const ry = snap90(Math.atan2(-x, -z)); // porta olha o centro, no grid voxel
@@ -511,86 +512,66 @@ export class SettlementManager {
         w.fp(a2.x, a2.z, 3, 3, `anexo ${i}`); // só a parte fora da casa
       }
       const dpos = this._spun(hg.position.x, hg.position.z, ry, -0.7, (o.d ?? 4) / 2 + 0.8);
-      const dx = Math.round(dpos.x), dz = Math.round(dpos.z);
       this._houseDoor(w, dpos.x, dpos.z, HOUSE_THEMES[i] ?? 'home'); // porta entrável (ADR 0094)
-      if (dz >= 15) spurs.push([dx, dz, dx, 14], [dx, 14, 0, 14]); // casas do norte via rua z14
-      else spurs.push(Math.abs(dz - 4) <= Math.abs(dx) ? [dx, dz, dx, 4] : [dx, dz, 0, dz]);
+      // Espigão em L da porta até a via em anel (±RING), sem cruzar a árvore.
+      const dx = Math.round(dpos.x), dz = Math.round(dpos.z);
+      const rx = Math.abs(dx) > RING ? Math.sign(dx) * RING : dx;
+      const rz = Math.abs(dz) > RING ? Math.sign(dz) * RING : dz;
+      spurs.push([dx, dz, rx, dz], [rx, dz, rx, rz]);
       if (i % 2 === 0) {
         const c = this._spun(hg.position.x, hg.position.z, ry, (o.w ?? 6) / 2 - 0.55, -1.0);
         this._smokeAt(w, c.x, 0.35 + (o.h ?? 3.0) + 2.3, c.z); // topo da chaminé
       }
     });
-    // Ruas de laje (ADR 0080/0083): praça, anel da fogueira, artérias e os
-    // espigões de porta — a vila inteira fica interligada.
+    // Ruas de laje (ADR 0080/0083): a via em anel quadrada ao redor da árvore,
+    // o corredor sul até o portão e os espigões de porta — tudo interligado.
     this._streets(w, [
-      // praça do mercador (sob a banca e o baú, até a Carvalho-Mãe)
-      [-8, -6, 8, -6], [-8, -7, 8, -7], [-8, -8, 8, -8], [-8, -9, 8, -9],
-      [-8, -10, -3, -10], [3, -10, 8, -10],
-      // rua norte-sul (contorna a fogueira num anel)
-      [0, -5, 0, 1], [0, 7, 0, 14],
-      [-2, 2, -2, 6], [2, 2, 2, 6], [-2, 2, 2, 2], [-2, 6, 2, 6],
-      // ruas leste-oeste até as casas laterais
-      [-13, 4, -3, 4], [3, 4, 13, 4],
-      // caminho ao portão sul
-      [0, -11, 0, -17],
+      // via em anel (quadrada) encerrando a praça da Carvalho-Mãe
+      [-RING, -RING, RING, -RING], [RING, -RING, RING, RING],
+      [RING, RING, -RING, RING], [-RING, RING, -RING, -RING],
+      // corredor ao portão sul
+      [0, -RING, 0, -24],
       ...spurs,
     ]);
     // Pegadas dos marcos fixos do hub (validador ADR 0085).
-    w.fp(0, -10, 3.4, 3.4, 'carvalho-mãe');
-    w.fp(0, 4, 2.4, 2.4, 'fogueira');
-    w.fp(-5.5, 7, 3.2, 1.8, 'jardim-oeste');
-    w.fp(5.5, 7, 3.2, 1.8, 'jardim-leste');
-    w.fp(-6.5, -8, 6, 4.5, 'banca do mercador');
-    w.fp(6, -8, 1.2, 1, 'baú');
-    w.fp(7.45, -5.2, 2, 1.2, 'barris');
-    w.fp(-10, -3, 1.9, 1.9, 'lenha');
-    w.fp(13, 8, 2.6, 0.5, 'varal-leste');
-    w.fp(-13, 9, 2.6, 0.5, 'varal-oeste');
-    // Fogueira comunal (com fumaça subindo).
-    this._fire(w, 0, 4, 0xff9a4a, 1.1);
-    this._smokeAt(w, 0, 1.6, 4);
-    this._flagAt(w, -3.2, -17.2, 0x6cba5a); // estandarte no portão sul
-    // Jardins de ervas (canteiros com brotos).
-    for (const [gx, gz] of [[-5.5, 7], [5.5, 7]]) {
-      const bed = mesh(new THREE.BoxGeometry(3.2, 0.3, 1.8), 0x4a3424, { tex: 'dirt', trx: 3, try: 2 });
+    w.fp(0, 0, 3.4, 3.4, 'carvalho-mãe');
+    w.fp(5, 5, 2.4, 2.4, 'fogueira');
+    w.fp(-5, 5, 3.2, 1.8, 'jardim-oeste');
+    w.fp(5, -5, 1.8, 3.2, 'jardim-leste');
+    w.fp(0, 15, 6, 4.5, 'banca do mercador');
+    w.fp(4, 15, 1.2, 1, 'baú');
+    // Fogueira comunal (com fumaça subindo), na praça ao lado da árvore.
+    this._fire(w, 5, 5, 0xff9a4a, 1.1);
+    this._smokeAt(w, 5, 1.6, 5);
+    this._flagAt(w, -3.2, -23.2, 0x6cba5a); // estandarte no portão sul
+    // Jardins de ervas (canteiros com brotos), na praça.
+    for (const [gx, gz, gw, gd] of [[-5, 5, 3.2, 1.8], [5, -5, 1.8, 3.2]]) {
+      const bed = mesh(new THREE.BoxGeometry(gw, 0.3, gd), 0x4a3424, { tex: 'dirt', trx: 3, try: 2 });
       bed.position.set(gx, 0.15, gz);
       w.add(bed);
       for (let i = 0; i < 5; i++) {
         const sprout = mesh(new THREE.BoxGeometry(0.22, 0.5, 0.22), i % 2 ? 0x7ac86a : 0x9fe06a);
-        sprout.position.set(gx - 1.2 + i * 0.6, 0.55, gz + (i % 2 ? 0.4 : -0.35));
+        const along = -1.2 + i * 0.6;
+        sprout.position.set(gx + (gw > gd ? along : 0), 0.55, gz + (gw > gd ? 0 : along));
         w.add(sprout);
       }
     }
-    // Props de rua (ADR 0084): barris na praça, lenha e varais entre casas.
-    this._barrel(w, 7, -5);
-    this._barrel(w, 7.9, -5.4);
-    this._woodpile(w, -10, -3, Math.PI / 2);
-    this._clothesline(w, 13, 8, 0x6cba5a);
-    this._clothesline(w, -13, 9, 0xb89b5a);
+    // Props de rua (ADR 0084): barris e lenha na praça, varais nos anéis.
+    this._barrel(w, -6, 6);
+    this._barrel(w, -6.8, 6.4);
+    this._woodpile(w, 6, 3, Math.PI / 2);
+    this._clothesline(w, 16, 6, 0x6cba5a);
+    this._clothesline(w, -16, 6, 0xb89b5a);
     // Menires gêmeos no portão sul (limiar entre a vila e o mundo selvagem).
     for (const mx of [-3, 3]) {
       const menhir = mesh(new THREE.BoxGeometry(1, 3.2, 1), 0x6a6a72, { tex: 'stone', trx: 1, try: 3 });
-      menhir.position.set(mx, 1.6, -18);
+      menhir.position.set(mx, 1.6, -24);
       w.add(menhir);
-      w.collider(mx, -18, 0.8);
+      w.collider(mx, -24, 0.8);
     }
-    // Lanternas de vagalumes.
-    // Praça do mercador ganha postes nos quatro cantos (ADR 0080).
-    const lampSpots = [[-7, -1], [7, 1], [-11, 6], [11, 7], [0, 9], [-1.5, -12], [-9, -6], [9, -6], [-9, -11], [9, -11]];
+    // Lanternas de vagalumes: cantos do anel + entre as casas + portão.
+    const lampSpots = [[RING, RING], [-RING, RING], [RING, -RING], [-RING, -RING], [0, 13], [13, 6], [-13, 6], [0, -13], [19, 6], [-19, 6]];
     for (const [x, z] of lampSpots) this._lantern(w, x, z, 0xd8ffa0);
-    // Cerca a leste/oeste: postes quadrados + travessa (escala MCD).
-    for (const sx of [-1, 1]) {
-      for (let i = 0; i < 6; i++) {
-        const post = mesh(new THREE.BoxGeometry(0.22, 1.25, 0.22), 0x6b4a2f, { shadow: false, tex: 'log', trx: 1, try: 1 });
-        post.position.set(sx * 18, 0.62, -6 + i * 3.4);
-        w.add(post);
-        if (i < 5) {
-          const rail = mesh(new THREE.BoxGeometry(0.14, 0.14, 3.4), 0x5a4232, { shadow: false });
-          rail.position.set(sx * 18, 0.95, -6 + i * 3.4 + 1.7);
-          w.add(rail);
-        }
-      }
-    }
   }
 
   /** Vau das Palafitas: lagoa, casas sobre estacas, passarelas e juncos. */
