@@ -4,6 +4,7 @@ import { ENEMIES } from '../data/enemies.js';
 import { createLootOrb } from '../entities/factories.js';
 import { rollDrops } from '../gameplay/loot.js';
 import { grantXp } from '../gameplay/progression.js';
+import { DROP_INGREDIENTS } from '../gameplay/ingredients.js';
 
 /**
  * Cabeamento dos handlers do event bus do jogo (antes em `Game._bindEvents`).
@@ -25,6 +26,15 @@ export function bindGameEvents(game) {
     createLootOrb(game.world, game.renderer, { x: e.x + 0.4, z: e.z, item: { essence, rarityColor: 0x9fe06a } });
     for (const item of rollDrops(def, game.regionLevel(), Math.random)) {
       createLootOrb(game.world, game.renderer, { x: e.x - 0.5 + Math.random(), z: e.z + Math.random() - 0.5, item });
+    }
+    // Ingredientes (E19): inimigos soltam partes (carne/couro/pena) que viram
+    // comida na cozinha. Comida pronta não cai mais.
+    if (DROP_INGREDIENTS.length && Math.random() < (def.ingredientChance ?? 0.35)) {
+      const ing = DROP_INGREDIENTS[Math.floor(Math.random() * DROP_INGREDIENTS.length)];
+      createLootOrb(game.world, game.renderer, {
+        x: e.x + Math.random() - 0.5, z: e.z + Math.random() - 0.5,
+        item: { ingredient: ing.id, name: ing.name, icon: ing.icon, rarityColor: 0xd0b060 },
+      });
     }
   });
 

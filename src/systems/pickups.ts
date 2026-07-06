@@ -1,5 +1,6 @@
 import { C } from '../core/ecs/components.js';
 import { dist, normalize } from '../utils/math.js';
+import { addIngredient, INGREDIENTS } from '../gameplay/ingredients.js';
 
 /** Loot/essência são atraídos para o jogador próximo e coletados ao encostar. */
 export function pickupSystem(game, dt) {
@@ -27,6 +28,13 @@ export function pickupSystem(game, dt) {
 
 function collect(game, playerId, item) {
   const inv = game.world.get(playerId, C.Inventory);
+  // Ingrediente (E19): vai para a despensa (empilhável), não para a grade.
+  if (item.ingredient) {
+    addIngredient(game, item.ingredient, item.count ?? 1);
+    const def = INGREDIENTS[item.ingredient];
+    game.emit('objective', { text: `${def?.icon ?? '🧺'} +1 ${def?.name ?? 'ingrediente'} (despensa)` });
+    return;
+  }
   if (item.questItem) {
     // Objetivo de missão de vila (ADR 0047): conta progresso, não vai à bolsa.
     game.emit('questItem', { questId: item.questItem, by: playerId });
