@@ -3,6 +3,7 @@ import { C, Transform } from '../core/ecs/components.js';
 import { makeRng } from '../utils/math.js';
 import { biomeAt } from './WorldManager.js';
 import { forageOf, addIngredient } from '../gameplay/ingredients.js';
+import { rollForageSeed, addSeed, CROPS } from '../gameplay/farming.js';
 
 /**
  * Forrageamento (E19.3): nós de coleta espalhados pelo mundo por bioma —
@@ -83,7 +84,14 @@ export class ForageManager {
     inter.used = true;
     node.mesh.visible = false;
     node.respawn = RESPAWN;
-    this.game.emit('objective', { text: `${node.def.icon} +1 ${node.def.name} (colhido)` });
+    // Chance de vir uma semente junto (E21.1): dá pra plantar o que se colhe.
+    const seedCrop = rollForageSeed(node.def.id, Math.random());
+    if (seedCrop) {
+      addSeed(this.game, seedCrop, 1);
+      this.game.emit('objective', { text: `${node.def.icon} +1 ${node.def.name} · ${CROPS[seedCrop].seedIcon} +1 ${CROPS[seedCrop].seedName}!` });
+    } else {
+      this.game.emit('objective', { text: `${node.def.icon} +1 ${node.def.name} (colhido)` });
+    }
   }
 
   update(dt) {

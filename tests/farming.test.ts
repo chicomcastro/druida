@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  CROPS, cropsAreValid, cropById,
+  CROPS, cropsAreValid, cropById, cropForIngredient, rollForageSeed, SEED_FORAGE_CHANCE,
   ensureSeeds, seedCount, addSeed, hasSeed, consumeSeed, seedList, grantStarterSeeds,
   plantPlot, plotState, plotProgress, plotStage, plotReady, tickFarming, harvestPlot,
 } from '../src/gameplay/farming.js';
@@ -20,6 +20,20 @@ describe('farming — dados', () => {
     expect(cropsAreValid()).toBe(true);
     expect(cropById('cenoura')?.yields).toBe('cenoura');
     expect(cropById('inexistente')).toBeUndefined();
+  });
+});
+
+describe('farming — semente no forrageamento (E21.1)', () => {
+  it('mapeia ingrediente plantável para a cultura; ingrediente não-plantável não dropa semente', () => {
+    expect(cropForIngredient('cenoura')?.id).toBe('cenoura');
+    expect(cropForIngredient('carne_crua')).toBeUndefined();
+    // Ingrediente sem cultura nunca dropa semente, mesmo com roll baixo.
+    expect(rollForageSeed('carne_crua', 0)).toBe(null);
+  });
+
+  it('dropa semente da cultura só quando o roll cai abaixo da chance', () => {
+    expect(rollForageSeed('erva', SEED_FORAGE_CHANCE - 0.01)).toBe('erva');
+    expect(rollForageSeed('erva', SEED_FORAGE_CHANCE + 0.01)).toBe(null);
   });
 });
 
