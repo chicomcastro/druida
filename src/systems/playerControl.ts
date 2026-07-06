@@ -157,8 +157,21 @@ export function playerControlSystem(game, dt) {
           }
         } else if (e.k === 'potion') {
           useConsumableNamed(game, id, String(e.id));
+        } else if (e.k === 'equip') {
+          // Troca de arma/armadura por tecla, com swap-back: o item equipado
+          // volta para a mochila em vez de sumir (E18.2).
+          const inv = world.get(id, C.Inventory);
+          const item = inv?.items?.find((it) => it?.uid === e.id);
+          if (item) {
+            const lo = world.get(id, C.Loadout);
+            const displaced = item.type === 'weapon' ? lo.weapon
+              : item.type === 'armor' ? lo.armor?.[item.slot ?? 'body'] : null;
+            inv.items.splice(inv.items.indexOf(item), 1);
+            game.equip(id, item);
+            if (displaced && displaced.uid !== item.uid) inv.items.push(displaced);
+            game.emit('itemEquipped', { id, item });
+          }
         }
-        // e.k === 'equip': troca de equipamento com swap-back vem no E18.2.
       }
     }
   }
