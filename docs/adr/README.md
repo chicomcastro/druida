@@ -125,4 +125,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0119](0119-biomas-maiores-cidades-ao-centro.md) | Biomas maiores, cidades mais ao centro | Aceito |
 | [0120](0120-postes-no-fim-do-espigao.md) | Postes no fim do espigão (Clareira) | Aceito |
 | [0121](0121-moradores-passivos.md) | Moradores passivos (vida própria nas vilas) | Aceito |
+| [0122](0122-lanternas-vilas-2-4-luz-ao-centro.md) | Lanternas das vilas 2–4 com luz voltada ao centro | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

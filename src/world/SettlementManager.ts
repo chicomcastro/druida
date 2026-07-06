@@ -769,7 +769,7 @@ export class SettlementManager {
         w.add(post);
       }
     }
-    this._lantern(w, 1, 12, 0x6affc8);
+    this._lantern(w, 1, 12, 0x6affc8, 1, 7); // ponta do píer, luz descendo o caminho (ADR 0122)
     const boat2 = mesh(new THREE.BoxGeometry(2.6, 0.5, 1.0), 0x5a4028, { tex: 'planks', trx: 2, try: 1 });
     boat2.position.set(3.2, 0.25, 10.5);
     boat2.rotation.y = Math.PI / 2;
@@ -780,7 +780,8 @@ export class SettlementManager {
     this._barrel(w, 1.6, 1);
     this._barrel(w, -1.6, -1.2);
     // Lanternas de musgo (verde-água) — a marca da vila.
-    for (const [x, z] of [[0, -1], [-6, -6], [8, -5], [-4, 6], [8, 7]]) this._lantern(w, x, z, 0x6affc8);
+    // Lanternas de musgo com a luz voltada ao centro/passarelas (ADR 0122).
+    for (const [x, z] of [[0, -1], [-6, -6], [8, -5], [-4, 6], [8, 7]]) this._lantern(w, x, z, 0x6affc8, 0, 0);
     this._fireLight(w, 0, -1, 0x6affc8, 0.9);
   }
 
@@ -899,7 +900,7 @@ export class SettlementManager {
     // Braseiros de contenção (brasa laranja) — a defesa da vila contra a praga.
     this._fire(w, -3, 2, 0xff7a2a, 1.2);
     this._fire(w, 4, 4, 0xff7a2a, 0);
-    for (const [x, z] of [[-6, 12], [8, -10]]) this._lantern(w, x, z, 0xffb46a);
+    for (const [x, z] of [[-6, 12], [8, -10]]) this._lantern(w, x, z, 0xffb46a, 0, 0); // luz p/ o centro (ADR 0122)
     // Torre de vigia (ADR 0084): a assinatura de Cinzafolha — os lenhadores
     // vigiam a floresta corrompida do alto, com lanterna acesa.
     const tower = new THREE.Group();
