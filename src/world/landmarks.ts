@@ -18,8 +18,8 @@ export function buildLandmarks(game) {
   buildSanctuary(game, LANDMARKS.sanctuary_bear, 'bear');
   buildSanctuary(game, LANDMARKS.sanctuary_raven, 'raven');
   buildSanctuary(game, LANDMARKS.sanctuary_frog, 'frog');
-  buildMerchant(game, { x: -6, z: -8 });
-  buildChest(game, { x: 6, z: -8 });
+  buildMerchant(game, { x: 0, z: 15 });  // banca no vão norte da praça (ADR 0111)
+  buildChest(game, { x: 4, z: 15 });
 }
 
 /**

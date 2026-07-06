@@ -307,12 +307,14 @@ export class WorldManager {
     );
     crown.position.y = 8; crown.castShadow = true;
     trunk.add(t); trunk.add(crown);
-    trunk.position.set(0, 0, -10);
+    // Carvalho-Mãe no CENTRO da vila (0,0): a Clareira cresce em anel ao redor
+    // dela (ADR 0111), como diz o lore. Antes ficava deslocada em −Z.
+    trunk.position.set(0, 0, 0);
     game.renderer.add(trunk);
     // Obstáculo do tronco.
     const id = game.world.createEntity();
-    game.world.add(id, C.Transform, Transform(0, -10));
-    game.world.add(id, C.Collider, Collider(1.8, true));
+    game.world.add(id, C.Transform, Transform(0, 0));
+    game.world.add(id, C.Collider, Collider(2.2, true));
   }
 
   _spawnProp(x, z, biome) {

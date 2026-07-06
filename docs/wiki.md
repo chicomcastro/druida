@@ -77,7 +77,7 @@ regional (estoque próprio), moradores com falas e **portas entráveis** (§5).
 
 | Vila | Tema | Bioma | Formato de casa | Assinatura |
 |---|---|---|---|---|
-| Círculo do Carvalho (hub) | `druida` | Clareira | casa de viga, telhado vivo | Carvalho-Mãe + fogueira |
+| Círculo do Carvalho (hub) | `druida` | Clareira | casa de viga, telhado vivo | Carvalho-Mãe **no centro**, 2 anéis de casas + via em anel (ADR 0111) |
 | Vau das Palafitas | `palafitas` | Pântano | palafita sobre estacas | píer de pesca + lagoa |
 | Cinzafolha | `lenhadores` | Bosque Cinza | cabana de tronco | paliçada + torre de vigia + serraria |
 | Abrigo do Degelo | `degelo` | Picos | tenda de pele | cairns + muro de gelo + chama azul |
