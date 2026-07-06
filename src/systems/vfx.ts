@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { C } from '../core/ecs/components.js';
+import { abilityBranch } from '../gameplay/skillTree.js';
 
 /**
  * Efeitos visuais transitórios (anéis de AoE, arcos de golpe, marcadores de
@@ -7,6 +8,23 @@ import { C } from '../core/ecs/components.js';
  * jogo e cria objetos Three.js de vida curta, atualizados/limpos por frame.
  * As partículas são recicladas via pool (ADR 0025).
  */
+
+/**
+ * Assinatura visual de conjuração por ramo da árvore de skills (E17.4). Ao
+ * conjurar uma habilidade ativa, o ramo dispara um efeito característico no
+ * conjurador — cada elemento com sua cor e "gesto" (jato pra cima, implosão,
+ * poeira radial, etc.), dando identidade a cada ramo como pediu o playtest.
+ * `mode` escolhe o gesto; `color` a cor base. Data-driven para ficar testável.
+ */
+export type CastMode = 'bloom' | 'jet' | 'implode' | 'nova' | 'stomp' | 'motes';
+export const CAST_SIGNATURE: Record<string, { color: number; mode: CastMode }> = {
+  natureza: { color: 0x6fae4f, mode: 'bloom' },   // esporos brotando do chão
+  chama: { color: 0xff7a3a, mode: 'jet' },         // jato de fogo pra cima
+  gelo: { color: 0x8ad0ff, mode: 'implode' },      // estilhaços convergindo
+  tempestade: { color: 0xc9a8ff, mode: 'nova' },   // estouro radial rápido
+  feras: { color: 0xd9c2a0, mode: 'stomp' },       // poeira/uivo rente ao chão
+  vida: { color: 0x8affa0, mode: 'motes' },        // faíscas curativas subindo
+};
 
 /** Cor associada a um conjunto de status (faíscas/trilhas elementais). */
 export function elementColor(effect: any): number | null {
@@ -39,6 +57,14 @@ export class VfxManager {
     game.on('vfxMarker', (e) => this.marker(e.x, e.z, e.radius, e.delay));
     game.on('vfxCone', (e) => this.ring(e.x, e.z, 2.5, e.color, 0.25));
     game.on('formSwap', (e) => this.ring(e.x, e.z, 1.5, 0x9fe06a, 0.4));
+    // Assinatura de conjuração por ramo (E17.4): só habilidades da árvore ativa
+    // (com ramo conhecido) disparam — ataques básicos de forma são ignorados.
+    game.on('cast', (e) => {
+      const branch = e.abilityId ? abilityBranch(e.abilityId) : undefined;
+      if (!branch) return;
+      const tr = game.world?.get?.(e.id, C.Transform);
+      if (tr) this.castSignature(tr.x, tr.z, branch);
+    });
     game.on('dodge', (e) => this.ring(e.x, e.z, 1.0, 0xffffff, 0.25));
     // Telegraph de inimigo (ADR 0092): anel de aviso vermelho no windup.
     game.on('enemyTelegraph', (e) => this.marker(e.x, e.z, 1.4, e.dur ?? 0.35, 0xff5a4a));
@@ -161,6 +187,67 @@ export class VfxManager {
       m.scale.setScalar(0.3 + k * radius);
       mat.opacity = 0.9 * t * t;
     });
+  }
+
+  /**
+   * Assinatura de conjuração por ramo (E17.4). Cada `mode` é um gesto distinto,
+   * montado a partir das primitivas existentes (ring/flash/shockwave/partículas)
+   * para dar personalidade visual a cada elemento sem custo de assets.
+   */
+  castSignature(x, z, branch) {
+    const sig = CAST_SIGNATURE[branch];
+    if (!sig) return;
+    const { color, mode } = sig;
+    if (mode === 'bloom') {
+      // Natureza: anel verde e esporos brotando do solo.
+      this.ring(x, z, 3.2, color, 0.5);
+      for (let i = 0; i < 12; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.random() * 1.2;
+        this._spawn(x + Math.sin(a) * r, 0.15, z + Math.cos(a) * r, color, 0.7,
+          Math.sin(a) * 0.6, 2.6 + Math.random() * 1.2, Math.cos(a) * 0.6, 0.8);
+      }
+    } else if (mode === 'jet') {
+      // Chama: clarão e jato de fogo pra cima.
+      this.flash(x, 1.1, z, color, 0.8);
+      for (let i = 0; i < 14; i++) {
+        this._spawn(x + (Math.random() - 0.5) * 0.5, 0.5, z + (Math.random() - 0.5) * 0.5, color, 0.5,
+          (Math.random() - 0.5) * 1.2, 5 + Math.random() * 3, (Math.random() - 0.5) * 1.2, 0.85);
+      }
+    } else if (mode === 'implode') {
+      // Gelo: estilhaços convergindo para o centro + clarão ciano.
+      this.flash(x, 0.9, z, color, 0.7);
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        const r = 2.4;
+        this._spawn(x + Math.sin(a) * r, 1.0 + Math.random() * 0.6, z + Math.cos(a) * r, color, 0.4,
+          -Math.sin(a) * 7, 0.6, -Math.cos(a) * 7, 0.7);
+      }
+    } else if (mode === 'nova') {
+      // Tempestade: estouro radial rápido rente ao chão + onda + clarão branco.
+      this.shockwave(x, z, 3.4, color);
+      this.flash(x, 1.0, z, 0xffffff, 0.7);
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        this._spawn(x, 0.8, z, color, 0.32, Math.sin(a) * 8, 1.2, Math.cos(a) * 8, 0.7);
+      }
+    } else if (mode === 'stomp') {
+      // Feras: poeira e uivo rente ao chão (onda baixa + poeira radial).
+      this.shockwave(x, z, 2.8, color);
+      for (let i = 0; i < 12; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 3 + Math.random() * 3;
+        this._spawn(x, 0.3, z, color, 0.5, Math.sin(a) * sp, 0.8 + Math.random(), Math.cos(a) * sp, 0.9);
+      }
+    } else if (mode === 'motes') {
+      // Vida: clarão suave e faíscas curativas subindo devagar.
+      this.flash(x, 1.0, z, color, 0.6);
+      this.ring(x, z, 2.4, color, 0.5);
+      for (let i = 0; i < 10; i++) {
+        this._spawn(x + (Math.random() - 0.5) * 1.0, 0.4 + Math.random() * 0.4, z + (Math.random() - 0.5) * 1.0,
+          color, 0.7, 0, 1.8 + Math.random(), 0, 0.7);
+      }
+    }
   }
 
   swing({ x, z, angle, range = 2, arc = 1, color = 0xffffff }) {

@@ -133,4 +133,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0127](0127-fix-vau-portas-lanternas-cinza-degelo.md) | Fix: portas do Vau + lanternas do Vau/Cinza/Degelo | Aceito |
 | [0128](0128-validador-postes-nas-ruas.md) | Validador: poste não pode ficar sobre a laje da rua | Aceito |
 | [0129](0129-hotbar-input-hud.md) | Hotbar 1–9: input + HUD + atribuição (E17.3b) | Aceito |
+| [0130](0130-vfx-conjuracao-por-ramo.md) | VFX de conjuração por ramo (E17.4) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
