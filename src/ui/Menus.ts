@@ -14,7 +14,7 @@ import { RECIPES, canCook, cook, craftLevel, ensureCraft, craftXpForLevel } from
 import { INGREDIENTS, ingredientCount, pouchList, addIngredient } from '../gameplay/ingredients.js';
 import { sellIngredient, INGREDIENT_SELL } from '../gameplay/economy.js';
 import { FOOD_BASES } from '../gameplay/consumables.js';
-import { CROPS, seedList, plotState, plotProgress, plotReady, plantPlot, harvestPlot } from '../gameplay/farming.js';
+import { CROPS, seedList, plotState, plotProgress, plotReady, plantPlot, harvestPlot, addSeed } from '../gameplay/farming.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -820,8 +820,8 @@ export class Menus {
     const pid = this._playerId();
     const loadout = pid != null ? this.game.world.get(pid, C.Loadout) : null;
     const slots = this.game.shopStock.map((s, i) => {
-      if (s.ingredient) {
-        // Oferta de ingrediente (E19.4): slot com emoji + preço.
+      if (s.ingredient || s.seed) {
+        // Oferta de ingrediente (E19.4) ou semente (E20.3): slot com emoji + preço.
         return `<div class="gslot" data-buy="${i}" title="${s.name}"><span style="font-size:26px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${s.icon}</span><span class="price">${s.price}✦</span></div>`;
       }
       return this._gslot(s.item, { data: `data-buy="${i}"`, price: s.price });
@@ -871,6 +871,14 @@ export class Menus {
       addIngredient(this.game, s.ingredient, 1);
       this.game.emit('purchase', { price: s.price });
       this.game.emit('objective', { text: `${s.icon} +1 ${s.name} (despensa)` });
+      this.refreshShop();
+      return;
+    }
+    if (s.seed) {
+      // Semente (E20.3): vai para as sementes. Reabastece (não some da loja).
+      addSeed(this.game, s.seed, 1);
+      this.game.emit('purchase', { price: s.price });
+      this.game.emit('objective', { text: `${s.icon} +1 ${s.name} (sementes)` });
       this.refreshShop();
       return;
     }

@@ -453,14 +453,15 @@ describe('Economia (essência + mercador)', () => {
     expect(sellIngredient(game, 'erva')).toBe(false); // sem estoque, não vende
   });
 
-  it('rerollShop gera estoque com preço (equip + poções + ingredientes + comida)', () => {
+  it('rerollShop gera estoque com preço (equip + poções + ingredientes + comida + sementes)', () => {
     const { game } = makeGame([0]);
     const stock = rerollShop(game);
-    // 5 equipamentos + 2 poções + 3 ingredientes + 1 comida (ADR 0104/0138).
-    expect(stock).toHaveLength(11);
+    // 5 equip + 2 poções + 3 ingredientes + 1 comida + 2 sementes (ADR 0104/0138/0143).
+    expect(stock).toHaveLength(13);
     expect(stock.every((s: any) => s.price > 0)).toBe(true);
-    expect(stock.every((s: any) => s.item || s.ingredient)).toBe(true); // item OU ingrediente
+    expect(stock.every((s: any) => s.item || s.ingredient || s.seed)).toBe(true); // item OU ingrediente OU semente
     expect(stock.some((s: any) => s.ingredient)).toBe(true);
+    expect(stock.some((s: any) => s.seed)).toBe(true);
     expect(game.shopStock).toBe(stock);
   });
 });
