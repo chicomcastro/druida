@@ -76,7 +76,7 @@ describe('PurityManager', () => {
     pm.update();
     const wm = new WorldManager(g);
     g.worldManager = wm;
-    g.groupCenter = { x: 50, z: -70 }; // pântano (purificado) — região do Vau
+    g.groupCenter = { x: 185, z: -95 }; // pântano (purificado) — selvagem, longe do Vau
     wm.update(0.1);
     expect(wm.groundMat.color.getHex()).toBe(BIOMES.pantano.purified.ground);
     const changed: any = g.events.find((e) => e.e === 'biomeChanged' && e.p.biome === 'pantano');

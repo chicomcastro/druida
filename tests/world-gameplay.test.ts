@@ -14,11 +14,11 @@ describe('WorldManager', () => {
   it('biomeAt: regiões orgânicas ancoradas nas vilas (ADR 0109)', () => {
     // Cada centro de vila cai no seu próprio bioma (âncora exata).
     expect(biomeAt(0, 0)).toBe('clareira'); // Círculo do Carvalho
-    expect(biomeAt(90, -72)).toBe('pantano'); // Vau das Palafitas
-    expect(biomeAt(-160, 38)).toBe('bosque_cinza'); // Cinzafolha
-    expect(biomeAt(140, 165)).toBe('picos'); // Abrigo do Degelo
+    expect(biomeAt(180, -120)).toBe('pantano'); // Vau das Palafitas
+    expect(biomeAt(-235, 58)).toBe('bosque_cinza'); // Cinzafolha
+    expect(biomeAt(175, 206)).toBe('picos'); // Abrigo do Degelo
     // A mancha do Coração é uma região própria ao sul.
-    expect(biomeAt(0, -225)).toBe('coracao');
+    expect(biomeAt(0, -280)).toBe('coracao');
     // Determinístico e não puramente radial: dois pontos no mesmo raio podem
     // diferir de bioma (o mundo deixou de ser concêntrico).
     expect(biomeAt(0, 0)).toBe(biomeAt(0, 0));
@@ -40,7 +40,7 @@ describe('WorldManager', () => {
     expect(wm.props.length).toBeGreaterThan(0);
 
     // longe -> muda bioma e descarta props distantes (mancha do Coração ao sul)
-    g.groupCenter = { x: 0, z: -225 };
+    g.groupCenter = { x: 0, z: -280 };
     wm.update(0.1);
     expect(wm.currentBiome).toBe('coracao');
   });

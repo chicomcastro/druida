@@ -14,8 +14,8 @@ describe('Perigos ambientais por bioma (ADR 0099)', () => {
 
   it('no pântano selvagem, dispara uma zona telegrafada', () => {
     const g = makeGame(); g.seed = 1;
-    g.groupCenter = { x: 80, z: 0 }; // pantano
-    addPlayer(g, 0, 80, 0);
+    g.groupCenter = { x: 185, z: -95 }; // pantano selvagem (longe do Vau)
+    addPlayer(g, 0, 185, -95);
     const hm = new HazardManager(g);
     hm.update(OVERWORLD_HAZARDS.pantano!.interval + 0.1);
     expect(g.events.some((e) => e.e === 'vfxRing')).toBe(true);
@@ -24,12 +24,12 @@ describe('Perigos ambientais por bioma (ADR 0099)', () => {
 
   it('o golpe telegrafado atinge quem fica na zona (dano + status)', () => {
     const g = makeGame(); g.seed = 1;
-    g.groupCenter = { x: 80, z: 0 };
-    const pid = addPlayer(g, 0, 80, 0);
+    g.groupCenter = { x: 185, z: -95 };
+    const pid = addPlayer(g, 0, 185, -95);
     const hm = new HazardManager(g);
     const hp = g.world.get(pid, C.Health);
     hp.hp = hp.max;
-    hm._strike({ x: 80, z: 0, hz: OVERWORLD_HAZARDS.pantano });
+    hm._strike({ x: 185, z: -95, hz: OVERWORLD_HAZARDS.pantano });
     expect(hp.hp).toBeLessThan(hp.max);
     expect(g.world.get(pid, C.StatusEffects).root).toBeGreaterThan(0);
   });
@@ -46,9 +46,9 @@ describe('Perigos ambientais por bioma (ADR 0099)', () => {
 
   it('suspenso em masmorra/interior', () => {
     const g = makeGame(); g.seed = 1;
-    g.groupCenter = { x: 80, z: 0 };
+    g.groupCenter = { x: 185, z: -95 };
     g.inDungeon = true;
-    addPlayer(g, 0, 80, 0);
+    addPlayer(g, 0, 185, -95);
     const hm = new HazardManager(g);
     hm.update(60);
     expect(hm.pending.length).toBe(0);
@@ -56,9 +56,9 @@ describe('Perigos ambientais por bioma (ADR 0099)', () => {
 
   it('vilas são refúgio: sem perigos ambientais', () => {
     const g = makeGame(); g.seed = 1;
-    g.groupCenter = { x: 80, z: 0 };
+    g.groupCenter = { x: 185, z: -95 };
     g.settlements = { isSafe: () => true };
-    addPlayer(g, 0, 80, 0);
+    addPlayer(g, 0, 185, -95);
     const hm = new HazardManager(g);
     hm.update(60);
     expect(hm.pending.length).toBe(0);
@@ -67,8 +67,8 @@ describe('Perigos ambientais por bioma (ADR 0099)', () => {
 
   it('a zona pendente é resolvida no update seguinte', () => {
     const g = makeGame(); g.seed = 1;
-    g.groupCenter = { x: 80, z: 0 };
-    addPlayer(g, 0, 80, 0);
+    g.groupCenter = { x: 185, z: -95 };
+    addPlayer(g, 0, 185, -95);
     const hm = new HazardManager(g);
     hm.update(OVERWORLD_HAZARDS.pantano!.interval + 0.1); // telegrafa
     expect(hm.pending.length).toBe(1);

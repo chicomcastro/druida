@@ -122,4 +122,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0116](0116-lanternas-direcionais-arterias-fix-colisao.md) | Lanternas direcionais, postes nas artérias e fix de colisão | Aceito |
 | [0117](0117-mapa-mundi-legenda.md) | Mapa-mundi legível: legenda de biomas + marcadores distintos | Aceito |
 | [0118](0118-santuarios-longe-das-cidades.md) | Santuários afastados das cidades (jornada como escolha) | Aceito |
+| [0119](0119-biomas-maiores-cidades-ao-centro.md) | Biomas maiores, cidades mais ao centro | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

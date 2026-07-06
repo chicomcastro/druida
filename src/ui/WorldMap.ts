@@ -9,7 +9,7 @@ import { biomeAt } from '../world/WorldManager.js';
  * reveladas. Clicar num marco descoberto faz fast-travel até ele. Pausa o jogo
  * enquanto aberto. Ver docs/adr/0013-world-map.md.
  */
-const MAP_RADIUS = 290; // unidades de mundo do centro até a borda do mapa
+const MAP_RADIUS = 380; // unidades de mundo do centro até a borda do mapa (biomas maiores, ADR 0119)
 const PX = 600;
 
 const POINTS = [
