@@ -51,6 +51,25 @@ export function cropsAreValid(): boolean {
 
 export const cropById = (id: string): CropDef | undefined => CROPS[id];
 
+/** Cultura cujo produto é este ingrediente (para dropar semente ao colher). */
+export function cropForIngredient(ingredientId: string): CropDef | undefined {
+  return Object.values(CROPS).find((c) => c.yields === ingredientId);
+}
+
+/** Chance de a coleta de forrageamento também render uma semente (E21.1). */
+export const SEED_FORAGE_CHANCE = 0.35;
+
+/**
+ * Sorteia se a coleta de um ingrediente também rende 1 semente. Só ingredientes
+ * que correspondem a uma cultura plantável podem dropar semente. `roll` é o
+ * número aleatório em [0,1) (injetado para teste). Devolve o id da cultura ou null.
+ */
+export function rollForageSeed(ingredientId: string, roll: number): string | null {
+  const crop = cropForIngredient(ingredientId);
+  if (!crop) return null;
+  return roll < SEED_FORAGE_CHANCE ? crop.id : null;
+}
+
 // --- Sementes (despensa) ---------------------------------------------------
 
 export function ensureSeeds(game): Record<string, number> {
