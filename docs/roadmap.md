@@ -153,5 +153,5 @@ A UI atual não chega na referência do MCD; esta é a versão de verdade.
 | E13 Missões/campanha | ✅ entregue (descrições de contexto por passo no HUD — ADR 0114) | — |
 | E14 Mapa-mundi das vilas | ✅ entregue (legenda de biomas com nível + vilas em losango vs santuários em círculo — ADR 0117) | — |
 | E15 Vilas evoluídas | 🚧 Clareira recentrada na Carvalho-Mãe (2 anéis + via em anel — ADR 0111); cenário sólido + banca fora das ruas (ADR 0113); postes atrelados aos caminhos + mercado como casa (ADR 0115); lanternas direcionais + postes nas artérias + fix de colisão de props (ADR 0116); layout interno das vilas 2–4 a seguir | — |
-| E16 Mundo orgânico + progressão aberta | ✅ entregue (E16.1 mapa orgânico — ADR 0109; E16.2 level-scaling + marcos nas regiões + Clareira maior/vilas ao interior — ADR 0110) | — |
+| E16 Mundo orgânico + progressão aberta | ✅ entregue (E16.1 mapa orgânico — ADR 0109; E16.2 level-scaling + marcos nas regiões + Clareira maior/vilas ao interior — ADR 0110; E16.3 santuários afastados das cidades, jornada como escolha — ADR 0118) | — |
 | E17 Hotbar 1–9 + skills | 🚧 planejado (redesenhar skill tree em skills ativas, depois hotbar) | — |
