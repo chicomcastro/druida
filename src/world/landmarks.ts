@@ -18,8 +18,8 @@ export function buildLandmarks(game) {
   buildSanctuary(game, LANDMARKS.sanctuary_bear, 'bear');
   buildSanctuary(game, LANDMARKS.sanctuary_raven, 'raven');
   buildSanctuary(game, LANDMARKS.sanctuary_frog, 'frog');
-  buildMerchant(game, { x: 0, z: 15 });  // banca no vão norte da praça (ADR 0111)
-  buildChest(game, { x: 4, z: 15 });
+  buildMerchant(game, { x: 12, z: 17 });  // banca no vão NE, fora das ruas (ADR 0113)
+  buildChest(game, { x: 8, z: 17 });
 }
 
 /**
@@ -77,6 +77,10 @@ function buildMerchant(game, pos) {
   game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
   game.world.add(id, C.Collider, Collider(0.6, true));
   game.world.add(id, C.Interactable, { kind: 'merchant', prompt: 'E — Mercador', range: 3.5, used: false });
+  // A estrutura da banca é sólida (ADR 0113): não dá pra atravessar o toldo.
+  const sid = game.world.createEntity();
+  game.world.add(sid, C.Transform, Transform(sx, sz));
+  game.world.add(sid, C.Collider, Collider(1.6, true));
 }
 
 function buildChest(game, pos) {

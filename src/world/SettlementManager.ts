@@ -456,10 +456,12 @@ export class SettlementManager {
     stall.position.set(wx, 0, wz);
     game.renderer.add(stall);
     this._fp(s, wx - s.x, wz - s.z, 6, 4.5, 'banca do mercador');
-    // Praça do mercador (ADR 0080): lanternas flanqueando a banca.
-    const w2 = { add: (...o) => game.renderer.add(...o), world: (x, z) => ({ x, z }) };
+    // Praça do mercador (ADR 0080): lanternas flanqueando a banca. w2 usa coords
+    // de mundo diretas; expõe collider p/ os postes ficarem sólidos (ADR 0113).
+    const w2 = { add: (...o) => game.renderer.add(...o), world: (x, z) => ({ x, z }), collider: (x, z, r) => this._collider(x, z, r) };
     this._lantern(w2, wx - 3, wz + 2, 0xffd27a);
     this._lantern(w2, wx + 3, wz + 2, 0xffd27a);
+    this._collider(wx, wz, 1.6); // estrutura da banca é sólida (ADR 0113)
     const id = game.world.createEntity();
     game.world.add(id, C.Transform, Transform(wx, wz));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
@@ -531,6 +533,8 @@ export class SettlementManager {
       [RING, RING, -RING, RING], [-RING, RING, -RING, -RING],
       // corredor ao portão sul
       [0, -RING, 0, -24],
+      // caminho até a FRENTE da banca do mercador (para na frente, não por baixo)
+      [RING, RING, 12, RING], [12, RING, 12, 14],
       ...spurs,
     ]);
     // Pegadas dos marcos fixos do hub (validador ADR 0085).
@@ -538,8 +542,8 @@ export class SettlementManager {
     w.fp(5, 5, 2.4, 2.4, 'fogueira');
     w.fp(-5, 5, 3.2, 1.8, 'jardim-oeste');
     w.fp(5, -5, 1.8, 3.2, 'jardim-leste');
-    w.fp(0, 15, 6, 4.5, 'banca do mercador');
-    w.fp(4, 15, 1.2, 1, 'baú');
+    w.fp(12, 17, 6, 4.5, 'banca do mercador'); // vão NE, fora das ruas (ADR 0113)
+    w.fp(8, 17, 1.2, 1, 'baú');
     // Fogueira comunal (com fumaça subindo), na praça ao lado da árvore.
     this._fire(w, 5, 5, 0xff9a4a, 1.1);
     this._smokeAt(w, 5, 1.6, 5);
@@ -1060,7 +1064,7 @@ export class SettlementManager {
 
   // --- Props de rua (ADR 0084): vida cotidiana nas vilas ---------------------
 
-  /** Barril de tábuas com cintas escuras. */
+  /** Barril de tábuas com cintas escuras. Sólido (ADR 0113). */
   _barrel(w, x, z) {
     const b = mesh(new THREE.BoxGeometry(0.75, 0.95, 0.75), 0x7a5a34, { tex: 'planks', trx: 1, try: 1 });
     b.position.set(x, 0.48, z);
@@ -1069,9 +1073,10 @@ export class SettlementManager {
     const band2 = mesh(new THREE.BoxGeometry(0.82, 0.12, 0.82), 0x4a3a28, { shadow: false });
     band2.position.set(x, 0.24, z);
     w.add(b, band, band2);
+    w.collider(x, z, 0.45);
   }
 
-  /** Pilha de lenha: duas toras embaixo, uma em cima. */
+  /** Pilha de lenha: duas toras embaixo, uma em cima. Sólida (ADR 0113). */
   _woodpile(w, x, z, ry = 0) {
     const g = new THREE.Group();
     for (const [px, py] of [[-0.35, 0.3], [0.35, 0.3], [0, 0.9]]) {
@@ -1082,14 +1087,16 @@ export class SettlementManager {
     g.position.set(x, 0, z);
     g.rotation.y = ry;
     w.add(g);
+    w.collider(x, z, 0.8);
   }
 
-  /** Varal: dois postes, linha e panos que balançam ao vento. */
+  /** Varal: dois postes, linha e panos que balançam ao vento. Postes sólidos. */
   _clothesline(w, x, z, color) {
     for (const px of [-1.2, 1.2]) {
       const post = mesh(new THREE.BoxGeometry(0.14, 1.9, 0.14), 0x4a3626, { shadow: false });
       post.position.set(x + px, 0.95, z);
       w.add(post);
+      w.collider(x + px, z, 0.2);
     }
     const line = mesh(new THREE.BoxGeometry(2.4, 0.05, 0.05), 0x2e2620, { shadow: false });
     line.position.set(x, 1.8, z);
@@ -1116,6 +1123,7 @@ export class SettlementManager {
     const lantern = mesh(new THREE.BoxGeometry(0.3, 0.38, 0.3), color, { emissive: color, emissiveIntensity: 1.0, rough: 0.4 });
     lantern.position.set(x + 0.55, 2.6, z);
     w.add(pole, arm, cap, lantern);
+    w.collider(x, z, 0.25); // mastro sólido (ADR 0113)
     this._flames.push({ mesh: lantern, base: 1.0, amp: 0.35, speed: 3.1, seed: x * 7 + z });
     // Lanternas também entram no pool (ADR 0065): luz firme e curta.
     const p = w.world(x + 0.55, z);
