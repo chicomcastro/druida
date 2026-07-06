@@ -554,7 +554,7 @@ export class SettlementManager {
     ];
     // Interiores acessíveis (ADR 0094, E5): serviços no anel interno, moradias
     // no externo. Mercado geral fica na banca externa (landmarks).
-    const HOUSE_THEMES = ['weapons', 'armor', 'tavern', 'leader', 'hall', 'home', 'home', 'home', 'home'];
+    const HOUSE_THEMES = ['weapons', 'armor', 'tavern', 'leader', 'hall', 'garden', 'home', 'home', 'home'];
     // Espigões de porta (ADR 0083): da porta de cada casa até a via em anel.
     // Os postes ficam no FIM do espigão (na via em anel), longe das casas e
     // espaçados — não mais ao lado das portas (ADR 0120).
@@ -731,7 +731,7 @@ export class SettlementManager {
     }
     // Portas entráveis (ADR 0097, E7): cada palafita vira um serviço.
     // Rixa do Vau (ADR 0107): duas famílias rivais + mercado + taverna.
-    const PAL_THEMES = ['vau_arpo', 'vau_couro', 'tavern', 'market', 'home'];
+    const PAL_THEMES = ['vau_arpo', 'vau_couro', 'tavern', 'market', 'garden'];
     huts.forEach(([x, z, ry], hi) => {
       const px = alignAxis(x, 5), pz = alignAxis(z, 5);
       const dp = this._spun(px, pz, ry, 0, 2.0); // na FRENTE do deck (ADR 0127) — não flutua sobre a água
@@ -834,7 +834,7 @@ export class SettlementManager {
     }
     // Cabanas de tronco com telhado de duas águas (prisma triangular).
     // Portas voltadas ao centro (ADR 0083).
-    const cabins = [[-7, -6, Math.PI / 2], [7, -4, -Math.PI / 2], [0, 9, Math.PI]];
+    const cabins = [[-7, -6, Math.PI / 2], [7, -4, -Math.PI / 2], [0, 9, Math.PI], [-12, 0, Math.PI / 2]];
     for (const [x, z, ry] of cabins) {
       const cabin = new THREE.Group();
       // Paredes de toras: cilindros horizontais empilhados, com os topos
@@ -890,7 +890,7 @@ export class SettlementManager {
     this._flagAt(w, 1.8, -16.2, 0xc8a06a); // estandarte no portão sul
     // Portas entráveis (ADR 0097, E7): as cabanas viram serviços da vila.
     // Rixa de Cinzafolha (ADR 0107): serraria × forno + taverna (mercador é ao ar livre).
-    const LEN_THEMES = ['cinza_serra', 'cinza_forno', 'tavern'];
+    const LEN_THEMES = ['cinza_serra', 'cinza_forno', 'tavern', 'garden'];
     cabins.forEach(([x, z, ry], ci) => {
       const swap = Math.abs(Math.round(ry / (Math.PI / 2))) % 2 === 1;
       const px = alignAxis(x, swap ? 4 : 6), pz = alignAxis(z, swap ? 6 : 4);
@@ -1047,7 +1047,7 @@ export class SettlementManager {
     w.fp(3, -6, 1, 1, 'barril');
     // Portas entráveis (ADR 0097, E7): as tendas viram serviços do abrigo.
     // Rixa do Degelo (ADR 0107): trilha × rebanho + mercado + taverna.
-    const DEG_THEMES = ['degelo_trilha', 'degelo_pasto', 'tavern', 'market', 'home'];
+    const DEG_THEMES = ['degelo_trilha', 'degelo_pasto', 'tavern', 'market', 'garden'];
     tents.forEach(([x, z], ti) => {
       const a = snap90(Math.atan2(-x, -z)); // entrada voltada ao centro
       const dx = x + Math.sin(a) * 2.9, dz = z + Math.cos(a) * 2.9;
