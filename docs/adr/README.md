@@ -140,4 +140,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0134](0134-comida-buffs-temporarios.md) | Comida & buffs temporários (E18.3) | Aceito |
 | [0135](0135-culinaria-fundacao.md) | Culinária: ingredientes, receitas e fundação do Craft (E19.1) | Aceito |
 | [0136](0136-cozinha-bancada.md) | Cozinha: bancada, painel de craft e nível (E19.2) | Aceito |
+| [0137](0137-forrageamento.md) | Forrageamento: nós de coleta no mundo (E19.3) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
