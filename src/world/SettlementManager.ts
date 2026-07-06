@@ -36,6 +36,8 @@ export class SettlementManager {
   _villagers: any[]; // moradores que passeiam (ADR 0055)
   _waterRef: any; // material da lagoa do Vau (pulsa no animate)
   footprints: Record<string, any[]>; // pegadas por vila (validador ADR 0085)
+  streetCells: Set<string>; // células de rua em coord de mundo (validador ADR 0128)
+  lanternPts: { x: number; z: number }[]; // postes em coord de mundo (validador ADR 0128)
 
   constructor(game) {
     this.game = game;
@@ -47,6 +49,8 @@ export class SettlementManager {
     this._water = [];
     this._villagers = [];
     this.footprints = {};
+    this.streetCells = new Set();
+    this.lanternPts = [];
     this.list = SETTLEMENTS.map((def) => ({ ...def, visited: false }));
     const builders = {
       druida: (s, rng) => this._buildDruida(s, rng),
@@ -315,6 +319,12 @@ export class SettlementManager {
       while (z !== Math.round(z1)) { z += Math.sign(z1 - z); cells.set(x + ':' + z, [x, z]); }
     }
     if (!cells.size) return;
+    // Registra as células de rua em mundo (validador ADR 0128: poste não pode
+    // cair sobre a laje de um caminho).
+    for (const [x, z] of cells.values()) {
+      const wc = w.world(x, z);
+      this.streetCells.add(Math.round(wc.x) + ':' + Math.round(wc.z));
+    }
     const inst = new THREE.InstancedMesh(
       new THREE.BoxGeometry(0.96, 0.06, 0.96),
       new THREE.MeshStandardMaterial({ roughness: 1, map: pixelTexture('stone') }),
@@ -390,6 +400,20 @@ export class SettlementManager {
           if (ox > 0.05 && oz > 0.05) bad.push({ settlement: sid, a: a.label, b: b.label, ox, oz });
         }
       }
+    }
+    return bad;
+  }
+
+  /**
+   * Validador de postes (ADR 0128): nenhum poste de lanterna pode ficar SOBRE a
+   * laje de um caminho (cai "no meio da rua"). Devolve os postes cujo centro cai
+   * dentro de uma célula de rua (mundo). Postes ao LADO da rua passam.
+   */
+  lanternsOnStreets() {
+    const bad: { x: number; z: number }[] = [];
+    for (const p of this.lanternPts) {
+      const key = Math.round(p.x) + ':' + Math.round(p.z);
+      if (this.streetCells.has(key)) bad.push({ x: p.x, z: p.z });
     }
     return bad;
   }
@@ -620,7 +644,7 @@ export class SettlementManager {
       [8.3, 4, 7, 4], [8.3, -4, 7, -4], [-8.3, 4, -7, 4], [-8.3, -4, -7, -4],   // lados L/O do anel
       [4, 8.3, 4, 7], [-4, 8.3, -4, 7], [4, -8.3, 4, -7], [-4, -8.3, -4, -7],   // lados S/N do anel
       [1.7, -12, 0, -12], [1.7, -19, 0, -19],                                   // corredor sul
-      [13.7, 11, 12, 11],                                                       // espigão do mercado
+      [14.5, 13, 12, 13],                                                       // ao lado do espigão do mercado (fora da laje)
     ];
     for (const [x, z, fx, fz] of lampSpots) this._lantern(w, x, z, 0xd8ffa0, fx, fz);
   }
@@ -1091,7 +1115,7 @@ export class SettlementManager {
     this._furRack(w, 6, 2); // bastidor de curtir peles (worker em _workers, ADR 0123)
     // Postes de gelo ao redor da chama azul (ADR 0127): o Degelo não tinha
     // lanternas visíveis. Luz fria voltada ao centro do abrigo.
-    for (const [x, z] of [[2.5, 2.5], [-2.5, -2.5], [2.5, -2.5], [-2.5, 3]]) {
+    for (const [x, z] of [[2.5, 2.5], [-2.5, -2.5], [2.5, -2.5], [-5, 3]]) {
       this._lantern(w, x, z, 0x9fdcff, 0, 0);
     }
     // Trilhas de laje ligando as tendas à chama azul (ADR 0080/0083).
@@ -1254,6 +1278,7 @@ export class SettlementManager {
     lantern.position.set(cp.x, 2.6, cp.z);
     w.add(pole, arm, cap, lantern);
     w.collider(x, z, 0.25); // mastro sólido (ADR 0113)
+    this.lanternPts.push(w.world(x, z)); // p/ o validador de postes (ADR 0128)
     this._flames.push({ mesh: lantern, base: 1.0, amp: 0.35, speed: 3.1, seed: x * 7 + z });
     // Lanternas também entram no pool (ADR 0065): luz firme e curta, na caixa.
     const p = w.world(cp.x, cp.z);
