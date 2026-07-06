@@ -47,17 +47,18 @@ esquivar (i-frames) · **5–9** trocar de forma · **U/I/O** artefatos/dons ·
 Controles. Suporte a toque (tablet) e gamepad no P1.
 
 ## 3. Mundo & biomas
-Fonte: `src/data/biomes.ts` · anéis em `src/world/WorldManager.ts`. O mundo é
-concêntrico no eixo −Z; cada anel é um bioma com nível recomendado (define o
-item level dos drops) e uma vila.
+Fonte: `src/data/biomes.ts` · `biomeAt` em `src/world/WorldManager.ts`. O mundo é
+**orgânico** (ADR 0109): cada bioma é uma região de Voronoi ao redor da sua vila
+(âncora), com fronteiras deformadas por ruído — sem ordem radial. O Coração é uma
+mancha própria ao sul. O "nível" abaixo é a assinatura/dificuldade-tema do bioma.
 
-| Bioma | Chave | Nível | Raio até | Clima/assinatura |
+| Bioma | Chave | Nível-tema | Âncora (vila) | Clima/assinatura |
 |---|---|---|---|---|
-| Clareira Viva | `clareira` | 1 | 55 | verde, vagalumes; vila-hub |
-| Pântano Apodrecido | `pantano` | 3 | 110 | lodo, esporos |
-| Bosque Cinza | `bosque_cinza` | 5 | 165 | cinza, brasas |
-| Picos Gélidos | `picos` | 7 | 220 | neve, gelo |
-| Coração Corrompido | `coracao` | 9 | ∞ | podridão roxa; sem fauna |
+| Clareira Viva | `clareira` | 1 | Círculo do Carvalho (0,0) | verde, vagalumes; hub |
+| Pântano Apodrecido | `pantano` | 3 | Vau das Palafitas (62,−48) | lodo, esporos |
+| Bosque Cinza | `bosque_cinza` | 5 | Cinzafolha (−128,30) | cinza, brasas |
+| Picos Gélidos | `picos` | 7 | Abrigo do Degelo (120,140) | neve, gelo |
+| Coração Corrompido | `coracao` | 9 | mancha (0,−225) | podridão roxa; sem fauna |
 
 Cada bioma tem: tabela de spawn + packs (ADR 0045), **hazard** ambiental
 (§10), **fauna** (§10), clima dia/noite (ADR 0049), purificação visível ao

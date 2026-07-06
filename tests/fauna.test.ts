@@ -28,7 +28,7 @@ describe('Fauna ambiente (ADR 0098)', () => {
 
   it('não spawna fauna no Coração Corrompido', () => {
     const g = makeGame(); g.seed = 1;
-    g.groupCenter = { x: 300, z: 0 }; // coracao
+    g.groupCenter = { x: 0, z: -225 }; // coracao (mancha ao sul)
     const fm = new FaunaManager(g);
     tick(fm, 6);
     expect(fm.critters.length).toBe(0);
@@ -67,7 +67,7 @@ describe('Fauna ambiente (ADR 0098)', () => {
     tick(fm, 6);
     expect(fm.critters.length).toBeGreaterThan(0);
     // Some fauna (troca de bioma para picos, longe): os da Clareira são reciclados.
-    g.groupCenter = { x: 200, z: 0 }; // picos
+    g.groupCenter = { x: 120, z: 150 }; // picos (região do Abrigo do Degelo)
     fm.update(0.1);
     const picoIds = new Set(FAUNA_BY_BIOME.picos.map((d) => d.id));
     for (const cr of fm.critters) expect(picoIds.has(cr.def.id)).toBe(true);

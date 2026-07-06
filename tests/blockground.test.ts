@@ -33,7 +33,7 @@ describe('BlockGround (ADR 0063)', () => {
     gp.update();
     expect((gp._pools.snow as any).count).toBeGreaterThan(1000);
     // No Coração, veios de lava emergem entre a pedra (ADR 0064).
-    const gc = new BlockGround(stubGame({ groupCenter: { x: 0, z: 300 } }));
+    const gc = new BlockGround(stubGame({ groupCenter: { x: 0, z: -225 } }));
     gc.update();
     expect((gc._pools.lava as any).count).toBeGreaterThan(50);
     expect((gc._pools.stone as any).count).toBeGreaterThan(3000);
