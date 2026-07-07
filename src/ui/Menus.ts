@@ -25,7 +25,7 @@ const css = `
 @keyframes menu-in{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
 .menu{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(14,26,16,.86),rgba(3,6,4,.94));font-family:system-ui,sans-serif;color:#eaf3e6;backdrop-filter:blur(3px)}
 .menu.show{display:flex}
-.panel{background:linear-gradient(165deg,#111f14,#0a130c);border:1px solid rgba(159,224,106,.35);border-radius:16px;padding:26px 30px;min-width:330px;max-width:92vw;box-shadow:0 24px 70px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05);animation:menu-in .28s cubic-bezier(.2,.9,.3,1.2)}
+.panel{background:linear-gradient(165deg,#111f14,#0a130c);border:1px solid rgba(159,224,106,.35);border-radius:16px;padding:26px 30px;min-width:min(330px,92vw);max-width:min(92vw,720px);max-height:88vh;overflow-y:auto;overflow-x:hidden;box-shadow:0 24px 70px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05);animation:menu-in .28s cubic-bezier(.2,.9,.3,1.2);-webkit-overflow-scrolling:touch}
 .panel h1{margin:0 0 4px;color:#9fe06a;font-size:38px;font-family:'Cinzel',Georgia,serif;letter-spacing:.05em;text-shadow:0 2px 16px rgba(159,224,106,.35)}
 .panel h2{margin:0 0 14px;font-size:19px;font-family:'Cinzel',Georgia,serif;letter-spacing:.04em}
 .panel .sub{opacity:.7;margin:0 0 18px;font-size:13px}
@@ -33,7 +33,7 @@ const css = `
 .btn:hover{transform:translateY(-1px);border-color:#9fe06a;box-shadow:0 6px 16px rgba(0,0,0,.35),0 0 12px rgba(159,224,106,.15)}
 .btn:active{transform:translateY(0) scale(.99)}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
-.inv{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-width:640px}
+.inv{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-width:min(640px,86vw)}
 .slot{border:1px solid rgba(159,224,106,.18);border-radius:9px;padding:8px 10px;margin-bottom:8px;font-size:13px;background:rgba(10,18,10,.4)}
 .slot .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;opacity:.6;color:#9fe06a}
 .items{max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:6px}
@@ -144,6 +144,13 @@ export class Menus {
     this.tip = document.createElement('div');
     this.tip.id = 'tip';
     document.body.append(this.main, this.pause, this.inv, this.shop, this.stash, this.controls, this.skills, this.kitchen, this.farm, this.tip);
+
+    // Fechar clicando FORA do painel (E23.3): no toque não há teclado, então
+    // tocar no fundo escurecido fecha o modal — nunca ficar preso. O menu
+    // principal (tela inicial) é a exceção: não fecha no vazio.
+    for (const m of [this.pause, this.inv, this.shop, this.stash, this.controls, this.skills, this.kitchen, this.farm]) {
+      m.addEventListener('pointerdown', (e) => { if (e.target === m) this._closeOverlay(m); });
+    }
 
     addEventListener('keydown', (e) => {
       if (game.menuMain) return; // bloqueia até iniciar
@@ -890,6 +897,21 @@ export class Menus {
 
   closeShop() {
     this.shop.classList.remove('show');
+    this.game.paused = false;
+  }
+
+  /** Fecha qualquer overlay (clique fora — E23.3), despausando o jogo. Usa o
+   *  toggle específico quando existe (mantém efeitos colaterais); senão só
+   *  esconde e despausa. */
+  _closeOverlay(m) {
+    this._hideTip?.();
+    if (m === this.inv) return this.toggleInventory();
+    if (m === this.kitchen) return this.toggleKitchen();
+    if (m === this.farm) return this.toggleFarm();
+    if (m === this.skills) return this.toggleSkills();
+    if (m === this.shop) return this.closeShop();
+    if (m === this.pause) { this.pause.classList.remove('show'); this.game.paused = false; return; }
+    m.classList.remove('show');
     this.game.paused = false;
   }
 
