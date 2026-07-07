@@ -606,7 +606,8 @@ export class InteriorManager {
   /** Tira o ocupante de cena: morador real volta pra vila; figurante é destruído. */
   _despawnOccupant(occ) {
     if (occ.kind === 'resident') {
-      this.game.settlements?.checkinResident?.(occ.rec);
+      // Sai pela porta: emerge na porta externa e volta a andar pela cidade (E33).
+      this.game.settlements?.checkinResident?.(occ.rec, this.active?.returnPos);
       const i = this.active.residents.indexOf(occ.rec);
       if (i >= 0) this.active.residents.splice(i, 1);
     } else {
@@ -639,7 +640,7 @@ export class InteriorManager {
     for (const pid of a.patrons ?? []) { // figurantes efêmeros (E31/E32)
       if (this.game.world.entities.has(pid)) this.game.world.destroyEntity(pid);
     }
-    for (const rec of a.residents ?? []) this.game.settlements?.checkinResident?.(rec); // moradores reais voltam à vila (E32)
+    for (const rec of a.residents ?? []) this.game.settlements?.checkinResident?.(rec, a.returnPos); // saem pela porta e voltam à cidade (E32/E33)
     if (a.kitchenId != null && this.game.world.entities.has(a.kitchenId)) this.game.world.destroyEntity(a.kitchenId);
     if (a.kitchenMesh) this.game.renderer.remove?.(a.kitchenMesh); // remove o caldeirão (E19.6)
     if (a.props) this.game.renderer.remove?.(a.props); // remove os móveis (ADR 0104)

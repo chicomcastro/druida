@@ -310,11 +310,18 @@ describe('Interiores povoados e vivos (E31)', () => {
     sm._wander(0.1);
     const trAfter = g.world.get(rec.id, C.Transform);
     expect(trAfter.x).toBe(trBefore.x); expect(trAfter.z).toBe(trBefore.z);
-    // Sair devolve o morador à posição no mundo e limpa o estado.
+    // Sair: o morador SAI PELA PORTA (E33) — fica escondido até o overworld voltar
+    // e então emerge na porta externa (returnPos ≈ centro da vila no teste), volta
+    // a ser visível e retoma a rotina. Nada de reaparecer num lugar aleatório.
     im.exit();
+    let steps = 0;
+    while (rec.indoor && steps < 60) { sm.update(0.3); steps++; }
     expect(rec.indoor).toBe(false);
-    expect(g.world.get(rec.id, C.Transform).x).toBeCloseTo(out.x, 5);
-    expect(g.world.get(rec.id, C.Transform).z).toBeCloseTo(out.z, 5);
+    const r = g.world.get(rec.id, C.Renderable);
+    expect(r.object3d.visible).toBe(true);
+    const tr = g.world.get(rec.id, C.Transform);
+    expect(Math.hypot(tr.x - cinza.x, tr.z - cinza.z)).toBeLessThan(2); // emergiu na porta
+    void out;
   });
 
   it('rodízio: comensais vão embora e chegam novos, sem quebrar (E32)', () => {
@@ -338,9 +345,12 @@ describe('Interiores povoados e vivos (E31)', () => {
     expect(sawTransition).toBe(true);                       // houve vai-e-vem
     expect(im.active.residents.length).toBeGreaterThan(0);  // segue povoado
     for (const rec of im.active.residents) expect(rec.indoor).toBe(true); // consistente
-    // Sair devolve todo mundo à vila (ninguém fica preso indoor).
+    // Sair: todos saem pela porta e, com a cidade ativa, a fila de emergência
+    // esvazia — ninguém fica preso indoor.
     im.exit();
+    for (let i = 0; i < 80; i++) sm.update(0.3);
     expect(sm._villagers.every((v: any) => !v.indoor)).toBe(true);
+    expect(sm._emerging.length).toBe(0);
   });
 
   it('o NPC encara a câmera (rosto/olhos à mostra, não de costas)', () => {

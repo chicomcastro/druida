@@ -62,6 +62,7 @@ export class SettlementManager {
   _flags: any[]; // bandeiras/estandartes ao vento
   _water: any[]; // superfícies de água com pulso
   _villagers: any[]; // moradores que seguem uma rotina de dia/noite (ADR 0055/E22)
+  _emerging: any[]; // fila de moradores saindo de um interior pela porta (E33)
   _lastTime: number | null = null; // hora do último tick (detecta virada do dia)
   _day = 0; // contador de dias (variação diária da rotina — E22)
   _clock = 0; // relógio em segundos (cooldown de conversa — E22.5)
@@ -80,6 +81,7 @@ export class SettlementManager {
     this._flags = [];
     this._water = [];
     this._villagers = [];
+    this._emerging = []; // moradores saindo de um interior: emergem na porta e voltam à cidade (E33)
     this.footprints = {};
     this.streetCells = new Set();
     this.pathCells = {}; // células de rua por vila em coord LOCAL (validador ADR 0155)
@@ -120,6 +122,7 @@ export class SettlementManager {
   /** Anuncia a chegada (banner sempre; diálogo de worldbuilding só na 1ª). */
   update(dt = 0.016) {
     if (this.game.inDungeon) return;
+    this._emergeTick(dt); // moradores saindo de interiores emergem na porta (E33)
     this._wander(dt);
     const c = this.game.groupCenter ?? { x: 0, z: 0 };
     const s = this.settlementAt(c.x, c.z);
@@ -256,13 +259,54 @@ export class SettlementManager {
     return true;
   }
 
-  /** Devolve o morador à vila (E32): restaura posição/altura e limpa o estado. */
-  checkinResident(rec) {
-    const tr = this.game.world.get(rec.id, C.Transform);
+  /**
+   * Devolve o morador à vila (E32/E33). Com uma `door` (porta externa do prédio),
+   * ele **sai pela porta**: fica escondido até o overworld voltar e então **emerge
+   * na porta** e retoma a rotina (anda pela cidade) — nada de reaparecer num lugar
+   * aleatório. Sem `door`, cai no comportamento antigo (restaura a posição salva).
+   */
+  checkinResident(rec, door?) {
     const r = this.game.world.get(rec.id, C.Renderable);
-    if (tr && rec._out) { tr.x = rec._out.x; tr.z = rec._out.z; tr.rot = rec._out.rot; }
     if (r) { r.yOffset = rec._baseY ?? 0; r.idleGesture = null; }
-    rec.indoor = false; rec._out = null; rec._interior = null;
+    rec._interior = null;
+    if (door) {
+      // Esconde e enfileira: emerge na porta (escalonado) quando a cidade voltar.
+      if (r?.object3d) r.object3d.visible = false;
+      const stagger = 0.2 + this._emerging.length * 0.55;
+      this._emerging.push({ rec, x: door.x, z: door.z, t: stagger });
+      return; // continua `indoor` (some da multidão) até emergir de fato
+    }
+    const tr = this.game.world.get(rec.id, C.Transform);
+    if (tr && rec._out) { tr.x = rec._out.x; tr.z = rec._out.z; tr.rot = rec._out.rot; }
+    if (r?.object3d) r.object3d.visible = true;
+    rec.indoor = false; rec._out = null;
+  }
+
+  /**
+   * Emergência pela porta (E33): quando o overworld está ativo, os moradores que
+   * saíram de um interior aparecem na porta externa (com leve dispersão), voltam
+   * a ser visíveis e retomam a rotina — dá pra vê-los saindo do prédio e indo
+   * embora pela cidade, em vez de sumirem/reaparecerem do nada.
+   */
+  _emergeTick(dt) {
+    if (!this._emerging.length) return;
+    for (let i = this._emerging.length - 1; i >= 0; i--) {
+      const e = this._emerging[i];
+      e.t -= dt;
+      if (e.t > 0) continue;
+      const rec = e.rec;
+      const tr = this.game.world.get(rec.id, C.Transform);
+      const r = this.game.world.get(rec.id, C.Renderable);
+      if (tr) {
+        const a = (rec.seed ?? rec.id) % 6; // dispersão determinística ao redor da porta
+        tr.x = e.x + Math.cos(a) * 0.8; tr.z = e.z + Math.sin(a) * 0.8;
+        const c = rec.center ?? { x: e.x, z: e.z };
+        tr.rot = Math.atan2(c.x - tr.x, c.z - tr.z); // vira-se para a vila e vai andar
+      }
+      if (r?.object3d) r.object3d.visible = true;
+      rec.indoor = false; rec._out = null; rec.target = null; rec.wait = 0.2 + (rec.id % 5) * 0.1;
+      this._emerging.splice(i, 1);
+    }
   }
 
   /**
