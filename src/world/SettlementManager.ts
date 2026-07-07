@@ -6,6 +6,16 @@ import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
 import { pixelTexture, tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { buildMerchantStall } from './landmarks.js';
 import { interiorTheme } from '../data/interiors.js';
+import { routineGoal, goalSpread, ROUTINE_ARCHETYPES } from '../gameplay/routine.js';
+
+/** Ponto de reunião (salão comunal) de cada vila, em coord LOCAL — onde os
+ *  moradores almoçam e se reúnem ao entardecer (E22). */
+const GATHER_OFFSET: Record<string, { x: number; z: number }> = {
+  druida: { x: 5, z: 5 },      // fogueira comunal, ao lado da Carvalho-Mãe
+  palafitas: { x: 0, z: -2 },  // deck central
+  lenhadores: { x: 0, z: 3 },  // entre os braseiros
+  degelo: { x: 0, z: 4 },      // praça do abrigo
+};
 
 /** Alinha um ângulo ao grid voxel — só rotações de 90°, como no MCD (ADR 0076). */
 const snap90 = (a) => Math.round(a / (Math.PI / 2)) * (Math.PI / 2);
@@ -33,7 +43,9 @@ export class SettlementManager {
   _smoke: any[]; // baforadas de chaminé (sobem e dissipam em loop)
   _flags: any[]; // bandeiras/estandartes ao vento
   _water: any[]; // superfícies de água com pulso
-  _villagers: any[]; // moradores que passeiam (ADR 0055)
+  _villagers: any[]; // moradores que seguem uma rotina de dia/noite (ADR 0055/E22)
+  _lastTime: number | null = null; // hora do último tick (detecta virada do dia)
+  _day = 0; // contador de dias (variação diária da rotina — E22)
   _waterRef: any; // material da lagoa do Vau (pulsa no animate)
   footprints: Record<string, any[]>; // pegadas por vila (validador ADR 0085)
   streetCells: Set<string>; // células de rua em coord de mundo (validador ADR 0128)
@@ -106,13 +118,19 @@ export class SettlementManager {
   }
 
   /**
-   * Moradores passeiam (ADR 0055): alvos aleatórios perto de "casa", pausa
-   * entre trajetos e param quando um jogador se aproxima (para conversar).
-   * O movimento vai via Velocity (movementSystem integra e colide) e a
-   * animação de andar vem de graça pelo renderSync.
+   * Rotina dos moradores (E22, evolui ADR 0055): cada aldeão escolhe para onde ir
+   * conforme a hora do dia e o arquétipo — trabalho, passeio, casa, e a reunião
+   * no salão comunal ao almoço/entardecer (routine.routineGoal). Movimento via
+   * Velocity (movementSystem integra e colide); param quando um jogador chega
+   * perto (para conversar). A hora vem de `game.dayNight.time`; um contador de
+   * dia (detectado na virada) dá a variação diária.
    */
   _wander(dt) {
     const { game } = this;
+    const time = game.dayNight?.time ?? 0.3;
+    if (this._lastTime != null && time < this._lastTime - 0.5) this._day = (this._day ?? 0) + 1;
+    this._lastTime = time;
+    const day = this._day ?? 0;
     for (const v of this._villagers) {
       if (!game.world.entities.has(v.id)) continue;
       const tr = game.world.get(v.id, C.Transform);
@@ -126,13 +144,17 @@ export class SettlementManager {
       if (playerNear) { vel.vx = 0; vel.vz = 0; continue; }
       if (v.wait > 0) { v.wait -= dt; vel.vx = 0; vel.vz = 0; continue; }
       if (!v.target || Math.hypot(v.target.x - tr.x, v.target.z - tr.z) < 0.4) {
-        // Trabalhadores (raio pequeno) ficam junto ao posto; demais passeiam (ADR 0123).
-        const spread = v.radius ?? 7;
+        const goal = routineGoal(v.archetype ?? 'social', time, { seed: v.seed ?? v.id, day });
+        v.goal = goal;
+        const anchor = goal === 'hall' ? v.gather : goal === 'roam' ? v.center
+          : goal === 'work' ? v.work : v.home; // home/sleep
+        const spread = goalSpread(goal);
         v.target = {
-          x: v.home.x + (Math.random() - 0.5) * spread,
-          z: v.home.z + (Math.random() - 0.5) * spread,
+          x: anchor.x + (Math.random() - 0.5) * spread,
+          z: anchor.z + (Math.random() - 0.5) * spread,
         };
-        v.wait = 1.5 + Math.random() * 3.5;
+        // Dormir/casa: pausas longas (fica parado); reunião: pausas curtas (troca de lugar).
+        v.wait = goal === 'sleep' ? 3 + Math.random() * 5 : goal === 'hall' ? 0.6 + Math.random() * 1.6 : 1.5 + Math.random() * 3.5;
         continue;
       }
       const dx = v.target.x - tr.x, dz = v.target.z - tr.z;
@@ -458,8 +480,20 @@ export class SettlementManager {
     game.world.add(id, C.Velocity, Velocity(0, 0, 1.2));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
     game.world.add(id, C.Collider, Collider(0.55, true));
-    // Anciãos ficam no posto; os demais passeiam pela vila (ADR 0055).
-    if (!v.elder) this._villagers.push({ id, home: { x: wx, z: wz }, target: null, wait: Math.random() * 2, radius: v.radius });
+    // Anciãos ficam no posto; os demais seguem uma rotina de dia/noite (E22).
+    if (!v.elder) {
+      const worker = (v.radius ?? 7) <= 3; // postos de trabalho (raio curto) = trabalhadores
+      const archetype = worker ? 'worker' : ROUTINE_ARCHETYPES[hsh % ROUTINE_ARCHETYPES.length];
+      const off = GATHER_OFFSET[s.theme] ?? { x: 0, z: 0 };
+      this._villagers.push({
+        id, seed: hsh, archetype,
+        home: { x: wx, z: wz },          // casa / âncora de moradia
+        work: { x: wx, z: wz },          // posto (trabalhador nasce no posto)
+        center: { x: s.x, z: s.z },      // centro da vila (para perambular)
+        gather: { x: s.x + off.x, z: s.z + off.z }, // salão comunal (reunião)
+        target: null, wait: Math.random() * 2, radius: v.radius,
+      });
+    }
     // Ancião com missão vira quest giver (ADR 0047); demais só conversam.
     if (v.elder && s.quest) {
       game.world.add(id, C.Interactable, {

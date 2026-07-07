@@ -150,4 +150,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0144](0144-sementes-no-forrageamento.md) | Sementes no forrageamento (drop ao colher) (E21.1) | Aceito |
 | [0145](0145-mercadores-especializados-cozinheiro.md) | Mercadores especializados + cozinheiro na taverna (E21.2) | Aceito |
 | [0146](0146-jardineiro-vende-sementes.md) | Jardineiro: casa que vende sementes em cada vila (E21.3) | Aceito |
+| [0147](0147-vila-viva-rotina-dia-noite.md) | Vila viva: rotina de dia/noite + reunião no salão (E22.1) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
