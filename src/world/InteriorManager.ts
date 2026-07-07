@@ -124,14 +124,14 @@ export class InteriorManager {
     for (const m of this._wallMats) m.color.setHex(theme.wall);
     this._lampMat.emissive.setHex(theme.accent);
     this.game.inDungeon = true;
-    this.active = {
-      themeId: theme.id, theme,
-      returnPos: { ...(this.game.groupCenter ?? { x: 0, z: 0 }) },
-      npcId: null,
-    };
+    const returnPos = { ...(this.game.groupCenter ?? { x: 0, z: 0 }) };
+    // Vila de origem (ADR 0163): a porta guarda onde estávamos; o tema da vila
+    // decide a decoração de sotaque do interior (rede no Vau, toras em Cinzafolha…).
+    const village = this.game.settlements?.settlementAt?.(returnPos.x, returnPos.z)?.theme ?? 'druida';
+    this.active = { themeId: theme.id, theme, returnPos, npcId: null, village };
     this._teleport(ROOM.x, ROOM.z - ROOM_R + 3);
     this.active.npcId = this._spawnNpc(theme);
-    this.active.props = this._buildProps(theme); // móveis temáticos (ADR 0104)
+    this.active.props = this._buildProps(theme, village); // móveis temáticos + sotaque da vila (ADR 0104/0163)
     this.active.kitchenId = theme.kitchen ? this._buildKitchen() : null; // caldeirão (E19.6)
     // Cozinheiro na taverna (E21.2): um 2º NPC que vende comida pronta e ingredientes.
     this.active.cookId = theme.service === 'rest' ? this._spawnCook() : null;
@@ -145,7 +145,7 @@ export class InteriorManager {
    * lareira na taverna, tapete/trono/estante nos salões. Grupo próprio,
    * removido na saída. Coordenadas relativas à sala (ROOM).
    */
-  _buildProps(theme) {
+  _buildProps(theme, village = 'druida') {
     const g = new THREE.Group();
     const mat = (c, emissive = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, emissive, emissiveIntensity: emissive ? 1 : 0 });
     const box = (w, h, d, x, y, z, c, em = 0) => {
@@ -180,6 +180,28 @@ export class InteriorManager {
       box(1.1, 0.3, 1.0, 0, 0.55, nz - 0.7, wood);        // assento
       box(2.4, 2.2, 0.5, -ROOM_R + 1.4 - ROOM.x * 0, 1.1, nz + 0.5, wood); // estante lateral (parede)
       box(0.9, 1.8, 0.08, 0, 3.3, -ROOM_R + 0.5, acc, acc); // estandarte na parede do fundo
+    }
+    // Sotaque da vila (ADR 0163): um cantinho decorado com a cara do assentamento,
+    // no canto dianteiro-esquerdo, perto da porta. Cada vila deixa sua marca.
+    const dx = -ROOM_R + 2, dz = ROOM_R - 3;
+    if (village === 'palafitas') {
+      box(1.0, 1.0, 0.9, dx, 0.5, dz, 0x3f6a5a);            // barril de peixe
+      box(0.9, 0.12, 0.9, dx, 1.05, dz, 0x8ad0ff, 0x2a5a7a); // peixe/água
+      box(0.1, 1.6, 0.1, dx + 1.1, 0.8, dz, 0x6a8a4a);       // junco alto
+      box(0.1, 1.4, 0.1, dx + 1.3, 0.7, dz + 0.2, 0x7a9a5a);
+    } else if (village === 'lenhadores') {
+      box(1.6, 0.5, 0.5, dx, 0.3, dz, 0x6b4a33);            // toras empilhadas
+      box(1.6, 0.5, 0.5, dx, 0.8, dz, 0x5a4028);
+      box(0.9, 0.7, 0.9, dx + 1.4, 0.35, dz, 0x7a5a3a);      // toco de rachar
+      box(0.1, 0.7, 0.5, dx + 1.4, 0.9, dz, 0x9a9a9a);       // machado fincado
+    } else if (village === 'degelo') {
+      box(1.4, 0.12, 1.0, dx, 0.14, dz, 0x8a7458);          // pele estendida
+      box(1.0, 0.8, 1.0, dx + 1.3, 0.4, dz, 0x9fdcff, 0x2a6a9a); // bloco de gelo
+    } else {
+      box(0.7, 0.7, 0.7, dx, 0.35, dz, 0x5a4028);           // cesto de ervas
+      box(0.7, 0.4, 0.7, dx, 0.75, dz, 0x6cba5a);           // maço de ervas verde
+      box(0.14, 1.1, 0.14, dx + 1.1, 0.55, dz, 0x6b4a33);   // muda em vaso
+      box(0.5, 0.5, 0.5, dx + 1.1, 1.15, dz, 0x4c7a34);
     }
     this.game.renderer.add(g);
     return g;
