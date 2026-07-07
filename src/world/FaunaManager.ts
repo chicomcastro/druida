@@ -1,14 +1,21 @@
 import * as THREE from 'three';
-import { C, Transform } from '../core/ecs/components.js';
+import { C, Transform, Health, Collider, Faction, Factions } from '../core/ecs/components.js';
 import { biomeAt } from './WorldManager.js';
 import { FAUNA_BY_BIOME } from '../data/fauna.js';
+import { INGREDIENTS } from '../gameplay/ingredients.js';
+import { createLootOrb } from '../entities/factories.js';
 import { makeRng } from '../utils/math.js';
 
 /**
  * Fauna ambiente (ADR 0098, E8): mantém um punhado de bichos vagueando perto do
  * grupo, conforme o bioma atual. Eles fogem quando um jogador se aproxima e são
- * reciclados quando ficam longe (pool com teto). Sem colisor nem combate — só
- * vida no mundo. Suspenso em masmorra/interior (`game.inDungeon`).
+ * reciclados quando ficam longe (pool com teto). Suspenso em masmorra/interior
+ * (`game.inDungeon`).
+ *
+ * Caça (ADR 0157): bichos com `drops` ganham vida + facção NEUTRA, então o
+ * ataque do jogador os acerta (meleeArc atinge times opostos); ao morrer soltam
+ * ingredientes temáticos da espécie — a fonte de carne/sebo/ovo vinda dos
+ * animais. Não têm IA (não perseguem) e continuam fugindo.
  */
 const MAX = 9;         // bichos vivos ao mesmo tempo
 const SPAWN_MIN = 16;  // banda de spawn ao redor do grupo
@@ -26,6 +33,33 @@ export class FaunaManager {
     this.critters = [];
     this.rng = makeRng((game.seed ^ 0x7a1c93f5) >>> 0);
     this._t = 0;
+    // Caça (ADR 0157): ao abater um bicho caçável, solta os ingredientes da
+    // espécie. O gameEvents pula o loot genérico de monstro para a fauna.
+    game.on?.('kill', (e) => this._onKill(e));
+  }
+
+  /** É uma entidade de fauna? (para o gameEvents pular o loot de monstro). */
+  isFauna(id) {
+    return this.critters.some((c) => c.id === id);
+  }
+
+  _onKill(e) {
+    const i = this.critters.findIndex((c) => c.id === e.id);
+    if (i < 0) return;
+    const cr = this.critters[i];
+    const tr = this.game.world.get(cr.id, C.Transform);
+    const x = tr?.x ?? cr.obj.position.x, z = tr?.z ?? cr.obj.position.z;
+    for (const [ing, qty] of Object.entries(cr.def.drops ?? {})) {
+      const def = INGREDIENTS[ing];
+      if (!def) continue;
+      createLootOrb(this.game.world, this.game.renderer, {
+        x: x + (this.rng() - 0.5), z: z + (this.rng() - 0.5),
+        item: { ingredient: def.id, name: def.name, icon: def.icon, count: qty as number, rarityColor: 0xd0b060 },
+      });
+    }
+    // O corpo tomba e some pelo caminho normal (killEntity agendou o destroy);
+    // aqui só paramos de conduzir o bicho no passeio.
+    this.critters.splice(i, 1);
   }
 
   _biome() {
@@ -43,6 +77,15 @@ export class FaunaManager {
     const id = this.game.world.createEntity();
     this.game.world.add(id, C.Transform, Transform(x, z));
     this.game.world.add(id, C.Renderable, { object3d: g, baseScale: def.size });
+    // Caçável (ADR 0157): vida + facção NEUTRA (o jogador acerta; inimigos/aliados
+    // ignoram — a IA só conduz entidades com C.AI) + colisor leve (não bloqueia)
+    // para o arco de ataque pegar, + Tint para o flash de dano.
+    if (def.hp && def.drops) {
+      this.game.world.add(id, C.Health, Health(def.hp));
+      this.game.world.add(id, C.Faction, Faction(Factions.NEUTRAL));
+      this.game.world.add(id, C.Collider, Collider(def.size * 0.5, false));
+      this.game.world.add(id, C.Tint, { flash: 0, react: 0 });
+    }
     this.critters.push({ id, def, obj: g, target: null, wait: this.rng() * 2, phase: this.rng() * 6.28 });
   }
 

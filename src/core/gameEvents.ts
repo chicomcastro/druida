@@ -17,6 +17,9 @@ export function bindGameEvents(game) {
   game.on('fastTravel', (e) => game.camera?.snapTo?.({ x: e.x, z: e.z }));
 
   game.on('kill', (e) => {
+    // Fauna caçável (ADR 0157) tem loot próprio (ingredientes da espécie, tratados
+    // no FaunaManager) — não ganha XP/essência/drop genérico de monstro.
+    if (game.fauna?.isFauna?.(e.id)) return;
     // XP + essência + drops.
     const def = e.loot ?? {};
     grantXp(game, def.xp ?? ENEMIES[e.killKind]?.xp ?? 6);

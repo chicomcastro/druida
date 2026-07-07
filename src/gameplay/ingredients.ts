@@ -24,13 +24,17 @@ export const INGREDIENTS: Record<string, IngredientDef> = {
   carne_crua: { id: 'carne_crua', name: 'Carne Crua', icon: '🥩', biomes: [], source: 'drop' },
   sebo: { id: 'sebo', name: 'Sebo', icon: '🧈', biomes: [], source: 'drop' },
   ovo: { id: 'ovo', name: 'Ovo Selvagem', icon: '🥚', biomes: [], source: 'drop' },
-  erva: { id: 'erva', name: 'Erva Silvestre', icon: '🌿', biomes: ['clareira'], source: 'forage' },
+  // Forrageáveis: as chaves de bioma DEVEM casar com as de `biomeAt`
+  // (clareira/pantano/bosque_cinza/picos) — antes 'cinza'/'degelo' não batiam e
+  // esses biomas ficavam sem forrageamento nenhum (ADR 0158). Cada bioma jogável
+  // tem ≥2 forrageáveis (guardado por teste).
+  erva: { id: 'erva', name: 'Erva Silvestre', icon: '🌿', biomes: ['clareira', 'picos'], source: 'forage' },
   cenoura: { id: 'cenoura', name: 'Cenoura Selvagem', icon: '🥕', biomes: ['clareira'], source: 'forage' },
-  cogumelo: { id: 'cogumelo', name: 'Cogumelo', icon: '🍄', biomes: ['clareira', 'pantano'], source: 'forage' },
+  cogumelo: { id: 'cogumelo', name: 'Cogumelo', icon: '🍄', biomes: ['clareira', 'pantano', 'bosque_cinza'], source: 'forage' },
   peixe: { id: 'peixe', name: 'Peixe', icon: '🐟', biomes: ['pantano'], source: 'forage' },
   junco: { id: 'junco', name: 'Raiz de Junco', icon: '🥬', biomes: ['pantano'], source: 'forage' },
-  baga_gelada: { id: 'baga_gelada', name: 'Baga Gelada', icon: '🫐', biomes: ['degelo'], source: 'forage' },
-  pimenta: { id: 'pimenta', name: 'Pimenta das Cinzas', icon: '🌶️', biomes: ['cinza'], source: 'forage' },
+  baga_gelada: { id: 'baga_gelada', name: 'Baga Gelada', icon: '🫐', biomes: ['picos'], source: 'forage' },
+  pimenta: { id: 'pimenta', name: 'Pimenta das Cinzas', icon: '🌶️', biomes: ['bosque_cinza'], source: 'forage' },
   mel: { id: 'mel', name: 'Mel Silvestre', icon: '🍯', biomes: ['clareira', 'pantano'], source: 'forage' },
 };
 
