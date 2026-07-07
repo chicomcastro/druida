@@ -26,6 +26,11 @@ const RESIDENCES: Record<string, { x: number; z: number }[]> = {
     { x: 0, z: 22 }, { x: 19, z: 11 }, { x: -19, z: 11 }, // moradias originais do anel externo
     { x: 19, z: -11 }, { x: -19, z: -11 }, { x: 22, z: 0 }, // casas de família novas (E22.3)
   ],
+  // Vilas 2–4 (E22.4): as próprias construções da vila são os lares das famílias
+  // (palafitas / cabanas / tendas) — o povo mora onde vive. Sem prédios novos.
+  palafitas: [{ x: -8, z: -4 }, { x: 6, z: -8 }, { x: -2, z: 8 }, { x: 10, z: 4 }, { x: -9, z: 6 }],
+  lenhadores: [{ x: -7, z: -6 }, { x: 7, z: -4 }, { x: 0, z: 9 }, { x: -12, z: 0 }],
+  degelo: [{ x: -7, z: 3 }, { x: 6, z: -3 }, { x: -3, z: -8 }, { x: 8, z: 8 }, { x: -9, z: -12 }],
 };
 
 /** Alinha um ângulo ao grid voxel — só rotações de 90°, como no MCD (ADR 0076). */

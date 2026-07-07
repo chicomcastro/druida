@@ -153,4 +153,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0147](0147-vila-viva-rotina-dia-noite.md) | Vila viva: rotina de dia/noite + reunião no salão (E22.1) | Aceito |
 | [0148](0148-familias-genero-lares.md) | Famílias, gênero e lares (E22.2) | Aceito |
 | [0149](0149-casas-familia-clareira.md) | Casas de família na Clareira (E22.3) | Aceito |
+| [0150](0150-casas-familia-vilas-2-4.md) | Casa pra todo mundo: famílias nas vilas 2–4 (E22.4) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
