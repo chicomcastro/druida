@@ -5,8 +5,9 @@ import {
 } from '../src/gameplay/ingredients.js';
 import {
   RECIPES, recipeById, recipesAreValid, craftXpForLevel, craftLevel,
-  gainCraftXp, canCook, cook,
+  gainCraftXp, canCook, cook, ingredientCoverage,
 } from '../src/gameplay/recipes.js';
+import { FOOD_BASES } from '../src/gameplay/consumables.js';
 
 function makeGame(): any {
   return { progress: {}, emit: () => {} };
@@ -39,12 +40,43 @@ describe('Despensa de ingredientes (ADR 0135, E19.1)', () => {
     expect(clareira).toContain('erva');
     expect(clareira).not.toContain('peixe'); // peixe é do pântano
   });
+
+  it('save antigo migra couro/pena → sebo/ovo sem perder itens (ADR 0156)', () => {
+    // Despensa de um save anterior à renomeação, incluindo sebo já existente.
+    const g: any = { progress: { ingredients: { couro: 3, pena: 2, sebo: 1, carne_crua: 4 } }, emit: () => {} };
+    expect(ingredientCount(g, 'sebo')).toBe(4); // 1 + 3 migrados
+    expect(ingredientCount(g, 'ovo')).toBe(2);
+    expect(ingredientCount(g, 'carne_crua')).toBe(4); // intactos
+    // Ids antigos somem após a migração.
+    expect(g.progress.ingredients.couro).toBeUndefined();
+    expect(g.progress.ingredients.pena).toBeUndefined();
+  });
 });
 
 describe('Receitas & nível de Craft (ADR 0135)', () => {
   it('toda receita produz uma comida existente', () => {
     expect(recipesAreValid()).toBe(true);
     expect(RECIPES.length).toBeGreaterThan(0);
+  });
+
+  it('nenhum ingrediente é órfão: todo ingrediente serve ≥2 pratos (ADR 0156)', () => {
+    const cov = ingredientCoverage();
+    const orphans = Object.entries(cov).filter(([, n]) => n < 2).map(([id, n]) => `${id}:${n}`);
+    expect(orphans, `ingredientes usados em <2 receitas: ${orphans.join(', ')}`).toEqual([]);
+  });
+
+  it('as receitas cobrem os três tipos de buff em três tiers (ADR 0156)', () => {
+    const foods = RECIPES.map((r) => FOOD_BASES[r.food]);
+    for (const kind of ['dmg', 'speed', 'taken'] as const) {
+      const tiers = foods.filter((f) => f.kind === kind).map((f) => f.pct).sort((a, b) => a - b);
+      expect(tiers.length, `linha ${kind}`).toBeGreaterThanOrEqual(3);
+      // Tiers estritamente crescentes: comida mais rara é mais forte.
+      for (let i = 1; i < tiers.length; i++) expect(tiers[i]).toBeGreaterThan(tiers[i - 1]);
+    }
+    // O prato mais forte de cada linha exige nível de Craft maior que o mais fraco.
+    const byLevel = [...RECIPES].sort((a, b) => a.level - b.level);
+    expect(byLevel[0].level).toBe(1);
+    expect(byLevel[byLevel.length - 1].level).toBeGreaterThanOrEqual(3);
   });
 
   it('curva de XP é crescente e gainCraftXp sobe de nível', () => {
