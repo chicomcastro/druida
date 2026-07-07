@@ -64,6 +64,25 @@ export function avoidForce(x: number, z: number, rects: Rect[], radius = 2.0): P
 }
 
 /**
+ * Rua explícita (ADR 0163): puxa o aldeão para a laje de rua mais próxima quando
+ * ele está FORA dos caminhos (além da `deadzone`). Faz o povo andar pelas ruas
+ * em vez de cortar reto pela grama — combina-se com o rumo ao alvo. `cells` são
+ * pares [x,z] no MESMO referencial de (x,z). Devolve direção (unitária) ou zero.
+ */
+export function streetForce(x: number, z: number, cells: [number, number][], deadzone = 1.0): Pt {
+  let bx = 0, bz = 0, bd = Infinity;
+  for (const [cx, cz] of cells) {
+    const d = (cx - x) * (cx - x) + (cz - z) * (cz - z);
+    if (d < bd) { bd = d; bx = cx; bz = cz; }
+  }
+  if (bd === Infinity) return { x: 0, z: 0 };
+  const dist = Math.sqrt(bd);
+  if (dist <= deadzone) return { x: 0, z: 0 }; // já está na rua
+  const dx = bx - x, dz = bz - z, m = Math.hypot(dx, dz) || 1;
+  return { x: dx / m, z: dz / m };
+}
+
+/**
  * Combina o rumo desejado com separação e desvio, devolvendo um vetor unitário
  * (ou zero se nada empurra). Pesos: desvio manda mais que separação, que manda
  * mais que o rumo — evita atravessar casas, depois vizinhos, senão segue o alvo.

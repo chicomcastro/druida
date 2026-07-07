@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pointInRects, separationForce, avoidForce, steer } from '../src/gameplay/steering.js';
+import { pointInRects, separationForce, avoidForce, steer, streetForce } from '../src/gameplay/steering.js';
 
 const rect = (x0, z0, x1, z1) => ({ x0, z0, x1, z1 });
 
@@ -43,5 +43,18 @@ describe('steering — IA dos aldeões (E23.5)', () => {
   it('steer sem forças e sem rumo devolve zero', () => {
     const dir = steer({ x: 0, z: 0 }, { x: 0, z: 0 }, { x: 0, z: 0 });
     expect(dir).toEqual({ x: 0, z: 0 });
+  });
+
+  it('streetForce puxa para a laje mais próxima quando fora da rua (ADR 0163)', () => {
+    const cells: [number, number][] = [[5, 0], [6, 0], [7, 0]];
+    const f = streetForce(0, 0, cells, 0.9); // longe da rua em +x
+    expect(f.x).toBeGreaterThan(0.9); // aponta para a rua (unitário em +x)
+    expect(Math.abs(f.z)).toBeLessThan(0.1);
+  });
+
+  it('streetForce é zero quando já na rua (dentro da deadzone)', () => {
+    const cells: [number, number][] = [[0.5, 0]];
+    expect(streetForce(0, 0, cells, 0.9)).toEqual({ x: 0, z: 0 });
+    expect(streetForce(0, 0, [], 0.9)).toEqual({ x: 0, z: 0 }); // sem ruas: neutro
   });
 });

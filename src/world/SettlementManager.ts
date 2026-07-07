@@ -9,7 +9,7 @@ import { interiorTheme } from '../data/interiors.js';
 import { routineGoal, goalSpread, ROUTINE_ARCHETYPES } from '../gameplay/routine.js';
 import { assignHouseholds } from '../gameplay/households.js';
 import { shouldChat, pickChatLine, CHAT_RANGE, CHAT_COOLDOWN } from '../gameplay/chatter.js';
-import { separationForce, avoidForce, steer, pointInRects } from '../gameplay/steering.js';
+import { separationForce, avoidForce, steer, pointInRects, streetForce } from '../gameplay/steering.js';
 
 /** Ponto de reunião (salão comunal) de cada vila, em coord LOCAL — onde os
  *  moradores almoçam e se reúnem ao entardecer (E22). */
@@ -190,7 +190,17 @@ export class SettlementManager {
       // estruturas — não se amontoam nem atravessam casas/árvore-mãe.
       const dx = v.target.x - tr.x, dz = v.target.z - tr.z;
       const dd = Math.hypot(dx, dz) || 1;
-      const desire = { x: dx / dd, z: dz / dd };
+      const cx = v.center?.x ?? 0, cz = v.center?.z ?? 0;
+      // Rua explícita (ADR 0163): longe do alvo, some ao rumo uma atração pela
+      // laje de rua mais próxima — o povo anda pelos caminhos. Perto do alvo
+      // (≤2.5u) some, para poder sair da rua e chegar à porta de casa/posto.
+      let desireX = dx / dd, desireZ = dz / dd;
+      if (dd > 2.5 && v.streets?.length) {
+        const sf = streetForce(tr.x - cx, tr.z - cz, v.streets, 0.9);
+        desireX += sf.x * 0.8; desireZ += sf.z * 0.8;
+        const m = Math.hypot(desireX, desireZ) || 1; desireX /= m; desireZ /= m;
+      }
+      const desire = { x: desireX, z: desireZ };
       const neighbors: { x: number; z: number }[] = [];
       for (const o of this._villagers) {
         if (o === v) continue;
@@ -198,7 +208,6 @@ export class SettlementManager {
         if (otr && Math.abs(otr.x - tr.x) < 2 && Math.abs(otr.z - tr.z) < 2) neighbors.push({ x: otr.x, z: otr.z });
       }
       const sep = separationForce(tr.x, tr.z, neighbors, 1.5);
-      const cx = v.center?.x ?? 0, cz = v.center?.z ?? 0;
       const avoid = avoidForce(tr.x - cx, tr.z - cz, v.fps ?? [], 2.0);
       const dir = steer(desire, sep, avoid);
       if (dir.x === 0 && dir.z === 0) { vel.vx = 0; vel.vz = 0; continue; }
@@ -626,6 +635,7 @@ export class SettlementManager {
         id, seed: hsh, archetype,
         gender: v.gender, role: v.role, householdId: v.householdId, // família (E22.2)
         fps: this.footprints[s.id] ?? [], // estruturas da vila p/ desvio (E23.5, coord local)
+        streets: this.pathCells[s.id] ?? [], // células de rua (local) p/ andar nos caminhos (ADR 0163)
         home,                            // casa / âncora de moradia (lar da família)
         work: { x: wx, z: wz },          // posto (trabalhador nasce no posto)
         center: { x: s.x, z: s.z },      // centro da vila (para perambular)
