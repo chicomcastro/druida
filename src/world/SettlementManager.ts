@@ -7,6 +7,7 @@ import { pixelTexture, tiledPixelTexture } from '../core/render/pixelTextures.js
 import { buildMerchantStall } from './landmarks.js';
 import { interiorTheme } from '../data/interiors.js';
 import { routineGoal, goalSpread, ROUTINE_ARCHETYPES } from '../gameplay/routine.js';
+import { assignHouseholds } from '../gameplay/households.js';
 
 /** Ponto de reunião (salão comunal) de cada vila, em coord LOCAL — onde os
  *  moradores almoçam e se reúnem ao entardecer (E22). */
@@ -76,9 +77,7 @@ export class SettlementManager {
       g.position.set(s.x, 0, s.z);
       builders[s.theme](wrap(g, s, this, rng), rng);
       game.renderer.add(g);
-      for (const v of s.villagers) this._buildVillager(s, v);
-      this._ambientVillagers(s); // moradores passivos extras — vida própria (ADR 0121)
-      this._workers(s); // trabalhadores fixos nos postos de trabalho (ADR 0123)
+      this._populate(s); // moradores + famílias/lares (ADR 0121/0123/E22.2)
       if (s.merchant) this._buildMerchant(s);
       // Cozinhar deixou de ficar exposto na praça (E19.6): o caldeirão agora
       // vive dentro da taverna e do salão comunal (ver InteriorManager).
@@ -467,9 +466,11 @@ export class SettlementManager {
       hood: !!v.elder || hsh % 4 === 0,
       hair: HAIR[hsh % HAIR.length],
       skin: SKIN[hsh % SKIN.length],
-      beard: hsh % 5 === 3,
+      beard: hsh % 5 === 3 && v.gender !== 'f', // sem barba nas mulheres
       apron: hsh % 4 === 1,
       pack: hsh % 5 === 2,
+      female: v.gender === 'f',   // gênero (E22.2)
+      child: v.role === 'child',  // filho (silhueta menor)
     }));
     const wx = s.x + v.x, wz = s.z + v.z;
     g.position.set(wx, 0, wz);
@@ -478,16 +479,18 @@ export class SettlementManager {
     // Olha para o centro da vila (rotação sincronizada pelo renderSync).
     game.world.add(id, C.Transform, Transform(wx, wz, angleTo(wx, wz, s.x, s.z)));
     game.world.add(id, C.Velocity, Velocity(0, 0, 1.2));
-    game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
+    game.world.add(id, C.Renderable, { object3d: g, baseScale: v.role === 'child' ? 0.72 : 1 });
     game.world.add(id, C.Collider, Collider(0.55, true));
     // Anciãos ficam no posto; os demais seguem uma rotina de dia/noite (E22).
     if (!v.elder) {
       const worker = (v.radius ?? 7) <= 3; // postos de trabalho (raio curto) = trabalhadores
       const archetype = worker ? 'worker' : ROUTINE_ARCHETYPES[hsh % ROUTINE_ARCHETYPES.length];
       const off = GATHER_OFFSET[s.theme] ?? { x: 0, z: 0 };
+      const home = v.homeAt ?? { x: wx, z: wz }; // lar da família (E22.2)
       this._villagers.push({
         id, seed: hsh, archetype,
-        home: { x: wx, z: wz },          // casa / âncora de moradia
+        gender: v.gender, role: v.role, householdId: v.householdId, // família (E22.2)
+        home,                            // casa / âncora de moradia (lar da família)
         work: { x: wx, z: wz },          // posto (trabalhador nasce no posto)
         center: { x: s.x, z: s.z },      // centro da vila (para perambular)
         gather: { x: s.x + off.x, z: s.z + off.z }, // salão comunal (reunião)
@@ -512,27 +515,57 @@ export class SettlementManager {
    * ao redor do centro) — pontos na faixa de circulação, longe das casas e do
    * landmark central. Passeiam como os demais e têm falas de ambiente.
    */
-  _ambientVillagers(s) {
+  /**
+   * Popula a vila (E22.2): junta os defs de moradores (nomeados + ambientes +
+   * trabalhadores), agrupa-os em FAMÍLIAS/lares (households.assignHouseholds) e
+   * constrói cada um com gênero, papel e o lar da família. Anciãos (quest
+   * givers) nascem à parte, sem família.
+   */
+  _populate(s) {
+    const named = (s.villagers ?? []).filter((v) => !v.elder);
+    const defs = [...named, ...this._ambientDefs(s), ...this._workerDefs(s)];
+    // Anciãos: construídos direto (quest givers / conversa).
+    for (const v of (s.villagers ?? []).filter((v) => v.elder)) this._buildVillager(s, v);
+    if (!defs.length) return;
+    const members = defs.map((d) => ({
+      seed: [...String(d.name ?? '')].reduce((a, ch) => ((a * 31 + ch.charCodeAt(0)) >>> 0), 7),
+      x: s.x + d.x, z: s.z + d.z,
+    }));
+    const homes = assignHouseholds(members);
+    defs.forEach((d, i) => this._buildVillager(s, {
+      ...d, gender: homes[i].gender, role: homes[i].role,
+      householdId: homes[i].householdId, homeAt: homes[i].home,
+    }));
+  }
+
+  /**
+   * Defs de moradores passivos (ADR 0121): pontos médios entre moradores já
+   * existentes (ordenados por ângulo) — faixa de circulação, longe do centro.
+   */
+  _ambientDefs(s): any[] {
     const base = (s.villagers ?? []).filter((v) => !v.elder && Number.isFinite(v.x));
-    if (base.length < 2) return;
+    if (base.length < 2) return [];
     const sorted = [...base].sort((a, b) => Math.atan2(a.z, a.x) - Math.atan2(b.z, b.x));
     const names = AMBIENT_NAMES[s.theme] ?? AMBIENT_NAMES.druida;
     const lines = AMBIENT_LINES[s.theme] ?? AMBIENT_LINES.druida;
-    let made = 0;
-    for (let i = 0; i < sorted.length && made < 4; i++) {
+    const out: any[] = [];
+    for (let i = 0; i < sorted.length && out.length < 4; i++) {
       const a = sorted[i], b = sorted[(i + 1) % sorted.length];
       const x = (a.x + b.x) / 2, z = (a.z + b.z) / 2;
       if (Math.hypot(x, z) < 4.5) continue; // não cai sobre o landmark central
-      this._buildVillager(s, { name: names[made % names.length], x, z, lines });
-      made++;
+      out.push({ name: names[out.length % names.length], x, z, lines });
     }
+    return out;
   }
 
-  /** Trabalhador fixo (ADR 0123): morador que fica junto a um posto de trabalho
-   *  (raio de passeio curto), dando a leitura de "vida própria" — o NPC usa o
-   *  objeto de cenário. Coords locais à vila. */
-  _worker(s, x, z, name, lines) {
-    this._buildVillager(s, { name, x, z, lines, radius: 2.2 });
+  /** Defs dos trabalhadores fixos (ADR 0123): postos de trabalho por vila. */
+  _workerDefs(s): any[] {
+    const table = {
+      palafitas: [[4, -1.5, 'Peixeira Vaza', ['Limpo o peixe antes que a seiva o pegue.', 'A lagoa ainda dá o que comer.']]],
+      lenhadores: [[8, 2.4, 'Rachador Lasca', ['Rachar lenha aquece duas vezes.', 'A praga não gosta de fogo.']]],
+      degelo: [[6, 3.4, 'Curtidora Pele', ['Curto as peles antes que o gelo as tome.', 'O frio conserva tudo, forasteiro.']]],
+    };
+    return (table[s.theme] ?? []).map(([x, z, name, lines]) => ({ x, z, name, lines, radius: 2.2 }));
   }
 
   /** Mercador regional da vila: mesmo voxel do hub, estoque da região. */
@@ -1241,15 +1274,6 @@ export class SettlementManager {
     w.fp(x, z, 2.4, 0.9, 'bastidor de peles');
   }
 
-  /** Trabalhadores fixos por vila, nos postos criados pelos builders (ADR 0123). */
-  _workers(s) {
-    const table = {
-      palafitas: [[4, -1.5, 'Peixeira Vaza', ['Limpo o peixe antes que a seiva o pegue.', 'A lagoa ainda dá o que comer.']]],
-      lenhadores: [[8, 2.4, 'Rachador Lasca', ['Rachar lenha aquece duas vezes.', 'A praga não gosta de fogo.']]],
-      degelo: [[6, 3.4, 'Curtidora Pele', ['Curto as peles antes que o gelo as tome.', 'O frio conserva tudo, forasteiro.']]],
-    };
-    for (const [x, z, name, lines] of (table[s.theme] ?? [])) this._worker(s, x, z, name, lines);
-  }
 
   /** Pilha de lenha: duas toras embaixo, uma em cima. Sólida (ADR 0113). */
   _woodpile(w, x, z, ry = 0) {
