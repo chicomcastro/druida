@@ -487,7 +487,19 @@ Inimigos também dropam ingredientes de **culinária** (§7).
 
 **Hazards ambientais** (`src/data/hazards.ts`, ADR 0099) — zona telegrafada
 periódica fora das vilas: Pântano **lodo/root** · Bosque **cinza/atordoa** ·
-Picos **gelo/congela** · Coração **chão/queima**. Clareira é segura.
+Picos **gelo/congela** · Coração **chão/queima**. Clareira é segura. Um anel na
+cor do bioma avisa antes do golpe (`telegraph`); sair da área a tempo evita o
+dano + status.
+
+<p align="center">
+  <img src="img/hazard-pantano.jpg" width="270" alt="Lodo do Pântano (root)" />
+  <img src="img/hazard-bosque_cinza.jpg" width="270" alt="Nuvem de cinza (atordoa)" />
+</p>
+<p align="center">
+  <img src="img/hazard-picos.jpg" width="270" alt="Gelo dos Picos (congela)" />
+  <img src="img/hazard-coracao.jpg" width="270" alt="Chão pulsante do Coração (queima)" />
+</p>
+<sub>O anel telegrafado do perigo em cada bioma: lodo 🫧 (Pântano, prende), cinza 🌫️ (Bosque, atordoa), gelo ❄️ (Picos, congela) e a carne pulsante 🩸 (Coração, queima).</sub>
 
 **Fauna** (`src/data/fauna.ts`, ADR 0098/0103) — bichos que vagueiam e fogem
 (sem IA de perseguição): Clareira cervo+lebre · Pântano sapo+libélula · Bosque
