@@ -223,22 +223,27 @@ que alimenta os buffs de comida.
 
 | Ingrediente | Ícone | Fonte | Onde |
 |---|---|---|---|
-| Carne Crua | 🥩 | drop | qualquer inimigo |
-| Sebo | 🧈 | drop | qualquer inimigo |
-| Ovo Selvagem | 🥚 | drop | qualquer inimigo |
-| Erva Silvestre | 🌿 | forage | Clareira |
+| Carne Crua | 🥩 | drop / **caça** | inimigos e fauna (cervo, lebre, cabra, sapo) |
+| Sebo | 🧈 | drop / **caça** | inimigos e fauna grande (cervo, cabra) |
+| Ovo Selvagem | 🥚 | drop / **caça** | inimigos e aves (corvo, coruja) |
+| Erva Silvestre | 🌿 | forage | Clareira, Picos |
 | Cenoura Selvagem | 🥕 | forage | Clareira |
-| Cogumelo | 🍄 | forage | Clareira, Pântano |
+| Cogumelo | 🍄 | forage | Clareira, Pântano, Bosque Cinza |
 | Peixe | 🐟 | forage | Pântano |
 | Raiz de Junco | 🥬 | forage | Pântano |
 | Baga Gelada | 🫐 | forage | Picos |
 | Pimenta das Cinzas | 🌶️ | forage | Bosque Cinza |
 | Mel Silvestre | 🍯 | forage | Clareira, Pântano |
 
-**Forrageamento** (`ForageManager`): nós de coleta espalhados pelo bioma;
-interaja (**E/✋**) para colher o ingrediente da região. Ao forragear há
-**35% de chance** de também ganhar a **semente** correspondente (ADR 0144), o que
-liga forrageio → plantação (§8).
+**Forrageamento** (`ForageManager`): nós de coleta espalhados por bioma; interaja
+(**E/✋**) para colher o ingrediente da região. **Todo bioma jogável tem ≥2
+forrageáveis** (ADR 0158 — antes Bosque Cinza e Picos ficavam sem coleta por um
+erro de chave de bioma). Ao forragear há **35% de chance** de também ganhar a
+**semente** correspondente (ADR 0144), ligando forrageio → plantação (§8).
+
+**Caça** (ADR 0157): a **carne 🥩, o sebo 🧈 e o ovo 🥚** vêm tanto de matar
+inimigos quanto de **caçar a fauna** (§13) — cada bioma tem seus animais
+abatíveis. Assim flora (forrageio/plantação) e fauna (caça) alimentam a cozinha.
 
 **Cozinha** (`recipes.ts`). Interaja com o **caldeirão** da taverna/salão para
 abrir a UI de culinária. Cada receita consome ingredientes e produz uma
@@ -410,9 +415,13 @@ Inimigos também dropam ingredientes de **culinária** (§7).
 periódica fora das vilas: Pântano **lodo/root** · Bosque **cinza/atordoa** ·
 Picos **gelo/congela** · Coração **chão/queima**. Clareira é segura.
 
-**Fauna** (`src/data/fauna.ts`, ADR 0098/0103) — bichos inofensivos que
-vagueiam e fogem: Clareira cervo+lebre · Pântano sapo+libélula · Bosque corvo ·
-Picos cabra+coruja · Coração nenhum. Silhueta própria por espécie.
+**Fauna** (`src/data/fauna.ts`, ADR 0098/0103) — bichos que vagueiam e fogem
+(sem IA de perseguição): Clareira cervo+lebre · Pântano sapo+libélula · Bosque
+corvo+lebre-cinza · Picos cabra+coruja · Coração nenhum. Silhueta própria por
+espécie. **Caçáveis** (ADR 0157): a maioria tem vida e, ao ser abatida, solta
+ingredientes da espécie — cervo/cabra → carne+sebo, lebre/sapo → carne,
+corvo/coruja → ovo. Só a libélula segue de enfeite. É a fonte de carne vinda dos
+animais (§7).
 
 ## 14. Chefes & masmorras
 **Chefes** (`src/data/enemies.ts`, ADR 0101) — fases por % de vida, slam em
@@ -498,6 +507,10 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
 - ~~**Ingredientes órfãos / poucas comidas**~~ ✅ **Resolvido (ADR 0156)**: 9
   receitas em 3 linhas de buff × 3 tiers; todo ingrediente serve ≥2 pratos
   (teste); comidas melhores exigem mais nível de Craft.
+- ~~**Animais não caçáveis / carne só de monstro**~~ ✅ **Resolvido (ADR 0157)**:
+  fauna caçável solta ingredientes por espécie; cada bioma tem seus animais.
+- ~~**Forrageamento quebrado em 2 biomas**~~ ✅ **Resolvido (ADR 0158)**: chaves
+  de bioma corrigidas + ≥2 forrageáveis por bioma jogável (teste).
 - **Rua explícita**: os aldeões já desviam de obstáculos, mas ainda **não seguem
   as células de rua** de propósito (follow-up do ADR 0154).
 - **Tuning numérico**: preços/curva/drops aguardam o playtest (Gate F).

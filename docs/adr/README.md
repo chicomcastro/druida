@@ -160,4 +160,6 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0154](0154-ia-aldeoes-steering.md) | IA dos aldeões: steering (desvio + separação) (E23.5) | Aceito |
 | [0155](0155-caminhos-nao-cortam-casas.md) | Caminhos não cortam casas: roteador + validador (E24.1) | Aceito |
 | [0156](0156-culinaria-sem-orfaos-tiers.md) | Culinária: ingredientes sem órfãos + comidas em tiers (E24.2) | Aceito |
+| [0157](0157-fauna-cacavel.md) | Fauna caçável: animais soltam ingredientes (E25.1) | Aceito |
+| [0158](0158-forrageamento-chaves-bioma.md) | Forrageamento: chaves de bioma corretas + variedade (E25.2) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
