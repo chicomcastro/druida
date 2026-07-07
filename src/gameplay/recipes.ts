@@ -1,10 +1,15 @@
-import { consumeIngredients, hasIngredients } from './ingredients.js';
+import { consumeIngredients, hasIngredients, INGREDIENTS } from './ingredients.js';
 import { FOOD_BASES, generateFood } from './consumables.js';
 
 /**
- * Receitas de cozinha (E19). Cada receita transforma ingredientes da despensa
- * em uma **comida** (consumível de buff, ADR 0134). Cozinhar dá XP de Craft; o
- * nível de Craft destrava receitas melhores (E19.2 traz a bancada/UI).
+ * Receitas de cozinha (E19, ampliadas no E24). Cada receita transforma
+ * ingredientes da despensa em uma **comida** (consumível de buff, ADR 0134).
+ * Cozinhar dá XP de Craft; o nível de Craft destrava receitas melhores.
+ *
+ * Regra de design (ADR 0156): TODO ingrediente entra em ≥2 receitas (nada de
+ * ingrediente órfão) e cada linha de buff tem três tiers — os pratos mais
+ * fortes usam ingredientes mais raros e exigem mais nível de Craft. O teste
+ * `cooking.test` trava regressões via `ingredientCoverage()`.
  */
 
 export interface Recipe {
@@ -21,9 +26,18 @@ export interface Recipe {
 }
 
 export const RECIPES: Recipe[] = [
+  // DANO (assados) — carne + pimenta/sebo/cogumelo. Tier sobe: mais forte, mais raro.
   { id: 'r_jerky', name: 'Carne Seca', food: 'jerky', inputs: { carne_crua: 2, pimenta: 1 }, level: 1, xp: 10 },
+  { id: 'r_skewer', name: 'Espetinho da Caça', food: 'skewer', inputs: { carne_crua: 2, cogumelo: 1, sebo: 1 }, level: 2, xp: 18 },
+  { id: 'r_roast', name: 'Assado das Brasas', food: 'roast', inputs: { carne_crua: 2, pimenta: 2, sebo: 1 }, level: 3, xp: 30 },
+  // VELOCIDADE (leves) — erva/mel/peixe/ovo/junco/baga.
   { id: 'r_herbtea', name: 'Chá de Ervas', food: 'herbtea', inputs: { erva: 2, mel: 1 }, level: 1, xp: 10 },
+  { id: 'r_fishpie', name: 'Torta de Peixe', food: 'fishpie', inputs: { peixe: 2, ovo: 1, junco: 1 }, level: 2, xp: 18 },
+  { id: 'r_icejam', name: 'Geleia Gélida', food: 'icejam', inputs: { baga_gelada: 2, mel: 2, ovo: 1 }, level: 3, xp: 30 },
+  // DEFESA (sopas/caldos) — cenoura/junco/cogumelo/peixe/baga/erva/ovo.
+  { id: 'r_soup', name: 'Sopa de Raízes', food: 'soup', inputs: { cenoura: 2, junco: 1 }, level: 1, xp: 10 },
   { id: 'r_stew', name: 'Ensopado Quente', food: 'stew', inputs: { cenoura: 1, cogumelo: 1, carne_crua: 1 }, level: 2, xp: 16 },
+  { id: 'r_broth', name: 'Caldo do Inverno', food: 'broth', inputs: { peixe: 1, baga_gelada: 1, ovo: 1, erva: 1 }, level: 3, xp: 30 },
 ];
 
 const RECIPE_INDEX: Record<string, Recipe> = {};
@@ -36,6 +50,19 @@ export function recipeById(id: string): Recipe | undefined {
 /** Toda receita produz uma comida existente (guarda de sanidade/teste). */
 export function recipesAreValid(): boolean {
   return RECIPES.every((r) => !!FOOD_BASES[r.food]);
+}
+
+/**
+ * Quantas receitas usam cada ingrediente (ADR 0156). Base do teste que garante
+ * que nenhum ingrediente é órfão e que todo ingrediente serve ≥2 pratos.
+ */
+export function ingredientCoverage(): Record<string, number> {
+  const cov: Record<string, number> = {};
+  for (const id of Object.keys(INGREDIENTS)) cov[id] = 0;
+  for (const r of RECIPES) {
+    for (const id of Object.keys(r.inputs)) cov[id] = (cov[id] ?? 0) + 1;
+  }
+  return cov;
 }
 
 // --- Nível de Craft --------------------------------------------------------

@@ -14,11 +14,26 @@ export const CONSUMABLE_BASES: Record<string, { name: string; effect: string; ma
   sap_s: { name: 'Orvalho Concentrado', effect: 'sap', magnitude: 45, color: 0x6affc8 },
 };
 
-/** Comidas (E18.3): buff temporário. `pct` é a intensidade; `taken` reduz dano. */
+/**
+ * Comidas (E18.3, E24): buff temporário. `pct` é a intensidade; `taken` reduz
+ * dano. Três linhas de buff (dano/velocidade/defesa) em três tiers cada — as
+ * comidas mais fortes usam ingredientes mais raros e exigem mais nível de Craft
+ * (ver RECIPES em recipes.ts). Como o buff é agrupado por `kind` (`food:dmg`…),
+ * uma comida melhor simplesmente sobrescreve a mais fraca do mesmo tipo.
+ */
 export const FOOD_BASES: Record<string, { name: string; kind: 'dmg' | 'speed' | 'taken'; pct: number; dur: number; color: number; icon: string }> = {
+  // Linha do DANO (assados/carnes) 🍖
   jerky: { name: 'Carne Seca', kind: 'dmg', pct: 0.20, dur: 45, color: 0xd08a4a, icon: '🍖' },
+  skewer: { name: 'Espetinho da Caça', kind: 'dmg', pct: 0.26, dur: 50, color: 0xc8703a, icon: '🍢' },
+  roast: { name: 'Assado das Brasas', kind: 'dmg', pct: 0.34, dur: 60, color: 0xb8532a, icon: '🍗' },
+  // Linha da VELOCIDADE (chás/tortas leves) 🍵
   herbtea: { name: 'Chá de Ervas', kind: 'speed', pct: 0.20, dur: 40, color: 0x8fe0a0, icon: '🍵' },
-  stew: { name: 'Ensopado Quente', kind: 'taken', pct: 0.20, dur: 40, color: 0xffb84a, icon: '🍲' },
+  fishpie: { name: 'Torta de Peixe', kind: 'speed', pct: 0.26, dur: 48, color: 0x7ac8b0, icon: '🥧' },
+  icejam: { name: 'Geleia Gélida', kind: 'speed', pct: 0.32, dur: 56, color: 0x8ab8e0, icon: '🧊' },
+  // Linha da DEFESA (sopas/caldos) 🍲
+  soup: { name: 'Sopa de Raízes', kind: 'taken', pct: 0.15, dur: 38, color: 0xd8b46a, icon: '🥣' },
+  stew: { name: 'Ensopado Quente', kind: 'taken', pct: 0.20, dur: 42, color: 0xffb84a, icon: '🍲' },
+  broth: { name: 'Caldo do Inverno', kind: 'taken', pct: 0.28, dur: 60, color: 0xe08a4a, icon: '🍜' },
 };
 
 let _cid = 90000;

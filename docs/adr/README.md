@@ -158,4 +158,6 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0152](0152-arma-na-mao-nao-entre-pernas.md) | Arma empunhada na mão (não entre as pernas) (E23.1) | Aceito |
 | [0153](0153-ux-mobile-zoom-modais-botoes.md) | UX mobile: anti-zoom, modais e botões de toque (E23.2–E23.4) | Aceito |
 | [0154](0154-ia-aldeoes-steering.md) | IA dos aldeões: steering (desvio + separação) (E23.5) | Aceito |
+| [0155](0155-caminhos-nao-cortam-casas.md) | Caminhos não cortam casas: roteador + validador (E24.1) | Aceito |
+| [0156](0156-culinaria-sem-orfaos-tiers.md) | Culinária: ingredientes sem órfãos + comidas em tiers (E24.2) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

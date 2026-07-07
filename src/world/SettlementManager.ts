@@ -68,6 +68,7 @@ export class SettlementManager {
   _waterRef: any; // material da lagoa do Vau (pulsa no animate)
   footprints: Record<string, any[]>; // pegadas por vila (validador ADR 0085)
   streetCells: Set<string>; // células de rua em coord de mundo (validador ADR 0128)
+  pathCells: Record<string, [number, number][]>; // células de rua por vila em coord local (validador ADR 0155)
   lanternPts: { x: number; z: number }[]; // postes em coord de mundo (validador ADR 0128)
 
   constructor(game) {
@@ -81,6 +82,7 @@ export class SettlementManager {
     this._villagers = [];
     this.footprints = {};
     this.streetCells = new Set();
+    this.pathCells = {}; // células de rua por vila em coord LOCAL (validador ADR 0155)
     this.lanternPts = [];
     this.list = SETTLEMENTS.map((def) => ({ ...def, visited: false }));
     const builders = {
@@ -413,10 +415,13 @@ export class SettlementManager {
     }
     if (!cells.size) return;
     // Registra as células de rua em mundo (validador ADR 0128: poste não pode
-    // cair sobre a laje de um caminho).
+    // cair sobre a laje de um caminho) e em local (validador ADR 0155: caminho
+    // não pode atravessar a pegada de uma casa).
+    const local = (this.pathCells[w.sid] ??= []);
     for (const [x, z] of cells.values()) {
       const wc = w.world(x, z);
       this.streetCells.add(Math.round(wc.x) + ':' + Math.round(wc.z));
+      local.push([x, z]);
     }
     const inst = new THREE.InstancedMesh(
       new THREE.BoxGeometry(0.96, 0.06, 0.96),
@@ -436,6 +441,41 @@ export class SettlementManager {
       i++;
     }
     w.add(inst);
+  }
+
+  /**
+   * Roteia o espigão de uma porta (dx,dz) até a via em anel (±RING) SEM cortar
+   * outra casa (ADR 0155). Testa alvos no anel (ponto radial + cantos + meios de
+   * aresta) nas duas ordens de "L" e escolhe o traçado com ZERO travessias de
+   * casa (desempate por comprimento). Corrige o furo do playtest em que a casa
+   * externa mandava o espigão reto por cima da casa interna da mesma fileira.
+   */
+  _spurSegs(dx, dz, ownLabel, sid, RING) {
+    dx = Math.round(dx); dz = Math.round(dz);
+    const houses = (this.footprints[sid] ?? []).filter(
+      (f) => f.label !== ownLabel && /^(casa|cabana|palafita|tenda|anexo|serraria|torre)/.test(f.label));
+    const inHouse = (x, z) => houses.some((f) => x > f.x0 + 0.5 && x < f.x1 - 0.5 && z > f.z0 + 0.5 && z < f.z1 - 0.5);
+    const rate = (segs) => {
+      let x = Math.round(segs[0][0]), z = Math.round(segs[0][1]), cross = 0, len = 0;
+      for (const [, , x1, z1] of segs) {
+        while (x !== Math.round(x1)) { x += Math.sign(x1 - x); len++; if (inHouse(x, z)) cross++; }
+        while (z !== Math.round(z1)) { z += Math.sign(z1 - z); len++; if (inHouse(x, z)) cross++; }
+      }
+      return { cross, len };
+    };
+    const rx = Math.abs(dx) > RING ? Math.sign(dx) * RING : dx;
+    const rz = Math.abs(dz) > RING ? Math.sign(dz) * RING : dz;
+    const targets = [[rx, rz], [RING, RING], [RING, -RING], [-RING, RING], [-RING, -RING], [rx, RING], [rx, -RING], [RING, rz], [-RING, rz]];
+    let best: number[][] = [[dx, dz, rx, dz], [rx, dz, rx, rz]], bestScore = { cross: Infinity, len: Infinity };
+    for (const [tx, tz] of targets) {
+      for (const segs of [[[dx, dz, tx, dz], [tx, dz, tx, tz]], [[dx, dz, dx, tz], [dx, tz, tx, tz]]]) {
+        const s = rate(segs);
+        if (s.cross < bestScore.cross || (s.cross === bestScore.cross && s.len < bestScore.len)) {
+          bestScore = s; best = segs;
+        }
+      }
+    }
+    return best;
   }
 
   /** Offset local -> mundo (rotação Y) p/ acoplar fumaça/props a uma casa girada. */
@@ -507,6 +547,31 @@ export class SettlementManager {
     for (const p of this.lanternPts) {
       const key = Math.round(p.x) + ':' + Math.round(p.z);
       if (this.streetCells.has(key)) bad.push({ x: p.x, z: p.z });
+    }
+    return bad;
+  }
+
+  /**
+   * Validador de caminhos (ADR 0155): nenhuma laje de rua pode atravessar a
+   * pegada de uma construção habitável (casa/cabana/palafita/tenda/anexo, mais
+   * serraria e torre). Um espigão de porta que corta a casa do vizinho — o furo
+   * relatado no playtest — deixa de passar despercebido. A soleira da porta fica
+   * na borda da pegada, então uma margem tira o falso-positivo do primeiro tile:
+   * só conta como "atravessa" se o CENTRO da laje entra na casa além da margem.
+   */
+  pathsThroughHouses(margin = 0.5) {
+    const isBuilding = (label: string) =>
+      /^(casa|cabana|palafita|tenda|anexo|serraria|torre)/.test(label ?? '');
+    const bad: { settlement: string; structure: string; x: number; z: number }[] = [];
+    for (const [sid, cells] of Object.entries(this.pathCells)) {
+      const fps = (this.footprints[sid] ?? []).filter((f) => isBuilding(f.label));
+      for (const [x, z] of cells) {
+        for (const f of fps) {
+          if (x > f.x0 + margin && x < f.x1 - margin && z > f.z0 + margin && z < f.z1 - margin) {
+            bad.push({ settlement: sid, structure: f.label, x, z });
+          }
+        }
+      }
     }
     return bad;
   }
@@ -721,11 +786,10 @@ export class SettlementManager {
       }
       const dpos = this._spun(hg.position.x, hg.position.z, ry, -0.7, (o.d ?? 4) / 2 + 0.8);
       this._houseDoor(w, dpos.x, dpos.z, HOUSE_THEMES[i] ?? 'home'); // porta entrável (ADR 0094)
-      // Espigão em L da porta até a via em anel (±RING), sem cruzar a árvore.
-      const dx = Math.round(dpos.x), dz = Math.round(dpos.z);
-      const rx = Math.abs(dx) > RING ? Math.sign(dx) * RING : dx;
-      const rz = Math.abs(dz) > RING ? Math.sign(dz) * RING : dz;
-      spurs.push([dx, dz, rx, dz], [rx, dz, rx, rz]);
+      // Espigão da porta até a via em anel (±RING) roteado para NÃO cortar outra
+      // casa (ADR 0155) — a casa externa não manda mais o caminho por cima da
+      // casa interna. As casas já registraram suas pegadas acima no forEach.
+      spurs.push(...this._spurSegs(dpos.x, dpos.z, `casa ${i}`, w.sid, RING));
       if (i % 2 === 0) {
         const c = this._spun(hg.position.x, hg.position.z, ry, (o.w ?? 6) / 2 - 0.55, -1.0);
         this._smokeAt(w, c.x, 0.35 + (o.h ?? 3.0) + 2.3, c.z); // topo da chaminé
@@ -1260,7 +1324,10 @@ export class SettlementManager {
     this._streets(w, [
       [-4, 3, -2, 3], [-2, 3, -2, 0], [3, -3, 2, -3], [2, -3, 2, 0],
       [-3, -5, -3, -2], [5, 8, 2, 8], [2, 8, 2, 2],
-      [-9, -9, -3, -9], [-3, -9, -3, -5],
+      // A tenda -3,-8 tem a porta ao NORTE (z≈-5); ligamos a tenda -9,-12 ao
+      // centro contornando a oeste (x=-9) e entrando pela FRENTE (z=-5), sem
+      // furar a tenda -3,-8 pelas costas (ADR 0155).
+      [-9, -9, -9, -5], [-9, -5, -3, -5],
     ], 0x9aa8b4);
   }
 
@@ -1445,6 +1512,7 @@ export class SettlementManager {
 /** Envelope de conveniência para os builders: add local + collider em mundo. */
 function wrap(group, s, mgr, rng) {
   return {
+    sid: s.id,
     add: (...objs) => group.add(...objs),
     collider: (lx, lz, r) => mgr._collider(s.x + lx, s.z + lz, r),
     world: (lx, lz) => ({ x: s.x + lx, z: s.z + lz }),

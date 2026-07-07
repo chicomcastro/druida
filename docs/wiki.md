@@ -224,8 +224,8 @@ que alimenta os buffs de comida.
 | Ingrediente | Ícone | Fonte | Onde |
 |---|---|---|---|
 | Carne Crua | 🥩 | drop | qualquer inimigo |
-| Couro Curtido | 🟫 | drop | qualquer inimigo |
-| Pena | 🪶 | drop | qualquer inimigo |
+| Sebo | 🧈 | drop | qualquer inimigo |
+| Ovo Selvagem | 🥚 | drop | qualquer inimigo |
 | Erva Silvestre | 🌿 | forage | Clareira |
 | Cenoura Selvagem | 🥕 | forage | Clareira |
 | Cogumelo | 🍄 | forage | Clareira, Pântano |
@@ -245,15 +245,27 @@ abrir a UI de culinária. Cada receita consome ingredientes e produz uma
 **comida** (consumível de buff), dando **XP de Craft**; o **nível de Craft**
 destrava receitas melhores.
 
-| Receita | Resultado | Ingredientes | Nível | Efeito da comida |
-|---|---|---|---|---|
-| Carne Seca | 🍖 | 2× carne crua + 1× pimenta | 1 | **+20% de dano** por 45s |
-| Chá de Ervas | 🍵 | 2× erva + 1× mel | 1 | **+20% de velocidade** por 40s |
-| Ensopado Quente | 🍲 | 1× cenoura + 1× cogumelo + 1× carne crua | 2 | **−20% de dano sofrido** por 40s |
+Há **três linhas de buff** (dano / velocidade / defesa), cada uma em **três
+tiers** — quanto mais forte a comida, mais raros os ingredientes e maior o nível
+de Craft exigido (ADR 0156). O buff é por tipo (`food:dmg`…), então uma comida
+melhor **sobrescreve** a mais fraca do mesmo tipo.
 
-A curva de Craft é suave (0, 40, 120, 240… XP por nível). As comidas vão para a
-mochila e podem ser postas na hotbar (§12); o buff é de **grupo** e escala leve
-com o nível da comida.
+| Linha | Receita | Resultado | Ingredientes | Nível | Efeito |
+|---|---|---|---|---|---|
+| Dano | Carne Seca | 🍖 | 2× carne crua + 1× pimenta | 1 | **+20% dano** / 45s |
+| Dano | Espetinho da Caça | 🍢 | 2× carne crua + 1× cogumelo + 1× sebo | 2 | **+26% dano** / 50s |
+| Dano | Assado das Brasas | 🍗 | 2× carne crua + 2× pimenta + 1× sebo | 3 | **+34% dano** / 60s |
+| Veloc. | Chá de Ervas | 🍵 | 2× erva + 1× mel | 1 | **+20% veloc.** / 40s |
+| Veloc. | Torta de Peixe | 🥧 | 2× peixe + 1× ovo + 1× junco | 2 | **+26% veloc.** / 48s |
+| Veloc. | Geleia Gélida | 🧊 | 2× baga gelada + 2× mel + 1× ovo | 3 | **+32% veloc.** / 56s |
+| Defesa | Sopa de Raízes | 🥣 | 2× cenoura + 1× junco | 1 | **−15% dano sofrido** / 38s |
+| Defesa | Ensopado Quente | 🍲 | 1× cenoura + 1× cogumelo + 1× carne crua | 2 | **−20% dano sofrido** / 42s |
+| Defesa | Caldo do Inverno | 🍜 | 1× peixe + 1× baga gelada + 1× ovo + 1× erva | 3 | **−28% dano sofrido** / 60s |
+
+**Todo ingrediente serve a ≥2 pratos** — não há ingrediente órfão (garantido por
+teste, ADR 0156). A curva de Craft é suave (0, 40, 120, 240… XP por nível): os
+pratos tier 3 pedem **Craft nível 3** (≈120 XP de cozinha). As comidas vão para a
+mochila e podem ser postas na hotbar (§12); o buff é de **grupo**.
 
 ## 8. Plantação
 Fonte: `src/gameplay/farming.ts` · `src/world/FarmManager.ts` (ADR 0141–0144).
@@ -480,6 +492,12 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
   toque para mochila/talentos/mapa, e bloqueio de zoom por gesto/duplo-toque.
 - **Modelos**: formas e fauna são serviçáveis mas sem animação própria além do
   gait; interiores mobiliados mas com pouca variação por vila.
+- ~~**Caminho de saída de casa cortando a casa do vizinho**~~ ✅ **Resolvido
+  (ADR 0155)**: o espigão de porta agora é roteado para não atravessar nenhuma
+  construção, com **teste** (`streetsClear.test.ts`) que trava o furo para sempre.
+- ~~**Ingredientes órfãos / poucas comidas**~~ ✅ **Resolvido (ADR 0156)**: 9
+  receitas em 3 linhas de buff × 3 tiers; todo ingrediente serve ≥2 pratos
+  (teste); comidas melhores exigem mais nível de Craft.
 - **Rua explícita**: os aldeões já desviam de obstáculos, mas ainda **não seguem
   as células de rua** de propósito (follow-up do ADR 0154).
 - **Tuning numérico**: preços/curva/drops aguardam o playtest (Gate F).

@@ -18,9 +18,12 @@ export interface IngredientDef {
 }
 
 export const INGREDIENTS: Record<string, IngredientDef> = {
+  // Drops de inimigos: as três partes comestíveis das feras corrompidas. Antes
+  // couro/pena eram "órfãos" (não entravam em receita nenhuma); viraram sebo/ovo
+  // — ingredientes de cozinha de verdade, usados em ≥2 pratos (ADR 0156).
   carne_crua: { id: 'carne_crua', name: 'Carne Crua', icon: '🥩', biomes: [], source: 'drop' },
-  couro: { id: 'couro', name: 'Couro Curtido', icon: '🟫', biomes: [], source: 'drop' },
-  pena: { id: 'pena', name: 'Pena', icon: '🪶', biomes: [], source: 'drop' },
+  sebo: { id: 'sebo', name: 'Sebo', icon: '🧈', biomes: [], source: 'drop' },
+  ovo: { id: 'ovo', name: 'Ovo Selvagem', icon: '🥚', biomes: [], source: 'drop' },
   erva: { id: 'erva', name: 'Erva Silvestre', icon: '🌿', biomes: ['clareira'], source: 'forage' },
   cenoura: { id: 'cenoura', name: 'Cenoura Selvagem', icon: '🥕', biomes: ['clareira'], source: 'forage' },
   cogumelo: { id: 'cogumelo', name: 'Cogumelo', icon: '🍄', biomes: ['clareira', 'pantano'], source: 'forage' },
@@ -41,9 +44,18 @@ export function forageOf(biome: string): IngredientDef[] {
 
 // --- Despensa --------------------------------------------------------------
 
+/** Ingredientes renomeados (ADR 0156): saves antigos migram sem perder itens. */
+const RENAMED: Record<string, string> = { couro: 'sebo', pena: 'ovo' };
+
 export function ensurePouch(game): Record<string, number> {
   const p = game.progress || (game.progress = {});
   p.ingredients = p.ingredients ?? {};
+  for (const [old, neu] of Object.entries(RENAMED)) {
+    if (p.ingredients[old] != null) {
+      p.ingredients[neu] = (p.ingredients[neu] ?? 0) + p.ingredients[old];
+      delete p.ingredients[old];
+    }
+  }
   return p.ingredients;
 }
 
