@@ -5,7 +5,7 @@ import { FORMS } from '../gameplay/forms.js';
 import { castAbility } from '../gameplay/abilities/index.js';
 import { evalCombo } from '../gameplay/combo.js';
 import { COMBO } from '../gameplay/combo.js';
-import { skillBonus, gainProficiency } from '../gameplay/skills.js';
+import { skillBonus } from '../gameplay/skills.js';
 import { hotbarEntry } from '../gameplay/hotbar.js';
 import { useConsumableNamed } from '../gameplay/consumables.js';
 import { buffMul } from '../gameplay/buffs.js';
@@ -101,9 +101,8 @@ export function playerControlSystem(game, dt) {
       const spd = skillBonus(game, id, 'atkSpeed') / 100;
       const total = formDef.attackCooldown * (1 - Math.min(0.4, spd));
       const widen = skillBonus(game, id, 'combo') / 100;
-      const eq = world.get(id, C.Equipment);
-      const track = form.current !== 'humanoid' ? form.current : eq?.weapon?.family;
-      if (track) gainProficiency(game, track);
+      // Proficiência acumula ao ACERTAR (ver gameEvents 'damage'), não a cada
+      // golpe no ar (bug do playtest, ADR 0162): antes bastava atacar o vazio.
       if (pc.attackTimer <= 0) {
         // Primeiro golpe da sequência: abre a janela de combo.
         pc.attackTimer = total; pc.castTotal = total;

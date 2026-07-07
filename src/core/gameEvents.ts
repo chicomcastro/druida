@@ -5,6 +5,7 @@ import { createLootOrb } from '../entities/factories.js';
 import { rollDrops } from '../gameplay/loot.js';
 import { grantXp } from '../gameplay/progression.js';
 import { DROP_INGREDIENTS } from '../gameplay/ingredients.js';
+import { gainProficiency } from '../gameplay/skills.js';
 
 /**
  * Cabeamento dos handlers do event bus do jogo (antes em `Game._bindEvents`).
@@ -64,6 +65,16 @@ export function bindGameEvents(game) {
     if (e.dot) return;
     if (game.world.has(e.id, C.PlayerControlled) && e.amount >= 8) {
       game.camera.addShake(Math.min(0.5, e.amount / 45));
+    }
+    // Proficiência ao ACERTAR (ADR 0162): só quando um jogador atinge um alvo
+    // que não é jogador — golpe no ar não conta mais. Trilha = forma ativa ou
+    // família da arma equipada.
+    const atk = e.attackerId;
+    if (atk != null && game.world.has(atk, C.PlayerControlled) && !game.world.has(e.id, C.PlayerControlled)) {
+      const form = game.world.get(atk, C.Form);
+      const eq = game.world.get(atk, C.Equipment);
+      const track = form && form.current !== 'humanoid' ? form.current : eq?.weapon?.family;
+      if (track) gainProficiency(game, track);
     }
   });
   game.on('playerDowned', () => game.camera.addShake(0.6));

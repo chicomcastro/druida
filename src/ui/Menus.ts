@@ -262,7 +262,14 @@ export class Menus {
       <button class="btn" id="p-export" style="text-align:center">📋 Copiar dados de jogo</button>
       <button class="btn" id="p-skills" style="text-align:center">🌟 Talentos (K)</button>
       <button class="btn" id="p-controls" style="text-align:center">🎮 Controles</button>
+      <button class="btn" id="p-menu" style="text-align:center;border-color:rgba(255,120,120,.4)">🏠 Menu inicial</button>
     </div>`;
+    this.pause.querySelector('#p-menu').onclick = async (ev) => {
+      // Salva antes de voltar ao menu inicial (recarrega para o estado limpo).
+      ev.target.textContent = 'Salvando…';
+      try { await saveToStorage(this.game); } catch { /* segue mesmo assim */ }
+      location.reload();
+    };
     this.pause.querySelector('#p-skills').onclick = () => { this.togglePause(); this.toggleSkills(); };
     this.pause.querySelector('#p-resume').onclick = () => this.togglePause();
     this.pause.querySelector('#p-save').onclick = async (ev) => {

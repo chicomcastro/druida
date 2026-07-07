@@ -165,4 +165,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0159](0159-wiki-ilustrada-por-entidade.md) | Wiki ilustrada por entidade + fauna na vitrine (E26) | Aceito |
 | [0160](0160-wiki-ilustrada-lote-2.md) | Wiki ilustrada, lote 2: biomas, interiores, armas & skills (E27) | Aceito |
 | [0161](0161-wiki-hazards-ilustrados.md) | Hazards ilustrados: wiki 100% por entidade (E28) | Aceito |
+| [0162](0162-fixes-playtest-formas-interior-proficiencia.md) | Correções do playtest: forma inicial, interior, proficiência, menu (E29) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
