@@ -32,7 +32,7 @@ export const FAUNA_BY_BIOME: Record<string, FaunaDef[]> = {
   ],
   bosque_cinza: [
     { id: 'corvo', name: 'Corvo', color: 0x2a2a30, accent: 0x6a6a78, size: 0.5, speed: 2.8, flee: 8, hp: 6, drops: { ovo: 1 } },
-    { id: 'lebre', name: 'Lebre-cinza', color: 0x8a8478, accent: 0xd0cabc, size: 0.55, speed: 2.6, flee: 7, hop: true, hp: 6, drops: { carne_crua: 1 } },
+    { id: 'lebre_cinza', name: 'Lebre-cinza', color: 0x8a8478, accent: 0xd0cabc, size: 0.55, speed: 2.6, flee: 7, hop: true, hp: 6, drops: { carne_crua: 1 } },
   ],
   picos: [
     { id: 'cabra', name: 'Cabra-das-rochas', color: 0xd8d0c0, accent: 0x8a7a5a, size: 0.9, speed: 2.0, flee: 8, hp: 14, drops: { carne_crua: 2, sebo: 1 } },

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { getModel } from './modelLoader.js';
 import { buildVoxelModel } from './voxelModels.js';
+import { buildFaunaModel, FAUNA_DEFS } from './faunaModel.js';
 
 /**
  * Meshes dos personagens/inimigos. Prioridade: (1) modelo .glb carregado, se
@@ -13,6 +14,11 @@ export function buildMesh(kind) {
   if (model) {
     model.userData.kind = kind;
     return model;
+  }
+  if (FAUNA_DEFS[kind]) { // fauna (cervo/lebre/…): mesmo builder do jogo e da vitrine
+    const f = buildFaunaModel(FAUNA_DEFS[kind]);
+    f.userData.kind = kind;
+    return f;
   }
   const voxel = buildVoxelModel(kind) ?? buildVoxelModel('rotboar'); // data-driven (com fallback)
   voxel.userData.kind = kind;

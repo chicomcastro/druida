@@ -511,6 +511,7 @@ export const SHOWCASE_GROUPS: Array<{ label: string; kinds: string[] }> = [
   { label: 'Inimigos', kinds: ['rotboar', 'shadecrow', 'fungling', 'husk', 'shaman', 'bogbrute', 'ashwraith', 'frostfang'] },
   { label: 'Chefes', kinds: ['rotlord', 'mirelord', 'frostreaver'] },
   { label: 'NPCs', kinds: ['guardian', 'merchant', 'villager', 'elder'] },
+  { label: 'Fauna', kinds: ['cervo', 'lebre', 'sapo', 'libelula', 'corvo', 'cabra', 'coruja', 'lebre_cinza'] },
   { label: 'Armas', kinds: ['sword', 'staff', 'scythe'] },
 ];
 

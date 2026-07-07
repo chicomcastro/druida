@@ -162,4 +162,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0156](0156-culinaria-sem-orfaos-tiers.md) | Culinária: ingredientes sem órfãos + comidas em tiers (E24.2) | Aceito |
 | [0157](0157-fauna-cacavel.md) | Fauna caçável: animais soltam ingredientes (E25.1) | Aceito |
 | [0158](0158-forrageamento-chaves-bioma.md) | Forrageamento: chaves de bioma corretas + variedade (E25.2) | Aceito |
+| [0159](0159-wiki-ilustrada-por-entidade.md) | Wiki ilustrada por entidade + fauna na vitrine (E26) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
