@@ -9,6 +9,7 @@ import { interiorTheme } from '../data/interiors.js';
 import { routineGoal, goalSpread, ROUTINE_ARCHETYPES } from '../gameplay/routine.js';
 import { assignHouseholds } from '../gameplay/households.js';
 import { shouldChat, pickChatLine, CHAT_RANGE, CHAT_COOLDOWN } from '../gameplay/chatter.js';
+import { separationForce, avoidForce, steer, pointInRects } from '../gameplay/steering.js';
 
 /** Ponto de reunião (salão comunal) de cada vila, em coord LOCAL — onde os
  *  moradores almoçam e se reúnem ao entardecer (E22). */
@@ -170,19 +171,38 @@ export class SettlementManager {
         const anchor = goal === 'hall' ? v.gather : goal === 'roam' ? v.center
           : goal === 'work' ? v.work : v.home; // home/sleep
         const spread = goalSpread(goal);
-        v.target = {
-          x: anchor.x + (Math.random() - 0.5) * spread,
-          z: anchor.z + (Math.random() - 0.5) * spread,
-        };
+        const cx = v.center?.x ?? 0, cz = v.center?.z ?? 0;
+        // Sorteia um alvo FORA de qualquer estrutura (não mira dentro da árvore/casa).
+        let tx = anchor.x, tz = anchor.z;
+        for (let t = 0; t < 6; t++) {
+          tx = anchor.x + (Math.random() - 0.5) * spread;
+          tz = anchor.z + (Math.random() - 0.5) * spread;
+          if (!pointInRects(tx - cx, tz - cz, v.fps ?? [], 0.6)) break; // local vs footprints
+        }
+        v.target = { x: tx, z: tz };
         // Dormir/casa: pausas longas (fica parado); reunião: pausas curtas (troca de lugar).
         v.wait = goal === 'sleep' ? 3 + Math.random() * 5 : goal === 'hall' ? 0.6 + Math.random() * 1.6 : 1.5 + Math.random() * 3.5;
         continue;
       }
+      // Rumo ao alvo + steering (E23.5): separação de vizinhos e desvio de
+      // estruturas — não se amontoam nem atravessam casas/árvore-mãe.
       const dx = v.target.x - tr.x, dz = v.target.z - tr.z;
-      const d = Math.hypot(dx, dz) || 1;
-      vel.vx = (dx / d) * 1.1;
-      vel.vz = (dz / d) * 1.1;
-      tr.rot = Math.atan2(dx, dz);
+      const dd = Math.hypot(dx, dz) || 1;
+      const desire = { x: dx / dd, z: dz / dd };
+      const neighbors: { x: number; z: number }[] = [];
+      for (const o of this._villagers) {
+        if (o === v) continue;
+        const otr = game.world.get(o.id, C.Transform);
+        if (otr && Math.abs(otr.x - tr.x) < 2 && Math.abs(otr.z - tr.z) < 2) neighbors.push({ x: otr.x, z: otr.z });
+      }
+      const sep = separationForce(tr.x, tr.z, neighbors, 1.5);
+      const cx = v.center?.x ?? 0, cz = v.center?.z ?? 0;
+      const avoid = avoidForce(tr.x - cx, tr.z - cz, v.fps ?? [], 2.0);
+      const dir = steer(desire, sep, avoid);
+      if (dir.x === 0 && dir.z === 0) { vel.vx = 0; vel.vz = 0; continue; }
+      vel.vx = dir.x * 1.1;
+      vel.vz = dir.z * 1.1;
+      tr.rot = Math.atan2(dir.x, dir.z);
     }
   }
 
@@ -540,6 +560,7 @@ export class SettlementManager {
       this._villagers.push({
         id, seed: hsh, archetype,
         gender: v.gender, role: v.role, householdId: v.householdId, // família (E22.2)
+        fps: this.footprints[s.id] ?? [], // estruturas da vila p/ desvio (E23.5, coord local)
         home,                            // casa / âncora de moradia (lar da família)
         work: { x: wx, z: wz },          // posto (trabalhador nasce no posto)
         center: { x: s.x, z: s.z },      // centro da vila (para perambular)

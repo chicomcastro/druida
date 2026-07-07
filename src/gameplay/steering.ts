@@ -1,0 +1,76 @@
+/**
+ * Direção "esperta" dos aldeões (E23.5). Antes eles andavam em linha reta até um
+ * alvo aleatório e se batiam entre si, nas casas e na Carvalho-Mãe. Aqui ficam as
+ * forças de steering (puras/testáveis) que o SettlementManager soma ao rumo:
+ *
+ *  - **separação**: afasta de vizinhos muito próximos (não se amontoam/empurram);
+ *  - **desvio**: empurra para longe de retângulos de estrutura (footprints) que o
+ *    aldeão esteja prestes a atravessar — casas, banca, árvore-mãe;
+ *  - **pointInRects**: rejeita alvos que caiam dentro de uma estrutura (não mirar
+ *    dentro da árvore/casa).
+ *
+ * Footprints usam coordenadas LOCAIS da vila (x0..x1,z0..z1); como o steering só
+ * devolve DIREÇÕES (sem rotação da vila), a mesma direção vale em mundo.
+ */
+
+export interface Rect { x0: number; x1: number; z0: number; z1: number }
+export interface Pt { x: number; z: number }
+
+/** Está o ponto dentro de algum retângulo (com margem)? */
+export function pointInRects(x: number, z: number, rects: Rect[], margin = 0): boolean {
+  for (const r of rects) {
+    if (x > r.x0 - margin && x < r.x1 + margin && z > r.z0 - margin && z < r.z1 + margin) return true;
+  }
+  return false;
+}
+
+/** Força de separação: soma de vetores para longe de vizinhos dentro do raio. */
+export function separationForce(x: number, z: number, neighbors: Pt[], radius = 1.5): Pt {
+  let sx = 0, sz = 0;
+  for (const n of neighbors) {
+    const dx = x - n.x, dz = z - n.z;
+    const d = Math.hypot(dx, dz);
+    if (d > 1e-4 && d < radius) {
+      const w = (radius - d) / radius; // mais forte quanto mais perto
+      sx += (dx / d) * w; sz += (dz / d) * w;
+    }
+  }
+  return { x: sx, z: sz };
+}
+
+/**
+ * Força de desvio de estruturas: para cada retângulo próximo, empurra o aldeão
+ * para longe do ponto mais próximo do retângulo (ou para fora, se já dentro).
+ */
+export function avoidForce(x: number, z: number, rects: Rect[], radius = 2.0): Pt {
+  let ax = 0, az = 0;
+  for (const r of rects) {
+    const cx = Math.max(r.x0, Math.min(x, r.x1));
+    const cz = Math.max(r.z0, Math.min(z, r.z1));
+    const dx = x - cx, dz = z - cz;
+    const d = Math.hypot(dx, dz);
+    if (d >= radius) continue;
+    if (d < 1e-3) {
+      // Dentro do retângulo: empurra pela saída mais curta.
+      const toL = x - r.x0, toR = r.x1 - x, toB = z - r.z0, toT = r.z1 - z;
+      const m = Math.min(toL, toR, toB, toT);
+      if (m === toL) ax -= 1; else if (m === toR) ax += 1; else if (m === toB) az -= 1; else az += 1;
+    } else {
+      const w = (radius - d) / radius;
+      ax += (dx / d) * w; az += (dz / d) * w;
+    }
+  }
+  return { x: ax, z: az };
+}
+
+/**
+ * Combina o rumo desejado com separação e desvio, devolvendo um vetor unitário
+ * (ou zero se nada empurra). Pesos: desvio manda mais que separação, que manda
+ * mais que o rumo — evita atravessar casas, depois vizinhos, senão segue o alvo.
+ */
+export function steer(desire: Pt, sep: Pt, avoid: Pt, wSep = 1.3, wAvoid = 1.8): Pt {
+  const x = desire.x + sep.x * wSep + avoid.x * wAvoid;
+  const z = desire.z + sep.z * wSep + avoid.z * wAvoid;
+  const d = Math.hypot(x, z);
+  return d > 1e-4 ? { x: x / d, z: z / d } : { x: 0, z: 0 };
+}
