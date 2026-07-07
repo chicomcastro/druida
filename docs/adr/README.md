@@ -168,4 +168,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0162](0162-fixes-playtest-formas-interior-proficiencia.md) | Correções do playtest: forma inicial, interior, proficiência, menu (E29) | Aceito |
 | [0163](0163-olhos-rua-explicita-deco-interior.md) | Olhos nas formas, rua explícita e decoração de interior por vila (E30) | Aceito |
 | [0164](0164-interiores-vivos-mobiliados.md) | Interiores vivos e mobiliados: móveis, banquete e moradores reais (E31) | Aceito |
+| [0165](0165-interior-integrado-moradores-reais.md) | Interior integrado à vila: moradores reais, rotina e vida (E32) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
