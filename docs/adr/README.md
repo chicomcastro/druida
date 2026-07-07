@@ -156,4 +156,6 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0150](0150-casas-familia-vilas-2-4.md) | Casa pra todo mundo: famílias nas vilas 2–4 (E22.4) | Aceito |
 | [0151](0151-aldeoes-conversam.md) | Aldeões conversam entre si (E22.5) | Aceito |
 | [0152](0152-arma-na-mao-nao-entre-pernas.md) | Arma empunhada na mão (não entre as pernas) (E23.1) | Aceito |
+| [0153](0153-ux-mobile-zoom-modais-botoes.md) | UX mobile: anti-zoom, modais e botões de toque (E23.2–E23.4) | Aceito |
+| [0154](0154-ia-aldeoes-steering.md) | IA dos aldeões: steering (desvio + separação) (E23.5) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
