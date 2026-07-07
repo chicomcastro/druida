@@ -154,4 +154,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0148](0148-familias-genero-lares.md) | Famílias, gênero e lares (E22.2) | Aceito |
 | [0149](0149-casas-familia-clareira.md) | Casas de família na Clareira (E22.3) | Aceito |
 | [0150](0150-casas-familia-vilas-2-4.md) | Casa pra todo mundo: famílias nas vilas 2–4 (E22.4) | Aceito |
+| [0151](0151-aldeoes-conversam.md) | Aldeões conversam entre si (E22.5) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
