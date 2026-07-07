@@ -74,8 +74,10 @@ const druid: VoxelModelSpec = {
       b([0.26, 0.6, 0.28], [0, -0.28, 0], C.leaf),
       b([0.3, 0.18, 0.32], [0, 0.04, 0], C.steel),
     ] },
-    // Espada na mão direita (parte própria, segue o braço).
-    { name: 'weapon', parent: 'armR', joint: [0, -0.5, 0.1], boxes: [
+    // Espada EMPUNHADA na mão direita (ADR 0152): a junta fica na mão (lado
+    // direito, à frente), não no centro — antes a lâmina pendia entre as pernas.
+    // A lâmina aponta pra cima; segue o braço na animação.
+    { name: 'weapon', parent: 'armR', joint: [0.52, 0.9, 0.2], boxes: [
       b([0.1, 0.12, 0.1], [0, 0, 0], C.belt),          // punho
       b([0.16, 0.12, 0.16], [0, 0.06, 0], C.gold),     // guarda
       b([0.14, 0.9, 0.14], [0, 0.6, 0], C.steel),      // lâmina
@@ -335,8 +337,9 @@ export function makeVillagerSpec({
     { name: 'legR', joint: [0.2, 0.55, 0], boxes: [b([0.28, 0.6, 0.32], [0, -0.3, 0], C.leather)] },
   ];
   if (elder) {
-    // Cajado na mão direita (segue o braço, como a arma do druida).
-    parts.push({ name: 'weapon', parent: 'armR', joint: [0, -0.5, 0.12], boxes: [
+    // Cajado EMPUNHADO na mão direita (ADR 0152): junta na mão (lado direito),
+    // não no centro — antes pendia entre as pernas.
+    parts.push({ name: 'weapon', parent: 'armR', joint: [0.5, 0.85, 0.15], boxes: [
       b([0.09, 1.5, 0.09], [0, 0.35, 0], C.belt),
       b([0.2, 0.2, 0.2], [0, 1.16, 0], glow),
     ] });
