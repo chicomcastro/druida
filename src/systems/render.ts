@@ -102,7 +102,7 @@ export function renderSyncSystem(game, alpha) {
         const ai = world.get(id, C.AI);
         if (ai?.swing) attack = Math.min(1, ai.swing / 0.25); // investida do inimigo
       }
-      animateBody(anim, adt, { moving: sp > 0.4, speed: sp, attack, react, gait: anim.userData.gait });
+      animateBody(anim, adt, { moving: sp > 0.4, speed: sp, attack, react, gait: anim.userData.gait, gesture: r.idleGesture ?? null, gestureSeed: id });
     }
   }
 }

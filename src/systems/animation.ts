@@ -15,6 +15,10 @@ export interface AnimState {
   /** Intensidade do recuo ao tomar dano em [0..1]; 0 = sem recuo. */
   react?: number;
   gait: Gait;
+  /** Gesto ocioso do interior (E32): comer/beber (mão à boca) ou servir (braço à frente). */
+  gesture?: 'eat' | 'drink' | 'serve' | null;
+  /** Semente de fase do gesto (id do ente) — desincroniza os aldeões à mesa. */
+  gestureSeed?: number;
 }
 
 export function animateBody(body: any, dt: number, st: AnimState): void {
@@ -91,6 +95,22 @@ export function animateBody(body: any, dt: number, st: AnimState): void {
   } else if (parts.weapon) {
     // Arma acompanha a passada com um leve atraso (peso na mão).
     parts.weapon.rotation.x = -Math.sin(ph - 0.6) * 0.08 * amp;
+  }
+
+  // --- Gesto ocioso do interior (E32): comer/beber/servir sem sair do lugar -
+  // Só quando parado e sem ataque/recuo — a mão vai à boca (comer/beber) ou o
+  // braço se estende à frente (servir), com fase própria pra não sincronizar.
+  if (st.gesture && a === 0 && r === 0 && walk < 0.2) {
+    if (ud._gph === undefined) ud._gph = (st.gestureSeed ?? 0) % 6.28;
+    ud._gph += dt * (st.gesture === 'serve' ? 2.0 : 1.4);
+    const g = 0.5 - 0.5 * Math.cos(ud._gph); // 0..1 suave
+    if (st.gesture === 'serve') {
+      if (parts.armR) parts.armR.rotation.x = -0.6 - 0.6 * g; // oferece o prato/concha
+      if (parts.armL) parts.armL.rotation.x = -0.2 * g;
+    } else {
+      if (parts.armR) parts.armR.rotation.x = -1.7 * g; // leva a mão à boca
+      headX = 0.3 * g;                                   // inclina a cabeça pro prato/caneca
+    }
   }
 
   // --- Recuo ao tomar dano (flinch) — domina ataque/idle -------------------

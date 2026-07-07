@@ -4,6 +4,7 @@ import { C } from '../src/core/ecs/components.js';
 import { SettlementManager } from '../src/world/SettlementManager.js';
 import { InteriorManager } from '../src/world/InteriorManager.js';
 import { interactionSystem } from '../src/systems/interaction.js';
+import { movementSystem } from '../src/systems/movement.js';
 import { rerollShop, shopCategory } from '../src/gameplay/economy.js';
 import { INTERIOR_THEMES, interiorTheme, TAVERN } from '../src/data/interiors.js';
 
@@ -274,7 +275,7 @@ describe('Interiores povoados e vivos (E31)', () => {
     expect(hall).toBeGreaterThan(shop);
   });
 
-  it('os fregueses refletem moradores reais da vila (nomes do elenco)', () => {
+  it('com vila, os ocupantes são MORADORES REAIS recolhidos (E32), não figurantes', () => {
     const g = makeGame();
     const sm = new SettlementManager(g);
     g.settlements = sm; // no jogo o Game registra; no teste, à mão
@@ -283,9 +284,63 @@ describe('Interiores povoados e vivos (E31)', () => {
     addPlayer(g, 0, cinza.x, cinza.z);
     g.groupCenter = { x: cinza.x, z: cinza.z };
     im.enter('hall');
-    const prompts = im.active.patrons.map((id: number) => g.world.get(id, C.Interactable).prompt);
-    const roster = cinza.villagers.map((v: any) => v.name);
-    expect(prompts.some((p: string) => roster.some((n: string) => p.includes(n)))).toBe(true);
+    expect(im.active.residents.length).toBeGreaterThan(0);
+    expect(im.active.patrons.length).toBe(0); // com vila, ninguém é figurante efêmero
+    for (const rec of im.active.residents) {
+      expect(rec.theme).toBe('lenhadores');    // morador da vila certa
+      expect(rec.indoor).toBe(true);           // marcado como dentro
+      expect(sm._villagers.includes(rec)).toBe(true); // é uma entidade real da vila
+    }
+  });
+
+  it('recolher um morador o tira da multidão externa e a saída o devolve (E32)', () => {
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    g.settlements = sm;
+    const cinza = sm.list.find((s: any) => s.theme === 'lenhadores');
+    const im = new InteriorManager(g);
+    addPlayer(g, 0, cinza.x, cinza.z);
+    g.groupCenter = { x: cinza.x, z: cinza.z };
+    im.enter('hall');
+    const rec = im.active.residents[0];
+    const out = { ...rec._out };
+    expect(rec.indoor).toBe(true);
+    // Enquanto dentro, o _wander do overworld o ignora (não anda lá fora).
+    const trBefore = { ...g.world.get(rec.id, C.Transform) };
+    sm._wander(0.1);
+    const trAfter = g.world.get(rec.id, C.Transform);
+    expect(trAfter.x).toBe(trBefore.x); expect(trAfter.z).toBe(trBefore.z);
+    // Sair devolve o morador à posição no mundo e limpa o estado.
+    im.exit();
+    expect(rec.indoor).toBe(false);
+    expect(g.world.get(rec.id, C.Transform).x).toBeCloseTo(out.x, 5);
+    expect(g.world.get(rec.id, C.Transform).z).toBeCloseTo(out.z, 5);
+  });
+
+  it('rodízio: comensais vão embora e chegam novos, sem quebrar (E32)', () => {
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    g.settlements = sm;
+    const cinza = sm.list.find((s: any) => s.theme === 'lenhadores');
+    const im = new InteriorManager(g);
+    addPlayer(g, 0, cinza.x, cinza.z);
+    g.groupCenter = { x: cinza.x, z: cinza.z };
+    im.enter('hall');
+    expect(im.active.residents.length).toBeGreaterThan(0);
+    // Roda a simulação (movimento + tique do interior) por ~40s: o rodízio
+    // manda gente à porta e chama novos. Deve haver transição e nada quebra.
+    let sawTransition = false;
+    for (let i = 0; i < 400; i++) {
+      movementSystem(g, 0.1);
+      im.update(0.1);
+      if (im.active.seats.some((s: any) => s.state !== 'seated')) sawTransition = true;
+    }
+    expect(sawTransition).toBe(true);                       // houve vai-e-vem
+    expect(im.active.residents.length).toBeGreaterThan(0);  // segue povoado
+    for (const rec of im.active.residents) expect(rec.indoor).toBe(true); // consistente
+    // Sair devolve todo mundo à vila (ninguém fica preso indoor).
+    im.exit();
+    expect(sm._villagers.every((v: any) => !v.indoor)).toBe(true);
   });
 
   it('o NPC encara a câmera (rosto/olhos à mostra, não de costas)', () => {

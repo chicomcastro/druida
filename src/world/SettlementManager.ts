@@ -152,6 +152,7 @@ export class SettlementManager {
     this._clock += dt;
     const day = this._day ?? 0;
     for (const v of this._villagers) {
+      if (v.indoor) continue; // morador está dentro de um interior (E32) — não perambula
       if (!game.world.entities.has(v.id)) continue;
       const tr = game.world.get(v.id, C.Transform);
       const vel = game.world.get(v.id, C.Velocity);
@@ -215,6 +216,53 @@ export class SettlementManager {
       vel.vz = dir.z * 1.1;
       tr.rot = Math.atan2(dir.x, dir.z);
     }
+  }
+
+  /**
+   * Moradores da vila `theme` livres para ocupar um interior (E32): entes vivos,
+   * perambulantes (anciãos/quest givers ficam no posto) e ainda não recolhidos.
+   * Cada um vem com o objetivo ATUAL da rotina, para o interior priorizar quem já
+   * estaria naquele tipo de lugar (o salão enche à noite, o posto de dia…).
+   */
+  residentPool(theme) {
+    const time = this.game.dayNight?.time ?? 0.3;
+    const day = this._day ?? 0;
+    const out: any[] = [];
+    for (const v of this._villagers) {
+      if (v.theme !== theme || v.indoor) continue;
+      if (!this.game.world.entities.has(v.id)) continue;
+      const goal = routineGoal(v.archetype ?? 'social', time, { seed: v.seed ?? v.id, day });
+      out.push({ rec: v, goal });
+    }
+    return out;
+  }
+
+  /**
+   * Recolhe um morador REAL para dentro de um interior (E32): guarda a posição no
+   * mundo, marca `indoor` (some da multidão lá fora — garante que ninguém está em
+   * dois lugares), e o planta no lugar dado. O `_wander` passa a ignorá-lo; a IA
+   * do interior assume. Devolvido à vila por `checkinResident`.
+   */
+  checkoutResident(rec, x, z, rot = 0, sit = false) {
+    const tr = this.game.world.get(rec.id, C.Transform);
+    const vel = this.game.world.get(rec.id, C.Velocity);
+    const r = this.game.world.get(rec.id, C.Renderable);
+    if (!tr) return false;
+    rec._out = { x: tr.x, z: tr.z, rot: tr.rot ?? 0 };
+    rec.indoor = true;
+    tr.x = x; tr.z = z; tr.rot = rot;
+    if (vel) { vel.vx = 0; vel.vz = 0; }
+    if (r) { rec._baseY = r.yOffset ?? 0; r.yOffset = sit ? -0.34 : 0; }
+    return true;
+  }
+
+  /** Devolve o morador à vila (E32): restaura posição/altura e limpa o estado. */
+  checkinResident(rec) {
+    const tr = this.game.world.get(rec.id, C.Transform);
+    const r = this.game.world.get(rec.id, C.Renderable);
+    if (tr && rec._out) { tr.x = rec._out.x; tr.z = rec._out.z; tr.rot = rec._out.rot; }
+    if (r) { r.yOffset = rec._baseY ?? 0; r.idleGesture = null; }
+    rec.indoor = false; rec._out = null; rec._interior = null;
   }
 
   /**
@@ -632,7 +680,7 @@ export class SettlementManager {
       const off = GATHER_OFFSET[s.theme] ?? { x: 0, z: 0 };
       const home = v.homeAt ?? { x: wx, z: wz }; // lar da família (E22.2)
       this._villagers.push({
-        id, seed: hsh, archetype,
+        id, seed: hsh, archetype, name: v.name, theme: s.theme, // identidade + vila (E32)
         gender: v.gender, role: v.role, householdId: v.householdId, // família (E22.2)
         fps: this.footprints[s.id] ?? [], // estruturas da vila p/ desvio (E23.5, coord local)
         streets: this.pathCells[s.id] ?? [], // células de rua (local) p/ andar nos caminhos (ADR 0163)
