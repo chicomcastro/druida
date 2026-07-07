@@ -36,6 +36,8 @@ export class DamageNumbers {
       const tr = game.world.get(e.id, 'Transform');
       if (tr && e.amount >= 3) this.spawn(tr.x, tr.z, '+' + Math.round(e.amount), '#8affa0');
     });
+    // Conversa entre aldeões (E22.5): balãozinho de fala flutuante.
+    game.on('villagerChat', (e) => this.spawn(e.x, e.z, `💬 ${e.text}`, '#e8f0d8'));
   }
 
   spawn(x, z, text, color) {

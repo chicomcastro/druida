@@ -8,6 +8,7 @@ import { buildMerchantStall } from './landmarks.js';
 import { interiorTheme } from '../data/interiors.js';
 import { routineGoal, goalSpread, ROUTINE_ARCHETYPES } from '../gameplay/routine.js';
 import { assignHouseholds } from '../gameplay/households.js';
+import { shouldChat, pickChatLine, CHAT_RANGE, CHAT_COOLDOWN } from '../gameplay/chatter.js';
 
 /** Ponto de reunião (salão comunal) de cada vila, em coord LOCAL — onde os
  *  moradores almoçam e se reúnem ao entardecer (E22). */
@@ -62,6 +63,7 @@ export class SettlementManager {
   _villagers: any[]; // moradores que seguem uma rotina de dia/noite (ADR 0055/E22)
   _lastTime: number | null = null; // hora do último tick (detecta virada do dia)
   _day = 0; // contador de dias (variação diária da rotina — E22)
+  _clock = 0; // relógio em segundos (cooldown de conversa — E22.5)
   _waterRef: any; // material da lagoa do Vau (pulsa no animate)
   footprints: Record<string, any[]>; // pegadas por vila (validador ADR 0085)
   streetCells: Set<string>; // células de rua em coord de mundo (validador ADR 0128)
@@ -144,6 +146,7 @@ export class SettlementManager {
     const time = game.dayNight?.time ?? 0.3;
     if (this._lastTime != null && time < this._lastTime - 0.5) this._day = (this._day ?? 0) + 1;
     this._lastTime = time;
+    this._clock += dt;
     const day = this._day ?? 0;
     for (const v of this._villagers) {
       if (!game.world.entities.has(v.id)) continue;
@@ -156,7 +159,11 @@ export class SettlementManager {
         if (Math.hypot(ptr.x - tr.x, ptr.z - tr.z) < 3.5) { playerNear = true; break; }
       }
       if (playerNear) { vel.vx = 0; vel.vz = 0; continue; }
-      if (v.wait > 0) { v.wait -= dt; vel.vx = 0; vel.vz = 0; continue; }
+      if (v.wait > 0) {
+        v.wait -= dt; vel.vx = 0; vel.vz = 0;
+        this._maybeChat(v, tr); // parado: pode puxar prosa com um vizinho (E22.5)
+        continue;
+      }
       if (!v.target || Math.hypot(v.target.x - tr.x, v.target.z - tr.z) < 0.4) {
         const goal = routineGoal(v.archetype ?? 'social', time, { seed: v.seed ?? v.id, day });
         v.goal = goal;
@@ -176,6 +183,34 @@ export class SettlementManager {
       vel.vx = (dx / d) * 1.1;
       vel.vz = (dz / d) * 1.1;
       tr.rot = Math.atan2(dx, dz);
+    }
+  }
+
+  /**
+   * Conversa entre aldeões (E22.5): um morador parado procura um vizinho também
+   * parado e elegível; se acham, viram-se um pro outro, um solta uma fala (balão
+   * flutuante) e ambos entram em cooldown — a vila fica com vida social sem
+   * quebrar a rotina.
+   */
+  _maybeChat(v, tr) {
+    const now = this._clock;
+    const { game } = this;
+    if (now < (v.chatUntil ?? 0) || v.goal === 'sleep') return;
+    for (const o of this._villagers) {
+      if (o === v || o.householdId === undefined) continue;
+      const otr = game.world.get(o.id, C.Transform);
+      if (!otr) continue;
+      const dist = Math.hypot(otr.x - tr.x, otr.z - tr.z);
+      if (!shouldChat(v, o, dist, now)) continue;
+      // Viram-se um pro outro e entram em cooldown; só um "fala" (evita 2 balões).
+      tr.rot = Math.atan2(otr.x - tr.x, otr.z - tr.z);
+      otr.rot = Math.atan2(tr.x - otr.x, tr.z - otr.z);
+      v.chatUntil = now + CHAT_COOLDOWN;
+      o.chatUntil = now + CHAT_COOLDOWN;
+      v.wait = Math.max(v.wait, 1.6); o.wait = Math.max(o.wait ?? 0, 1.6);
+      const line = pickChatLine((v.seed ?? v.id) ^ (this._day << 3), this._day);
+      game.emit('villagerChat', { x: tr.x, z: tr.z, text: line });
+      return;
     }
   }
 
