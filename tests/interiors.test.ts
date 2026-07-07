@@ -250,6 +250,55 @@ describe('Cozinheiro na taverna (E21.2)', () => {
   });
 });
 
+describe('Interiores povoados e vivos (E31)', () => {
+  it('enter povoa o interior com aldeões (villager) que somem ao sair', () => {
+    const g = makeGame();
+    const im = new InteriorManager(g);
+    addPlayer(g, 0);
+    im.enter('market');
+    expect(im.active.patrons.length).toBeGreaterThanOrEqual(2);
+    const ids = [...im.active.patrons];
+    for (const id of ids) expect(g.world.get(id, C.Interactable).kind).toBe('villager');
+    im.exit();
+    g.world.flushDestroyed();
+    for (const id of ids) expect(g.world.entities.has(id)).toBe(false);
+  });
+
+  it('o salão comunal reúne mais gente (banquete) que uma loja', () => {
+    const g = makeGame();
+    const im = new InteriorManager(g);
+    addPlayer(g, 0);
+    im.enter('hall'); const hall = im.active.patrons.length; im.exit();
+    im.enter('market'); const shop = im.active.patrons.length;
+    expect(hall).toBeGreaterThanOrEqual(6); // vila reunida à mesa
+    expect(hall).toBeGreaterThan(shop);
+  });
+
+  it('os fregueses refletem moradores reais da vila (nomes do elenco)', () => {
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    g.settlements = sm; // no jogo o Game registra; no teste, à mão
+    const cinza = sm.list.find((s: any) => s.theme === 'lenhadores');
+    const im = new InteriorManager(g);
+    addPlayer(g, 0, cinza.x, cinza.z);
+    g.groupCenter = { x: cinza.x, z: cinza.z };
+    im.enter('hall');
+    const prompts = im.active.patrons.map((id: number) => g.world.get(id, C.Interactable).prompt);
+    const roster = cinza.villagers.map((v: any) => v.name);
+    expect(prompts.some((p: string) => roster.some((n: string) => p.includes(n)))).toBe(true);
+  });
+
+  it('o NPC encara a câmera (rosto/olhos à mostra, não de costas)', () => {
+    const g = makeGame();
+    const im = new InteriorManager(g);
+    addPlayer(g, 0);
+    im.enter('leader');
+    const rot = g.world.get(im.active.npcId, C.Transform).rot;
+    expect(Math.abs(rot - Math.PI)).toBeGreaterThan(0.5); // não virado de costas (norte)
+    expect(Math.abs(rot)).toBeLessThan(Math.PI / 2);       // rosto pra frente (+z, câmera)
+  });
+});
+
 describe('Interação — porta abre o interior', () => {
   it('pressionar E numa porta chama interiors.enter', () => {
     const g = makeGame();
