@@ -290,18 +290,24 @@ export interface VillagerLook {
   /** Variedade de rosto (ADR 0103): tom de pele e barba. */
   skin?: number;
   beard?: boolean;
+  /** Gênero (E22.2): feminino ganha saia e cabelo mais longo. */
+  female?: boolean;
+  /** Criança (E22.2): silhueta menor. */
+  child?: boolean;
 }
 
 export function makeVillagerSpec({
   robe, trim, glow = C.gold, elder = false,
   hood = true, hair = 0x4a331f, apron = false, pack = false,
-  skin = C.skin, beard = false,
+  skin = C.skin, beard = false, female = false, child = false,
 }: VillagerLook): VoxelModelSpec {
   const parts: VoxelPart[] = [
     { name: 'torso', joint: [0, 0.95, 0], boxes: [
       b([0.8, 0.85, 0.5], [0, 0.1, 0], robe),          // túnica
       b([0.88, 0.2, 0.56], [0, -0.28, 0], trim),       // cinto
       ...(elder ? [b([0.92, 0.24, 0.6], [0, 0.42, 0], trim)] : []), // capa do ancião
+      // Saia (E22.2): base mais larga que dá silhueta feminina.
+      ...(female ? [b([1.02, 0.34, 0.66], [0, -0.5, 0], robe)] : []),
       ...(apron ? [b([0.62, 0.55, 0.1], [0, -0.02, 0.28], 0xd8cfb0)] : []), // avental de linho
       ...(pack ? [b([0.42, 0.55, 0.26], [0, 0.12, -0.38], C.leather)] : []), // mochila
     ] },
@@ -315,6 +321,8 @@ export function makeVillagerSpec({
         : [
             b([0.66, 0.24, 0.66], [0, 0.5, 0], hair),   // cabelo
             b([0.66, 0.16, 0.12], [0, 0.38, 0.28], hair), // franja
+            // Cabelo mais longo dos lados (E22.2): silhueta feminina.
+            ...(female ? [b([0.7, 0.42, 0.2], [0, 0.1, -0.28], hair)] : []),
           ]),
       // Olhos mais baixos p/ aparecerem sob o capuz — todo aldeão tem rosto.
       b([0.12, 0.11, 0.06], [-0.15, 0.14, 0.31], 0x2a2a2a),
