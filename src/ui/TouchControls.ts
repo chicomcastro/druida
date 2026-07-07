@@ -65,6 +65,8 @@ export class TouchControls {
       ${BTN('tc-a2', 'O', 46, 'right:318px;bottom:98px')}
       ${BTN('tc-pause', '⏸', 42, 'right:14px;top:14px')}
       ${BTN('tc-map', '🗺️', 42, 'right:66px;top:14px')}
+      ${BTN('tc-inv', '🎒', 42, 'right:118px;top:14px')}
+      ${BTN('tc-skills', '🌿', 42, 'right:170px;top:14px')}
     `;
     document.body.appendChild(root);
     this.root = root;
@@ -81,6 +83,9 @@ export class TouchControls {
     this._bindPulse('tc-form', () => (this.state.switchForm = this._nextForm()));
     this._bindPulse('tc-pause', () => this.game.menus.togglePause());
     this._bindPulse('tc-map', () => this.game.worldMap.toggle());
+    // Sem teclado no tablet (E23.4): mochila e talentos viram botões de toque.
+    this._bindPulse('tc-inv', () => this.game.menus.toggleInventory());
+    this._bindPulse('tc-skills', () => this.game.menus.toggleSkills());
   }
 
   /** Cicla para a próxima forma desbloqueada do P1 (1-based p/ o intent). */
