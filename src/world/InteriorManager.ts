@@ -65,9 +65,22 @@ export class InteriorManager {
       wall.castShadow = true;
       this.game.renderer.add(wall);
       this._wallMats.push(mat);
-      const id = this.game.world.createEntity();
-      this.game.world.add(id, C.Transform, Transform(ROOM.x + lx, ROOM.z + lz));
-      this.game.world.add(id, C.Collider, Collider(Math.max(sw, sd) / 2, true));
+      // Barreira como FILEIRA de colisores pequenos ao longo da parede. Um único
+      // colisor circular de raio = metade do comprimento (bug do playtest, ADR
+      // 0162) tinha raio = ROOM_R e enchia a sala, prendendo o jogador num
+      // quadradinho central sem conseguir andar nem sair.
+      const horiz = sw > sd;
+      const len = horiz ? sw : sd;
+      const n = Math.max(2, Math.round(len / 1.2));
+      for (let k = 0; k <= n; k++) {
+        const t = k / n - 0.5;
+        const cid = this.game.world.createEntity();
+        this.game.world.add(cid, C.Transform, Transform(
+          ROOM.x + lx + (horiz ? t * len : 0),
+          ROOM.z + lz + (horiz ? 0 : t * len),
+        ));
+        this.game.world.add(cid, C.Collider, Collider(0.7, true));
+      }
     }
     // Lâmpadas de canto (emissivo recolorido por tema).
     this._lampMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffb46a, emissiveIntensity: 1.3 });

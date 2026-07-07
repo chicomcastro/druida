@@ -213,9 +213,9 @@ export class Game {
   setupNewPlayer(id, index) {
     const loadout = this.world.get(id, C.Loadout);
     const form = this.world.get(id, C.Form);
-    form.list = ['humanoid', 'wolf']; // começa com Lobo desbloqueado
-    // Semeia as formas na hotbar livre (E18) — teclas 5, 6 por padrão, mas
-    // remapeáveis. Só o P1 monta a barra do grupo (game.progress).
+    form.list = ['humanoid']; // só o humanoide no início; as formas vêm dos santuários (ADR 0106/0162)
+    // Semeia as formas na hotbar livre (E18). As Formas Ancestrais entram na
+    // barra ao despertar seu santuário (story.unlockForm). Só o P1 monta a barra.
     if (index === 0) seedForms(this, form.list);
     // Equipamento inicial: arma corpo-a-corpo (foco do jogo).
     this.equip(id, generateItem(1, 'weapon', 100 + index, null, 'melee'));

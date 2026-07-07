@@ -113,7 +113,9 @@ describe('playerControlSystem — formas, dodge, artefato', () => {
     const id = addPlayer(g, 0, 0, 0);
     const intent = g.world.get(id, C.Intent);
 
-    intent.switchForm = 2; // wolf (list = [humanoid, wolf])
+    // Formas vêm dos santuários (ADR 0162): destrava o Lobo antes de trocar.
+    g.world.get(id, C.Form).list = ['humanoid', 'wolf'];
+    intent.switchForm = 2; // wolf
     playerControlSystem(g, 0.016);
     expect(g.world.get(id, C.Form).current).toBe('wolf');
 
