@@ -1,10 +1,52 @@
 import * as THREE from 'three';
 import { C, Transform, Collider, Velocity } from '../core/ecs/components.js';
-import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
+import { buildVoxelGroup, makeVillagerSpec, VillagerLook } from '../entities/voxelModels.js';
 import { healEntity } from '../gameplay/combat.js';
 import { interiorTheme, TAVERN } from '../data/interiors.js';
 import { biomeAt } from './WorldManager.js';
 import { BIOMES } from '../data/biomes.js';
+
+/**
+ * Paletas de aldeões por vila (E31). As pessoas dentro do interior refletem o
+ * assentamento: cores de túnica coerentes com a vila (verdes na Clareira, azuis
+ * de água no Vau, marrons de lenha em Cinzafolha, tons frios no Degelo). Os
+ * NOMES vêm do elenco real da vila (SettlementManager.list), então quem está no
+ * salão são moradores de verdade, não figurantes genéricos.
+ */
+const PATRON_LOOKS: Record<string, VillagerLook[]> = {
+  druida: [
+    { robe: 0x5a8f5f, trim: 0x6b4a2f },
+    { robe: 0x6fae8f, trim: 0xe0a93a, female: true },
+    { robe: 0x3f7a58, trim: 0x8a6b3a, beard: true },
+    { robe: 0x7a9a5a, trim: 0x5a4633, hood: false },
+    { robe: 0x4f8a6a, trim: 0xcfe0a0, female: true, hood: false },
+    { robe: 0x6b8f4a, trim: 0x8a6b3a },
+  ],
+  palafitas: [
+    { robe: 0x3f6a86, trim: 0xbfe0ea, beard: true },
+    { robe: 0x5a6e3a, trim: 0xd8e0a8, female: true },
+    { robe: 0x3f6a5a, trim: 0x8ad0ff },
+    { robe: 0x4a7e86, trim: 0xcfe0ea, hood: false },
+    { robe: 0x4f7a6a, trim: 0xbfe0ea, female: true, hood: false },
+    { robe: 0x3a5e74, trim: 0xaecfe0 },
+  ],
+  lenhadores: [
+    { robe: 0x6b4a2f, trim: 0xc89a5a, beard: true },
+    { robe: 0x8a4a28, trim: 0xffb46a, female: true },
+    { robe: 0x8a5a3a, trim: 0x3a2d22 },
+    { robe: 0x7a5a3a, trim: 0xd0a060, hood: false },
+    { robe: 0x9a5a2a, trim: 0xffcf8a, female: true, hood: false },
+    { robe: 0x6b4a2f, trim: 0xc89a5a },
+  ],
+  degelo: [
+    { robe: 0x4a6e86, trim: 0xdff0ff, beard: true },
+    { robe: 0x8a7a5a, trim: 0xefe6cf, female: true },
+    { robe: 0x6e7e8e, trim: 0xcabf9a },
+    { robe: 0x5a7080, trim: 0xdfe6ef, hood: false },
+    { robe: 0x7a8494, trim: 0xefe6cf, female: true, hood: false },
+    { robe: 0x4a6e86, trim: 0xdff0ff },
+  ],
+};
 
 /** Clima "interior": fundo escuro que sela a sala do mundo aberto. Névoa a
  * distância grande (a câmera ortográfica fica longe — valores curtos apagam
@@ -128,22 +170,73 @@ export class InteriorManager {
     // Vila de origem (ADR 0163): a porta guarda onde estávamos; o tema da vila
     // decide a decoração de sotaque do interior (rede no Vau, toras em Cinzafolha…).
     const village = this.game.settlements?.settlementAt?.(returnPos.x, returnPos.z)?.theme ?? 'druida';
-    this.active = { themeId: theme.id, theme, returnPos, npcId: null, village };
+    this.active = { themeId: theme.id, theme, returnPos, npcId: null, village, patrons: [] };
     this._teleport(ROOM.x, ROOM.z - ROOM_R + 3);
     this.active.npcId = this._spawnNpc(theme);
     this.active.props = this._buildProps(theme, village); // móveis temáticos + sotaque da vila (ADR 0104/0163)
     this.active.kitchenId = theme.kitchen ? this._buildKitchen() : null; // caldeirão (E19.6)
     // Cozinheiro na taverna (E21.2): um 2º NPC que vende comida pronta e ingredientes.
     this.active.cookId = theme.service === 'rest' ? this._spawnCook() : null;
+    this._populatePatrons(theme, village); // aldeões vivendo o interior (E31)
     this.game.renderer.setBiomeMood?.(INDOOR_MOOD); // sela a sala (fundo escuro)
     this.game.emit('objective', { text: `${theme.name} — ${label ?? theme.role}` });
     this.game.emit('interiorEntered', { themeId: theme.id });
   }
 
   /**
-   * Móveis temáticos (ADR 0104): balcão/prateleiras nas lojas, mesas/barris/
-   * lareira na taverna, tapete/trono/estante nos salões. Grupo próprio,
-   * removido na saída. Coordenadas relativas à sala (ROOM).
+   * Disposição do interior (E31): onde ficam as MESAS e os LUGARES dos aldeões.
+   * Usada tanto por `_buildProps` (constrói mesas/banquetas/comida) quanto por
+   * `_populatePatrons` (senta as pessoas), pra móvel e gente ficarem alinhados.
+   * Coordenadas locais à sala. Cada lugar olha ~+z (sul) → o rosto fica virado
+   * pra câmera isométrica (SE), então os OLHOS aparecem (bug do playtest).
+   */
+  _layout(theme) {
+    const nz = -ROOM_R + 6;
+    if (theme.id === 'hall') {
+      // Salão Comunal: banquete — várias mesas fartas e a vila reunida comendo.
+      return {
+        tables: [[-3.2, 0.6], [3.2, 0.6], [0, 3.8]],
+        patrons: [
+          { x: -4.1, z: -0.7, rot: 0.3, sit: true }, { x: -2.3, z: -0.7, rot: -0.2, sit: true, serving: true },
+          { x: 4.1, z: -0.7, rot: 0.3, sit: true }, { x: 2.3, z: -0.7, rot: -0.2, sit: true },
+          { x: -0.9, z: 2.5, rot: 0.15, sit: true }, { x: 0.9, z: 2.5, rot: -0.15, sit: true, serving: true },
+        ],
+      };
+    }
+    if (theme.service === 'rest') {
+      // Taverna: fregueses comendo às mesas; a taverneira/cozinheiro servem.
+      return {
+        tables: [[-3.2, nz + 3], [3.2, nz + 3.4]],
+        patrons: [
+          { x: -4.1, z: nz + 1.9, rot: 0.3, sit: true }, { x: -2.3, z: nz + 1.9, rot: -0.25, sit: true },
+          { x: 3.2, z: nz + 2.3, rot: 0.0, sit: true, serving: true },
+        ],
+      };
+    }
+    if (theme.service === 'talk') {
+      // Liderança/moradia: dois moradores conversando; uma mesinha de canto.
+      return {
+        tables: [[3.0, nz + 3.4]],
+        patrons: [
+          { x: -2.4, z: nz + 3.2, rot: 0.45 }, { x: 3.0, z: nz + 2.2, rot: -0.2, sit: true },
+        ],
+      };
+    }
+    // Loja: dois fregueses dando uma olhada nas prateleiras/balcão.
+    return {
+      tables: [],
+      patrons: [
+        { x: 2.7, z: nz + 3.6, rot: -0.5 }, { x: -2.6, z: nz + 4.0, rot: 0.5 },
+      ],
+    };
+  }
+
+  /**
+   * Móveis temáticos (ADR 0104 / E31): balcão e prateleiras nas lojas; mesas
+   * fartas de comida e bebida na taverna; mesão de banquete no salão comunal;
+   * tapete/trono nos salões. Além disso TODO interior ganha quadros na parede,
+   * jarros, um tapete e um vaso — pra sala parecer habitada, não um galpão.
+   * Grupo próprio, removido na saída. Coordenadas relativas à sala (ROOM).
    */
   _buildProps(theme, village = 'druida') {
     const g = new THREE.Group();
@@ -154,31 +247,68 @@ export class InteriorManager {
     };
     const wood = 0x5a4028, wood2 = 0x6b4a33, stone = 0x6a6a72, acc = theme.accent;
     const nz = -ROOM_R + 6; // linha do NPC
+    const layout = this._layout(theme);
+
+    // --- Móveis reutilizáveis ------------------------------------------------
+    const stool = (x, z) => { box(0.5, 0.42, 0.5, x, 0.21, z, wood); box(0.56, 0.1, 0.56, x, 0.46, z, wood2); };
+    const jar = (x, z, c = 0xb98a4a) => { box(0.3, 0.44, 0.3, x, 0.22, z, c); box(0.18, 0.16, 0.18, x, 0.52, z, 0x8a6a3a); };
+    const plant = (x, z) => { box(0.42, 0.4, 0.42, x, 0.2, z, wood2); box(0.5, 0.5, 0.5, x, 0.66, z, 0x4c7a34); box(0.34, 0.34, 0.34, x, 1.0, z, 0x5faa4a); };
+    // Mesa farta: tampo + 4 pés + travessa de assado, pão e canecas de bebida.
+    const feastTable = (tx, tz) => {
+      box(2.1, 0.16, 1.3, tx, 0.92, tz, wood2);                       // tampo
+      for (const [ox, oz] of [[-0.9, -0.5], [0.9, -0.5], [-0.9, 0.5], [0.9, 0.5]]) box(0.16, 0.9, 0.16, tx + ox, 0.46, tz + oz, wood);
+      box(0.8, 0.1, 0.8, tx - 0.3, 1.02, tz, 0x9a7a4a);              // travessa
+      box(0.5, 0.26, 0.5, tx - 0.3, 1.18, tz, 0x8a5a2a);            // assado
+      box(0.36, 0.18, 0.5, tx + 0.5, 1.05, tz + 0.2, 0xc89a5a);     // pão
+      for (const [ox, oz] of [[0.2, -0.35], [0.6, -0.2], [-0.55, 0.35]]) {  // canecas de bebida
+        box(0.16, 0.24, 0.16, tx + ox, 1.06, tz + oz, 0x6b4a2f);
+        box(0.17, 0.05, 0.17, tx + ox, 1.2, tz + oz, 0xf0e6cf);      // espuma/topo
+      }
+    };
+    // Quadro na parede: moldura de madeira + tela colorida (cena da vila).
+    const artColors = [acc, 0x4c7a34, 0x3f6a86, 0xb85a3a];
+    const paintN = (x, art) => { box(1.1, 0.86, 0.08, x, 2.65, -ROOM_R + 0.32, wood2); box(0.86, 0.62, 0.05, x, 2.65, -ROOM_R + 0.4, art); };
+    const paintW = (z, art) => { box(0.08, 0.86, 1.1, -ROOM_R + 0.32, 2.65, z, wood2); box(0.05, 0.62, 0.86, -ROOM_R + 0.4, 2.65, z, art); };
+
+    // Quadros nas paredes do fundo (norte) e esquerda (oeste) — visíveis na iso.
+    paintN(-3.2, artColors[0]); paintN(3.2, artColors[1]);
+    paintW(-2.5, artColors[2]); paintW(2.5, artColors[3]);
+    // Tapete central quente sob a cena e um vaso de planta perto da porta.
+    box(4.6, 0.05, 4.4, 0, 0.05, nz + 2.6, 0x5a3a2a);
+    plant(ROOM_R - 1.6, ROOM_R - 1.6);
+
+    // Mesas + banquetas de quem senta (comida sobre as mesas).
+    for (const [tx, tz] of layout.tables) feastTable(tx, tz);
+    for (const p of layout.patrons) if (p.sit) stool(p.x, p.z);
+
     if (theme.service === 'shop') {
       // Balcão à frente do NPC + prateleiras na parede do fundo + engradados.
       box(4.2, 0.9, 0.9, 0, 0.45, nz + 1.6, wood2);
       box(4.4, 0.15, 1.05, 0, 0.95, nz + 1.6, wood);
+      jar(-1.4, nz + 1.5, 0xa8c0d0); jar(1.4, nz + 1.5, 0xc0a060); // jarros no balcão
       for (const sx of [-2.4, 2.4]) box(0.4, 2.4, 3.5, sx, 1.2, nz + 0.4, wood); // prateleiras laterais
       for (const [sx, sy] of [[-2.4, 1.6], [-2.4, 2.2], [2.4, 1.6], [2.4, 2.2]]) box(0.5, 0.4, 0.5, sx, sy, nz + 0.4, acc, acc);
       box(0.8, 0.8, 0.8, -3.0, 0.4, nz + 3.5, wood); box(0.8, 0.8, 0.8, 3.0, 0.4, nz + 3.5, wood2); // engradados
       if (theme.id === 'weapons') { box(1.2, 1.6, 1.2, 3.2, 0.8, nz, stone); box(1.4, 0.3, 1.4, 3.2, 1.75, nz, 0x2a2a2a); } // bigorna/forja
     } else if (theme.service === 'rest') {
-      // Mesas + banquetas + barris + lareira acesa no canto.
-      for (const [tx, tz] of [[-3, nz + 3], [3, nz + 3.5]]) {
-        box(1.8, 0.2, 1.8, tx, 1.0, tz, wood2); box(0.3, 1.0, 0.3, tx, 0.5, tz, wood);
-        for (const [ox, oz] of [[-1.2, 0], [1.2, 0], [0, -1.2], [0, 1.2]]) box(0.5, 0.55, 0.5, tx + ox, 0.28, tz + oz, wood);
-      }
+      // Barris + lareira acesa no canto (mesas fartas já vieram do layout).
       box(0.8, 1.0, 0.8, -3.2, 0.5, nz - 0.5, wood2); box(0.8, 1.0, 0.8, 3.4, 0.5, nz - 0.6, wood); // barris
-      // Lareira no canto (brasa emissiva + luz).
+      jar(-4.4, nz - 0.4, 0xb0783a); jar(4.6, nz - 0.5, 0xa8c0d0);
       box(2.0, 0.4, 1.2, ROOM_R - 2.2 - ROOM.x, 0.2, -ROOM_R + 1.6, stone);
       box(1.0, 0.6, 0.7, ROOM_R - 2.2 - ROOM.x, 0.5, -ROOM_R + 1.6, 0xff8a3a, 0xff7a2a);
       this.game.lightPool?.register(ROOM.x + ROOM_R - 2.2, 0.8, ROOM.z - ROOM_R + 1.6, 0xff7a2a, 22, 0.6);
+    } else if (theme.id === 'hall') {
+      // Salão comunal: caldeirão já é a cozinha; aqui só estandarte + barris de
+      // bebida pros que se servem, além do mesão de banquete (layout).
+      box(0.9, 2.0, 0.08, 0, 3.4, -ROOM_R + 0.5, acc, acc); // estandarte
+      box(0.9, 1.1, 0.9, ROOM_R - 2.4, 0.55, nz + 0.2, wood2); // barril de bebida
+      box(0.95, 0.14, 0.95, ROOM_R - 2.4, 1.18, nz + 0.2, 0xd8a24a); // tampa/concha
     } else {
-      // Salão/liderança: tapete, cadeira alta atrás do NPC, estante e estandarte.
-      box(3.2, 0.06, 3.6, 0, 0.12, nz + 1.6, acc);        // tapete na cor do tema
+      // Salão/liderança e moradia: cadeira alta atrás do NPC, estante, estandarte.
       box(1.0, 1.8, 0.5, 0, 0.9, nz - 0.9, wood2);        // encosto da cadeira
       box(1.1, 0.3, 1.0, 0, 0.55, nz - 0.7, wood);        // assento
-      box(2.4, 2.2, 0.5, -ROOM_R + 1.4 - ROOM.x * 0, 1.1, nz + 0.5, wood); // estante lateral (parede)
+      box(2.4, 2.2, 0.5, -ROOM_R + 1.4, 1.1, nz + 0.5, wood); // estante lateral (parede)
+      for (const jy of [1.4, 1.9]) box(0.3, 0.44, 0.3, -ROOM_R + 1.4, jy, nz + 0.3, 0xb98a4a); // jarros na estante
       box(0.9, 1.8, 0.08, 0, 3.3, -ROOM_R + 0.5, acc, acc); // estandarte na parede do fundo
     }
     // Sotaque da vila (ADR 0163): um cantinho decorado com a cara do assentamento,
@@ -255,7 +385,10 @@ export class InteriorManager {
     g.position.set(nx, 0, nz);
     game.renderer.add(g);
     const id = game.world.createEntity();
-    game.world.add(id, C.Transform, Transform(nx, nz, Math.PI)); // olha para a entrada (sul)
+    // Vira o rosto pra câmera isométrica (SE): o modelo tem os olhos em +z, então
+    // rot ~+z/+x deixa o rosto (e os olhos) visíveis. O Math.PI antigo virava de
+    // costas — daí a impressão de "NPC sem olhos" no playtest (E31).
+    game.world.add(id, C.Transform, Transform(nx, nz, 0.35));
     game.world.add(id, C.Velocity, Velocity(0, 0, 1));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
     game.world.add(id, C.Collider, Collider(0.55, true));
@@ -292,7 +425,7 @@ export class InteriorManager {
     g.position.set(nx, 0, nz);
     game.renderer.add(g);
     const id = game.world.createEntity();
-    game.world.add(id, C.Transform, Transform(nx, nz, Math.PI));
+    game.world.add(id, C.Transform, Transform(nx, nz, 0.35)); // rosto pra câmera (E31)
     game.world.add(id, C.Velocity, Velocity(0, 0, 1));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
     game.world.add(id, C.Collider, Collider(0.55, true));
@@ -306,6 +439,44 @@ export class InteriorManager {
       lines: ['Caldo quente e um farnel pra estrada? Tenho do bom.'],
     });
     return id;
+  }
+
+  /**
+   * Popula o interior com aldeões (E31). Quem está dentro são MORADORES DA VILA
+   * de verdade: nomes puxados do elenco do assentamento (`settlements.list`) e
+   * túnicas na paleta da vila (`PATRON_LOOKS`). Sentam às mesas comendo ("E —
+   * Nome" com fala) e alguns "se servem". Todos viram o rosto pra câmera (olhos
+   * visíveis). Ids ficam em `active.patrons` e são destruídos na saída — o mesh
+   * some junto pelo `_cleanupDestroyed` do Game.
+   */
+  _populatePatrons(theme, village) {
+    const { game } = this;
+    const layout = this._layout(theme);
+    const looks = PATRON_LOOKS[village] ?? PATRON_LOOKS.druida;
+    const roster = (game.settlements?.list?.find((s) => s.theme === village)?.villagers ?? [])
+      .map((v) => v.name).filter(Boolean);
+    // Não repete o residente-título (o NPC principal) entre os fregueses.
+    const pool = roster.filter((n) => n !== theme.npc);
+    layout.patrons.forEach((p, i) => {
+      const look = looks[i % looks.length];
+      const g = buildVoxelGroup(makeVillagerSpec({ ...look, elder: !!look.elder }));
+      const wx = ROOM.x + p.x, wz = ROOM.z + p.z;
+      g.position.set(wx, 0, wz);
+      game.renderer.add(g);
+      const id = game.world.createEntity();
+      game.world.add(id, C.Transform, Transform(wx, wz, p.rot ?? 0.35));
+      game.world.add(id, C.Velocity, Velocity(0, 0, 1));            // idle sutil (respira/mexe)
+      game.world.add(id, C.Renderable, { object3d: g, baseScale: 1, yOffset: p.sit ? -0.34 : 0 });
+      game.world.add(id, C.Collider, Collider(0.45, true));
+      const name = pool[i % Math.max(1, pool.length)] ?? 'Morador';
+      const first = name.split(/[ ,]/)[0];
+      const line = p.serving
+        ? `${first}: Serve-te, viajante — tem fartura hoje.`
+        : p.sit ? `${first}: Bom caldo, esse. Senta que sobra.`
+        : `${first}: Só dando uma olhada nas mercadorias.`;
+      game.world.add(id, C.Interactable, { kind: 'villager', prompt: `E — ${name}`, range: 2.2, used: false, lines: [line] });
+      this.active.patrons.push(id);
+    });
   }
 
   /** Taverna (ADR 0094): descansar cura o grupo, passa a noite e salva; a
@@ -328,6 +499,9 @@ export class InteriorManager {
     if (!a) return;
     if (a.npcId != null && this.game.world.entities.has(a.npcId)) this.game.world.destroyEntity(a.npcId);
     if (a.cookId != null && this.game.world.entities.has(a.cookId)) this.game.world.destroyEntity(a.cookId); // cozinheiro (E21.2)
+    for (const pid of a.patrons ?? []) { // aldeões do interior (E31)
+      if (this.game.world.entities.has(pid)) this.game.world.destroyEntity(pid);
+    }
     if (a.kitchenId != null && this.game.world.entities.has(a.kitchenId)) this.game.world.destroyEntity(a.kitchenId);
     if (a.kitchenMesh) this.game.renderer.remove?.(a.kitchenMesh); // remove o caldeirão (E19.6)
     if (a.props) this.game.renderer.remove?.(a.props); // remove os móveis (ADR 0104)
