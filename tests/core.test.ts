@@ -17,6 +17,7 @@ import { buildMesh } from '../src/entities/meshes.js';
 import { MODELS, modelUrl } from '../src/entities/modelRegistry.js';
 import { _setModelForTest, _resetModels } from '../src/entities/modelLoader.js';
 import { buildVoxelModel, MODEL_SPECS, SHOWCASE_GROUPS } from '../src/entities/voxelModels.js';
+import { FAUNA_DEFS } from '../src/entities/faunaModel.js';
 import { animateBody } from '../src/systems/animation.js';
 import { SpatialHash } from '../src/utils/SpatialHash.js';
 import { PoiManager } from '../src/world/PoiManager.js';
@@ -664,9 +665,12 @@ describe('Modelos (.glb pipeline)', () => {
     expect(m.userData.parts.head).toBeTruthy();
   });
 
-  it('todos os kinds da vitrine têm spec', () => {
+  it('todos os kinds da vitrine renderizam (spec voxel ou modelo de fauna)', () => {
     for (const grp of SHOWCASE_GROUPS) {
-      for (const kind of grp.kinds) expect(MODEL_SPECS[kind]).toBeTruthy();
+      for (const kind of grp.kinds) {
+        // Fauna (cervo/lebre/…) renderiza por buildFaunaModel, não por MODEL_SPECS.
+        expect(MODEL_SPECS[kind] || FAUNA_DEFS[kind], `sem render para ${kind}`).toBeTruthy();
+      }
     }
   });
 

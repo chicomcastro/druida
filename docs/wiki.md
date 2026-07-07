@@ -117,14 +117,29 @@ entráveis** (§6).
 | Cinzafolha | `lenhadores` | Bosque Cinza | cabana de tronco | paliçada + torre de vigia + serraria |
 | Abrigo do Degelo | `degelo` | Picos | tenda de pele | cairns + muro de gelo + chama azul |
 
-<p align="center"><img src="img/vila-clareira.jpg" width="480" alt="Círculo do Carvalho" /></p>
-<sub>Círculo do Carvalho: a vila cresce em anel ao redor da Carvalho-Mãe, com via em anel, canteiros e casas para cada morador (ADR 0111/0149).</sub>
+<p align="center">
+  <img src="img/vila-clareira.jpg" width="410" alt="Círculo do Carvalho" />
+  <img src="img/vila-palafitas.jpg" width="410" alt="Vau das Palafitas" />
+</p>
+<p align="center">
+  <img src="img/vila-cinzafolha.jpg" width="410" alt="Cinzafolha" />
+  <img src="img/vila-degelo.jpg" width="410" alt="Abrigo do Degelo" />
+</p>
+<sub>As quatro vilas: <b>Círculo do Carvalho</b> (anel em torno da Carvalho-Mãe, com canteiros), <b>Vau das Palafitas</b> (palafitas sobre a lagoa do brejo), <b>Cinzafolha</b> (cabanas + paliçada + torre no bosque morto) e <b>Abrigo do Degelo</b> (tendas de pele, cairns e chama azul na neve).</sub>
 
 **Moradores** (ADR 0081): modelo voxel variado por hash (túnica, capuz, cabelo,
 avental, mochila, **tom de pele e barba** — ADR 0103), agora também com
 **gênero** (silhueta com saia + cabelo mais longo) e **crianças** (escala menor)
 — ADR 0148. Anciãos usam capa/cajado e dão a missão da vila (§15). Todo morador
 tem rosto (capuz não cobre mais os olhos — ADR 0103).
+
+<p align="center">
+  <img src="img/npc-guardian.png" width="120" alt="Guardiã" />
+  <img src="img/npc-elder.png" width="120" alt="Ancião" />
+  <img src="img/npc-merchant.png" width="120" alt="Mercador" />
+  <img src="img/npc-villager.png" width="120" alt="Morador" />
+</p>
+<sub>NPCs: a <b>Guardiã</b> do Carvalho (campanha, §15), o <b>Ancião</b> (missão da vila), o <b>Mercador</b> (banca/loja) e o <b>Morador</b> comum (base variada por hash).</sub>
 
 **Camada social — em todas as 4 vilas** (ADR 0095 na Clareira; ADR 0107 nas
 vilas 2–4): cada vila tem **duas famílias em rixa**, temáticas ao ofício/bioma,
@@ -399,13 +414,18 @@ no toque, a hotbar aparece no topo. Cooldowns são desenhados por célula.
 | `frostfang` | Presa-Gélida | melee matilha | **congela** | Picos |
 
 <p align="center">
-  <img src="img/inimigo-rotboar.png" width="150" alt="Javali Apodrecido" />
-  <img src="img/inimigo-shadecrow.png" width="150" alt="Corvo-Sombra" />
-  <img src="img/inimigo-husk.png" width="150" alt="Casca Oca" />
-  <img src="img/chefe-rotlord.png" width="150" alt="O Apodrecedor" />
-  <img src="img/chefe-mirelord.png" width="150" alt="Senhor do Lodo" />
+  <img src="img/inimigo-rotboar.png" width="115" alt="Javali Apodrecido" />
+  <img src="img/inimigo-fungling.png" width="115" alt="Fungo Explosivo" />
+  <img src="img/inimigo-shadecrow.png" width="115" alt="Corvo-Sombra" />
+  <img src="img/inimigo-husk.png" width="115" alt="Casca Oca" />
 </p>
-<sub>Alguns inimigos e dois chefes (O Apodrecedor e o Senhor do Lodo) — silhuetas próprias.</sub>
+<p align="center">
+  <img src="img/inimigo-shaman.png" width="115" alt="Xamã Corrompido" />
+  <img src="img/inimigo-bogbrute.png" width="115" alt="Atoladiço" />
+  <img src="img/inimigo-ashwraith.png" width="115" alt="Espectro de Cinza" />
+  <img src="img/inimigo-frostfang.png" width="115" alt="Presa-Gélida" />
+</p>
+<sub>Os oito inimigos, cada um com silhueta própria: Javali Apodrecido, Fungo Explosivo, Corvo-Sombra, Casca Oca, Xamã Corrompido, Atoladiço, Espectro de Cinza e Presa-Gélida.</sub>
 
 **Elites** (ADR 0045): qualquer comum pode ser promovido — Veloz, Pétreo,
 Volátil (explode), Sanguessuga (leech). Corpo maior + gema + recompensa maior.
@@ -423,6 +443,19 @@ ingredientes da espécie — cervo/cabra → carne+sebo, lebre/sapo → carne,
 corvo/coruja → ovo. Só a libélula segue de enfeite. É a fonte de carne vinda dos
 animais (§7).
 
+<p align="center">
+  <img src="img/fauna-cervo.png" width="110" alt="Cervo" />
+  <img src="img/fauna-lebre.png" width="110" alt="Lebre" />
+  <img src="img/fauna-cabra.png" width="110" alt="Cabra-das-rochas" />
+  <img src="img/fauna-sapo.png" width="110" alt="Sapo" />
+</p>
+<p align="center">
+  <img src="img/fauna-corvo.png" width="110" alt="Corvo" />
+  <img src="img/fauna-coruja.png" width="110" alt="Coruja-da-neve" />
+  <img src="img/fauna-libelula.png" width="110" alt="Libélula" />
+</p>
+<sub>A fauna: Cervo, Lebre, Cabra-das-rochas e Sapo (→ carne/sebo), Corvo e Coruja (→ ovo), e a Libélula (só enfeite). Cada espécie tem silhueta própria.</sub>
+
 ## 14. Chefes & masmorras
 **Chefes** (`src/data/enemies.ts`, ADR 0101) — fases por % de vida, slam em
 área, invocações (via `bossSystem`):
@@ -431,6 +464,13 @@ animais (§7).
   Pântano.
 - **Ceifador Gélido** (`frostreaver`) — congela, foice de gelo; clímax da
   masmorra dos Picos.
+
+<p align="center">
+  <img src="img/chefe-rotlord.png" width="150" alt="O Apodrecedor" />
+  <img src="img/chefe-mirelord.png" width="150" alt="Senhor do Lodo" />
+  <img src="img/chefe-frostreaver.png" width="150" alt="Ceifador Gélido" />
+</p>
+<sub>Os três chefes: O Apodrecedor, o Senhor do Lodo e o Ceifador Gélido.</sub>
 
 **Masmorras** (`src/data/dungeons.ts`, ADR 0048) — POI instanciado por bioma:
 ondas + perigo ambiental + mini-chefe (ou chefe pleno no Pântano/Picos) e
