@@ -18,6 +18,16 @@ const GATHER_OFFSET: Record<string, { x: number; z: number }> = {
   degelo: { x: 0, z: 4 },      // praça do abrigo
 };
 
+/** Casas de família (E22.3): lares residenciais dedicados por vila, em coord
+ *  LOCAL — as famílias são ancoradas a estes prédios. Por ora só a Clareira
+ *  (template); as demais vilas replicam depois (âncora de moradia até lá). */
+const RESIDENCES: Record<string, { x: number; z: number }[]> = {
+  druida: [
+    { x: 0, z: 22 }, { x: 19, z: 11 }, { x: -19, z: 11 }, // moradias originais do anel externo
+    { x: 19, z: -11 }, { x: -19, z: -11 }, { x: 22, z: 0 }, // casas de família novas (E22.3)
+  ],
+};
+
 /** Alinha um ângulo ao grid voxel — só rotações de 90°, como no MCD (ADR 0076). */
 const snap90 = (a) => Math.round(a / (Math.PI / 2)) * (Math.PI / 2);
 
@@ -531,7 +541,9 @@ export class SettlementManager {
       seed: [...String(d.name ?? '')].reduce((a, ch) => ((a * 31 + ch.charCodeAt(0)) >>> 0), 7),
       x: s.x + d.x, z: s.z + d.z,
     }));
-    const homes = assignHouseholds(members);
+    // Casas de família dedicadas (E22.3), quando a vila as tem (Clareira).
+    const houseHomes = (RESIDENCES[s.theme] ?? []).map((h) => ({ x: s.x + h.x, z: s.z + h.z }));
+    const homes = assignHouseholds(members, houseHomes.length ? houseHomes : undefined);
     defs.forEach((d, i) => this._buildVillager(s, {
       ...d, gender: homes[i].gender, role: homes[i].role,
       householdId: homes[i].householdId, homeAt: homes[i].home,
@@ -618,10 +630,15 @@ export class SettlementManager {
       [0, 22, { roof: 0x4c7a34 }],
       [19, 11, { w: 4, d: 4, roof: 0x8a7a3a }],
       [-19, 11, { w: 4, d: 4, roof: 0x4c7a34 }],
+      // Casas de família (E22.3): mais moradias nos vãos SE/SO/L do anel externo,
+      // para toda família da Clareira ter uma casa dedicada.
+      [19, -11, { w: 4, d: 4, roof: 0x8a7a3a }],
+      [-19, -11, { w: 4, d: 4, roof: 0x4c7a34 }],
+      [22, 0, { w: 4, d: 4, roof: 0x5f8a3a }],
     ];
     // Interiores acessíveis (ADR 0094, E5): serviços no anel interno, moradias
     // no externo. Mercado geral fica na banca externa (landmarks).
-    const HOUSE_THEMES = ['weapons', 'armor', 'tavern', 'leader', 'hall', 'garden', 'home', 'home', 'home'];
+    const HOUSE_THEMES = ['weapons', 'armor', 'tavern', 'leader', 'hall', 'garden', 'home', 'home', 'home', 'home', 'home', 'home'];
     // Espigões de porta (ADR 0083): da porta de cada casa até a via em anel.
     // Os postes ficam no FIM do espigão (na via em anel), longe das casas e
     // espaçados — não mais ao lado das portas (ADR 0120).

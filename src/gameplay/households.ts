@@ -35,7 +35,7 @@ function vary(seed: number, mod: number): number {
  * posição do primeiro membro. Devolve um Assignment alinhado ao índice de
  * `members`.
  */
-export function assignHouseholds(members: Member[]): Assignment[] {
+export function assignHouseholds(members: Member[], homes?: { x: number; z: number }[]): Assignment[] {
   const n = members.length;
   const out: Assignment[] = new Array(n);
   if (n === 0) return out;
@@ -51,8 +51,10 @@ export function assignHouseholds(members: Member[]): Assignment[] {
     if (remaining === 1) size = 1;
     else if (remaining >= 3 && vary(members[order[i]].seed, 4) === 0) size = 3; // ~1/4 tem um filho
     const group = order.slice(i, i + size);
-    const anchor = members[group[0]];
-    const home = { x: anchor.x, z: anchor.z };
+    // Lar da família: uma casa dedicada (se houver lista) ou a posição do 1º membro.
+    const home = homes && homes.length
+      ? { ...homes[hid % homes.length] }
+      : { x: members[group[0]].x, z: members[group[0]].z };
     group.forEach((mi, k) => {
       const gender: Gender = k === 0
         ? (vary(members[mi].seed, 2) ? 'm' : 'f')       // 1º: qualquer gênero
