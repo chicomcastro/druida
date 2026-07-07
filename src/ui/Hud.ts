@@ -127,6 +127,7 @@ export class Hud {
   dialogueEl: any; victoryEl: any; toastEl: any; saveEl: any;
   panels: Map<number, any>;
   hotbarEl: any; _hotbarKey: string;
+  _touch = false;
   buffsEl: any; _buffsKey: string;
   comboEl: any; comboFill: any; comboCnt: any; _comboFlash: any;
   _dialogueQueue: string[];
@@ -155,7 +156,8 @@ export class Hud {
       <div id="hud-hint">WASD andar · J atacar · Shift esquivar · E falar<br>1–9 hotbar (formas + skills) · U/I/O dons · Q/R poção · B mochila · M mapa · T voltar ao Carvalho</div>`;
     document.body.appendChild(this.root);
     // Touch não tem teclado: as dicas de atalho só confundem (ADR 0068).
-    if (isTouchDevice()) {
+    this._touch = isTouchDevice();
+    if (this._touch) {
       this.root.classList.add('touch');
       (this.root.querySelector('#hud-hint') as HTMLElement).style.display = 'none';
     }
@@ -385,10 +387,13 @@ export class Hud {
       if (this.objDescEl) this.objDescEl.textContent = game.story.description?.() ?? '';
     }
 
-    // Prompt de interação.
+    // Prompt de interação. No touch não há tecla E: troca "E —" pelo botão ✋
+    // (E23.6) para não instruir uma tecla inexistente no tablet.
     if (game.interactPrompt) {
       this.promptEl.style.display = 'block';
-      this.promptEl.textContent = game.interactPrompt;
+      this.promptEl.textContent = this._touch
+        ? game.interactPrompt.replace(/(^|\s)E —/g, '$1✋ —').replace(/(^|\s)E\b/g, '$1✋')
+        : game.interactPrompt;
     } else {
       this.promptEl.style.display = 'none';
     }

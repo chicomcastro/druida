@@ -15,6 +15,7 @@ import { INGREDIENTS, ingredientCount, pouchList, addIngredient } from '../gamep
 import { sellIngredient, INGREDIENT_SELL } from '../gameplay/economy.js';
 import { FOOD_BASES } from '../gameplay/consumables.js';
 import { CROPS, seedList, plotState, plotProgress, plotReady, plantPlot, harvestPlot, addSeed } from '../gameplay/farming.js';
+import { isTouchDevice } from './TouchControls.js';
 
 /**
  * Menus em overlay DOM: menu principal (novo/continuar), pausa e
@@ -232,7 +233,9 @@ export class Menus {
       <p class="sub">Um dungeon-crawler de mundo aberto · classe Druida · coop local</p>
       <button class="btn" id="m-new" style="text-align:center">🌱 Novo jogo</button>
       <button class="btn" id="m-cont" style="text-align:center" disabled>📖 Continuar</button>
-      <p class="sub" style="margin-top:14px">WASD mover (olha p/ onde anda) · J/Clique atacar · 5–9 formas · U/I/O artefatos · Shift esquivar · E interagir · B inventário · Esc pausar</p>
+      <p class="sub" style="margin-top:14px">${isTouchDevice()
+        ? 'Manípulo à esquerda para andar · ⚔️ atacar · 💨 esquivar · ✋ interagir · 🎒 mochila · 🌿 talentos · 🗺️ mapa · ⏸ pausa'
+        : 'WASD mover (olha p/ onde anda) · J/Clique atacar · 5–9 formas · U/I/O artefatos · Shift esquivar · E interagir · B inventário · Esc pausar'}</p>
     </div>`;
     this.main.classList.add('show');
     this.main.querySelector('#m-new').onclick = () => { this.main.classList.remove('show'); this.game.menuMain = false; this.game.paused = false; onNew(); };
@@ -311,7 +314,7 @@ export class Menus {
         <span>${label}</span>
         <button class="mini" data-rb="${action}">${active ? '› pressione ‹' : cur}</button></div>`;
     }).join('');
-    this.controls.innerHTML = `<div class="panel" style="min-width:340px">
+    this.controls.innerHTML = `<div class="panel" style="min-width:min(340px,92vw)">
       <span class="close" id="ct-close">✕ (Esc)</span>
       <h2>🎮 Controles (P1)</h2>
       <p class="sub">Clique numa ação e pressione a nova tecla. O personagem olha para onde se move.</p>
