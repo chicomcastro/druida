@@ -104,6 +104,17 @@ Cada bioma tem: tabela de spawn + packs (ADR 0045), **hazard** ambiental
 avançar a campanha (ADR 0044), **forrageamento** de ingredientes (§7) e uma
 **masmorra** temática (§14).
 
+<p align="center">
+  <img src="img/bioma-clareira.jpg" width="270" alt="Clareira Viva" />
+  <img src="img/bioma-pantano.jpg" width="270" alt="Pântano Apodrecido" />
+  <img src="img/bioma-bosque_cinza.jpg" width="270" alt="Bosque Cinza" />
+</p>
+<p align="center">
+  <img src="img/bioma-picos.jpg" width="270" alt="Picos Gélidos" />
+  <img src="img/bioma-coracao.jpg" width="270" alt="Coração Corrompido" />
+</p>
+<sub>Os cinco biomas em campo: Clareira Viva (verde, vagalumes), Pântano Apodrecido (lodo/esporos), Bosque Cinza (cinza/brasas), Picos Gélidos (neve/gelo) e o Coração Corrompido (podridão roxa + lava).</sub>
+
 ## 4. Vilas
 Fonte: `src/data/settlements.ts` · geometria `src/world/SettlementManager.ts`.
 Quatro vilas, uma por bioma habitável, com **formato de casa próprio**, mercador
@@ -226,6 +237,18 @@ vila tem seu par de lojas-família rivais (§4).
 noite e **salva**; a refeição dá **+12% de dano por 120s** ("bem alimentado"). A
 taverna e o salão têm um **caldeirão** (`kind:'kitchen'`) — interaja para abrir a
 cozinha (§7). O salão comunal é o ponto de encontro noturno dos moradores (§5).
+
+<p align="center">
+  <img src="img/interior-weapons.jpg" width="270" alt="Forja (armas)" />
+  <img src="img/interior-armor.jpg" width="270" alt="Armaduraria" />
+  <img src="img/interior-market.jpg" width="270" alt="Mercado geral" />
+</p>
+<p align="center">
+  <img src="img/interior-garden.jpg" width="270" alt="Casa do Jardineiro" />
+  <img src="img/interior-tavern.jpg" width="270" alt="Taverna" />
+  <img src="img/interior-hall.jpg" width="270" alt="Salão comunal" />
+</p>
+<sub>Interiores temáticos (micro-instância selada, com móveis e NPC próprios): forja de armas, armaduraria, mercado geral, casa do jardineiro, taverna (com caldeirão) e salão comunal.</sub>
 
 ## 7. Culinária, forrageamento & despensa
 Fonte: `src/gameplay/recipes.ts`, `ingredients.ts`, `consumables.ts`,
@@ -374,6 +397,14 @@ ativa) e **1 ponto de talento por nível**. Tela: **K** (ou 🌿 no toque).
   correspondente ativa** — força builds coerentes.
 - **Respec grátis** (na tela; pensado para a Guardiã).
 
+Além das trilhas de arma/forma, há **habilidades ativas** atribuíveis a qualquer
+tecla da hotbar (§12), em seis ramos elementais — Natureza 🍃, Chama 🔥, Gelo ❄️,
+Tempestade ⚡, Feras 🐾 e Vida 💚 (ADR 0124/0130), cada um com efeito visual
+próprio.
+
+<p align="center"><img src="img/skilltree.png" width="620" alt="Painel de Talentos" /></p>
+<sub>Painel de Talentos (tecla K): habilidades ativas nos seis ramos + formas na hotbar, com respec grátis. As trilhas em destaque seguem a arma/forma ativa.</sub>
+
 ## 12. Itens, equipamento & hotbar
 Fonte: `src/gameplay/loot.ts`, `modifiers.ts`, `equip.ts`, `hotbar.ts`
 (ADR 0087/0088/0091). Inventário 5×10; **paperdoll anatômico**; ícones
@@ -382,9 +413,32 @@ ilustrados (ADR 0090).
 - **Tipos**: arma, armadura, artefato (dom), consumível.
 - **Slots de armadura**: elmo (`head`), peito (`body`), calças (`legs`), botas
   (`boots`).
-- **Famílias de arma**: machado (`axe`), foice (`scythe`), garras (`claws`),
-  cajado (`staff`) — ligam à skill tree. A arma equipada aparece **na mão** do
-  Druida (ADR 0152).
+- **Famílias de arma**: machado (`axe`, pesado/curto), foice (`scythe`, amplo),
+  garras (`claws`, rápido/estreito) e cajado (`staff`, à distância) — cada uma
+  liga à sua trilha na skill tree (§11). A arma equipada aparece **na mão** do
+  Druida (ADR 0152). ~20% do loot de arma é à distância (cajado).
+
+**Armas possíveis** (`loot.ts` · `MELEE/RANGED_WEAPON_BASES`): a base sorteia
+nome/elemento/família; raridade e afixos entram por cima.
+
+| Arma | Família | Elemento | Dano | Alcance/Arco |
+|---|---|---|---|---|
+| Machado da Clareira | machado | natureza 🍃 | 14 | 2.0 / estreito |
+| Machado de Geada | machado | gelo ❄️ | 15 | 2.0 / estreito |
+| Foice da Vinha | foice | natureza 🍃 | 11 | 2.6 / amplo |
+| Foice Trovejante | foice | tempestade ⚡ | 12 | 2.5 / amplo |
+| Garras Ancestrais | garras | natureza 🍃 | 9 | 1.7 / largo rápido |
+| Garras em Brasa | garras | fogo 🔥 | 10 | 1.7 / largo rápido |
+| Cajado de Carvalho | cajado | natureza 🍃 | 9 | à distância |
+| Galho Tempestuoso | cajado | tempestade ⚡ | 10 | à distância |
+| Cajado em Brasa | cajado | fogo 🔥 | 10 | à distância |
+
+<p align="center">
+  <img src="img/arma-espada.png" width="150" alt="Arma corpo-a-corpo (machado/garras)" />
+  <img src="img/arma-foice.png" width="150" alt="Foice" />
+  <img src="img/arma-cajado.png" width="150" alt="Cajado" />
+</p>
+<sub>Modelos de arma empunhados pelo Druida (ADR 0152): lâmina corpo-a-corpo (machado/garras), <b>foice</b> e <b>cajado</b>.</sub>
 - **Raridades**: comum (0 mods) · raro (1) · único (2), cada uma com cor e
   multiplicador.
 - **Modificadores** (afixos): armas — Potência (+dano), Roubo de Vida, Talho
