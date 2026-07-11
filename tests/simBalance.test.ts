@@ -79,6 +79,19 @@ describe('Canary de balanceamento (E42)', () => {
     }
   });
 
+  it('retrato COM gear por estilo: piso confortável, kite muito seguro (E51)', () => {
+    const at = (style: any) => {
+      const rows = runMatrix(spawnGame, {
+        styles: [style], enemies: ['husk', 'bogbrute'], counts: [3], levels: [10], seeds: [1, 2, 3], ticks: 3000, armor: true,
+      });
+      return rows.reduce((s, r) => s + r.hpLeftFrac, 0) / rows.length * 100;
+    };
+    const melee = at('melee'), ranged = at('ranged');
+    expect(melee).toBeGreaterThan(35);   // piso com gear: trio é médio, não wipe
+    expect(ranged).toBeGreaterThan(melee); // kitar é mais seguro que encarar
+    expect(ranged).toBeGreaterThan(80);   // ranged com gear quase não apanha
+  });
+
   it('o inimigo "duro" (Espectro) é fatal para quem não esquiva, mas justo p/ quem esquiva', () => {
     // Piso (melee sem esquiva): não consegue derrubá-lo (é rápido e atordoa —
     // encarar de frente não funciona). Sinal robusto: não limpa (ttk nulo).

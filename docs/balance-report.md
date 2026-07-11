@@ -157,6 +157,28 @@ que o jogo é bem balanceado do L1 ao L20 quando o jogador está equipado (como
 deve estar). O que faltava era o simulador **modelar** a armadura, não o jogo
 mudar. Fica travado por canary (com armadura o trio deixa de ser quase-wipe no vale).
 
+## Retrato COM gear por estilo/forma (E51)
+Fechado o veredito do vale, medimos o piso **com armadura** (common) por estilo e
+forma — o retrato que faltava. Nível 10, comuns, média (vida restante):
+
+| Estilo / Forma | 1 inimigo | 3 inimigos |
+|---|--:|--:|
+| melee (piso) | 89% | 59% |
+| melee + esquiva | 97% | 87% |
+| ranged (kite) | 99% | 97% |
+| caster | 100% | 99% |
+| Lobo | 89% | 59% |
+| Urso (tanque) | 91% | 67% |
+| Corvo (kite) | 99% | 88% |
+| **Sapo** | **79%** | **27%** |
+
+**Leitura:** com gear, o **melee sem esquiva** é o piso confortável (médio), e
+esquiva/ranged/caster ficam muito seguros (kite quase intocável) — como deve ser.
+Entre as formas, o **Sapo é a mais frágil** (curto-médio alcance, sem a robustez
+de Lobo/Urso: fica no alcance do inimigo mas sem mitigação de forma), enquanto o
+**Urso** é o mais tanque (35% de redução). Nada aparece trivial nem letal com gear
+— o balanceamento se sustenta em toda a leitura.
+
 ## Trava de regressão (canary)
 `tests/simBalance.test.ts` fixa as faixas: 1 comum não-trivial (vida < 90%) e não
 massacrado (> 45%); 3× muito mais duros (delta > 20 pts e vida < 55%); e o
