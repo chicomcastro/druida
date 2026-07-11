@@ -126,7 +126,11 @@ export class SimPlayer {
     for (const [eid, fac, etr, hp] of game.world.query(C.Faction, C.Transform, C.Health)) {
       if (fac.team !== Factions.ENEMY || hp.dead) continue;
       const d = (etr.x - tr.x) * (etr.x - tr.x) + (etr.z - tr.z) * (etr.z - tr.z);
-      if (d < bd) { bd = d; best = { eid, etr, d: Math.sqrt(d) }; }
+      if (d < bd) {
+        bd = d;
+        const radius = game.world.get(eid, C.Collider)?.radius ?? 0.5;
+        best = { eid, etr, d: Math.sqrt(d), radius };
+      }
     }
     return best;
   }
@@ -178,8 +182,12 @@ export class SimPlayer {
       return inp;
     }
 
-    // Melee / melee_dodge: aproxima e golpeia no combo.
-    if (foe.d > this.strike) { inp.moveX = ux; inp.moveZ = uz; }
+    // Melee / melee_dodge: aproxima e golpeia no combo. O alcance de golpe soma
+    // o RAIO do alvo (E53): contra um chefe grande (raio ~1.6) a colisão trava o
+    // bot longe do centro; sem isso ele "aproximaria" pra sempre sem nunca bater.
+    // Desconta o raio-padrão (0.5) p/ não afrouxar contra comuns.
+    const reach = this.strike + Math.max(0, (foe.radius ?? 0.5) - 0.5);
+    if (foe.d > reach) { inp.moveX = ux; inp.moveZ = uz; }
     else {
       inp.moveX = ux * 0.25; inp.moveZ = uz * 0.25;
       inp.attack = this._comboReady(game, playerId);

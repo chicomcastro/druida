@@ -199,6 +199,34 @@ unique+Casca **93%**. Ou seja, o gear escala o poder de forma **muito** relevant
 chefes/elites/biomas mais duros, não de comuns). O simulador agora modela isso, o
 que permite medir o topo da curva com fidelidade.
 
+## Chefes e elites no endgame (E53)
+Se comuns viram triviais no auge (E52), o **desafio do topo** tem de estar nos
+**chefes/elites**. O simulador passou a medi-los: `runScenario({ boss: true })`
+sobe 1 chefe e roda o `bossSystem` (fases/slam/invocação); `eliteAffix` promove
+o pack a elite (Pétreo/Volátil/Sanguessuga). Personagem endgame (unique + Casca,
+`melee_dodge`, reação 0.6):
+
+| Chefe (L15) | TTK | vida restante | mortes |
+|---|--:|--:|--:|
+| O Apodrecedor (rotlord) | ~33 s | 28% | 0/3 |
+| Ceifador Gélido (frostreaver) | ~26 s | 43% | 0/3 |
+| Senhor do Lodo (mirelord) | — | 0%* | 0/3 |
+
+\* o Senhor do Lodo é **invocador**: um jogador melee puro não vence a corrida
+contra os adds (fica vivo, mas não fecha a luta em 200 s) — é um **teste de build**
+(pede AoE/ranged para limpar as invocações). Elites (3 comuns promovidos, L10):
+Pétreo 78%, Volátil 84%, Sanguessuga 86% — um degrau acima do comum, mas o kitado
+aguenta.
+
+**Leitura:** contra comuns o endgame passeia (~90%+); contra chefes a luta custa
+**57–72%** da vida (ou vira stalemate no invocador). Ou seja, o desafio do topo
+mora onde deve — chefes/elites, não comuns.
+
+**Fix de alcance (E53):** o bot melee agora golpeia dentro de `strike + (raio do
+alvo − 0.5)`. Sem isso, contra um chefe grande (raio 1.6) a colisão travava o bot
+a ~2.1u e o arco (2.0u) nunca conectava — DPS zerava. Não muda nada contra comuns
+(raio 0.5).
+
 ## Trava de regressão (canary)
 `tests/simBalance.test.ts` fixa as faixas: 1 comum não-trivial (vida < 90%) e não
 massacrado (> 45%); 3× muito mais duros (delta > 20 pts e vida < 55%); e o
