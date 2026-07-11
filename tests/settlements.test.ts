@@ -158,6 +158,10 @@ describe('mundo vivo (ADR 0055)', () => {
     const sm = new SettlementManager(g);
     expect(sm._villagers.length).toBeGreaterThan(0);
     const v = sm._villagers[0];
+    // Fixa uma rotina EXTERNA (andarilho de manhã → 'roam'): o cronograma (E34)
+    // pode recolher moradores em recintos conforme a hora; aqui testamos o passeio.
+    v.archetype = 'wanderer';
+    g.dayNight = { time: 0.15 };
     const tr0 = g.world.get(v.id, C.Transform);
     v.wait = 0;
     v.target = { x: tr0.x + 5, z: tr0.z }; // alvo fixo/longe: sem flakiness de RNG
