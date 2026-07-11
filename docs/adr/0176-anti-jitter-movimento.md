@@ -41,6 +41,26 @@ foge → sai do raio → passeia (volta) → entra no raio → foge (ping-pong).
 - 399 testes verdes, `tsc` limpo, `vite build` ok. Ajustado o teste "moradores
   passeiam" para a velocidade RAMPAR (a suavização entra em ~0.18 s).
 
+## Adendo (E48) — auditoria dos demais agentes
+Depois de corrigir aldeões/fauna, auditamos **todos os agentes que se movem** para
+ver se o jitter aparecia noutro lugar (inimigos, chefes, invocações, loot):
+
+- **Inimigos** (`ai.ts`): só **perseguem** (melee, rumo direto ao alvo) ou
+  **mantêm distância com banda morta de ±1.5** (ranged) — sem forças de steering
+  conflitantes, então não invertem 180°. Medido: um pack de 6 melee colado no
+  jogador dá **0** reversões; um pack misto perseguindo um jogador em movimento por
+  15 s dá **~8** (imperceptível). Contra as **1846** dos aldeões antes do fix.
+- **Chefes** (`boss.ts`): não mexem em velocidade — só telegrafam slams e invocam;
+  o deslocamento vem da IA melee base (mesma de cima, sem jitter).
+- **Invocações** (`ally_*`): usam a mesma IA de perseguição — idem.
+- **Loot** (`pickups.ts`): puxado em linha reta para o jogador — sem reversão.
+
+**Conclusão:** o bug era exclusivo dos agentes com steering combinado (aldeões/
+fauna), já corrigido. Os demais estão limpos por construção. Travado por
+`tests/agentJitter.test.ts` (pack de inimigos com < 10–20 reversões), para pegar
+uma regressão caso alguém dê steering aos inimigos sem suavizar. **Nenhuma
+mudança de código de produção foi necessária no E48.**
+
 ## Futuro
 Aplicar a mesma suavização a qualquer novo agente ambiente; considerar
 interpolação visual no `renderSync` (usar o `alpha` do loop) para telas de alta
