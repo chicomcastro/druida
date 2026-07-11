@@ -115,6 +115,18 @@ avançar a campanha (ADR 0044), **forrageamento** de ingredientes (§7) e uma
 </p>
 <sub>Os cinco biomas em campo: Clareira Viva (verde, vagalumes), Pântano Apodrecido (lodo/esporos), Bosque Cinza (cinza/brasas), Picos Gélidos (neve/gelo) e o Coração Corrompido (podridão roxa + lava).</sub>
 
+### Ermos — cenários únicos & eremitas
+Fonte: `src/data/landmarks.ts` · `src/world/LandmarkManager.ts` (ADR 0170).
+Fora das vilas, o mapa tem **spots isolados** com cenário próprio: **Torre Rachada**
+(posto da Ordem em ruína), **Cemitério Esquecido** (lápides, mortalha, cadáver),
+**Estátua Caída** (herói sem nome), **Pedras Eretas** (monólitos + altar) e o
+**Marco da Romaria** (arco, lanterna, placa). Alguns têm um **eremita** vivendo ali
+(com uma rotininha de perambular perto de casa) que oferece uma **caçada**:
+expurgar N criaturas do ermo em troca de uma recompensa **única** (arma/armadura/
+artefato lendário nomeado). Chegar perto revela a **placa** do lugar.
+
+<p align="center"><img src="img/ermos.jpg" width="640" alt="Ermos: torre, cemitério, estátua, pedras eretas e marco da romaria" /></p>
+
 ## 4. Vilas
 Fonte: `src/data/settlements.ts` · geometria `src/world/SettlementManager.ts`.
 Quatro vilas, uma por bioma habitável, com **formato de casa próprio**, mercador
