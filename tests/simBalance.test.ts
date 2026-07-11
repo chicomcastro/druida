@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { makeGame, addPlayer } from './helpers.js';
-import { runMatrix, runScenario } from '../src/gameplay/simMatrix.js';
+import { runMatrix, runScenario, equipArmorSet } from '../src/gameplay/simMatrix.js';
 import { BALANCE } from '../src/data/balance.js';
+import { C } from '../src/core/ecs/components.js';
 
 const avgHpAt = (level: number, count: number) => {
   const rows = runMatrix(spawnGame, {
@@ -90,6 +91,33 @@ describe('Canary de balanceamento (E42)', () => {
     expect(melee).toBeGreaterThan(35);   // piso com gear: trio é médio, não wipe
     expect(ranged).toBeGreaterThan(melee); // kitar é mais seguro que encarar
     expect(ranged).toBeGreaterThan(80);   // ranged com gear quase não apanha
+  });
+
+  it('afixos de armadura e dons entram no piso (endgame fiel — E52)', () => {
+    // Rarity mais alta traz afixos (Vitalidade→vida, Baluarte→mitigação); o dom
+    // Casca dá +20% de vida. O simulador passa a modelar isso.
+    const stats = (rarity: string, boon: boolean) => {
+      const g = makeGame(); const pid = addPlayer(g, 0, 0, 0); g.progress.level = 15;
+      if (boon) g.boons = { b0: 'casca' };
+      equipArmorSet(g, pid, 15, rarity);
+      const hp = g.world.get(pid, C.Health), eq = g.world.get(pid, C.Equipment);
+      return { hp: hp.max, mit: eq.mitigation };
+    };
+    const common = stats('common', false), unique = stats('unique', false), maxed = stats('unique', true);
+    expect(unique.hp).toBeGreaterThan(common.hp);      // Vitalidade soma vida
+    expect(unique.mit).toBeGreaterThan(common.mit);    // Baluarte soma mitigação
+    expect(maxed.hp).toBeGreaterThan(unique.hp);        // Casca (+20%) por cima
+    // Endgame kitado sobrevive melhor que gear comum (o poder vem do gear — MCD).
+    const hpTrio = (rarity: string, boons?: string[]) => {
+      const rows = runMatrix(spawnGame, {
+        styles: ['melee'], enemies: ['husk', 'bogbrute'], counts: [3], levels: [15], seeds: [1, 2, 3],
+        ticks: 3000, armor: true, armorRarity: rarity, boons,
+      });
+      return rows.reduce((s, r) => s + r.hpLeftFrac, 0) / rows.length * 100;
+    };
+    const maxedTrio = hpTrio('unique', ['casca']);
+    expect(maxedTrio).toBeGreaterThan(hpTrio('common') + 10); // gear+dom melhoram bem a sobrevivência
+    expect(maxedTrio).toBeGreaterThan(50);                    // e o trio fica confortável (médio)
   });
 
   it('o inimigo "duro" (Espectro) é fatal para quem não esquiva, mas justo p/ quem esquiva', () => {

@@ -25,6 +25,10 @@ export interface Scenario {
   form?: string;
   /** Veste um set de armadura no tier do nível (piso "com gear", E49). Default false. */
   armor?: boolean;
+  /** Raridade da armadura ('common'|'rare'|'unique') — mais alta = afixos (E52). Default 'common'. */
+  armorRarity?: string;
+  /** Dons de santuário ativos (ids, ex.: ['casca']) — modela endgame (E52). */
+  boons?: string[];
 }
 
 export interface ScenarioResult extends Scenario {
@@ -57,10 +61,12 @@ export function equipForStyle(game: any, playerId: number, style: SimStyle, leve
  * fraco possível) para uma medição determinística e CONSERVADORA: se até armadura
  * comum já cobre o vale, um jogador de verdade (que acha peças raras) cobre mais.
  */
-export function equipArmorSet(game: any, playerId: number, level = 1) {
+export function equipArmorSet(game: any, playerId: number, level = 1, rarity: string = 'common') {
+  // Rarity mais alta traz afixos (Vitalidade/Baluarte…): common 0, rare 1,
+  // unique 2 afixos por peça (E52) — modela do jogador cru ao endgame kitado.
   for (let s = 0; s < ARMOR_SLOTS.length; s++) {
     const slot = ARMOR_SLOTS[s];
-    game.equip(playerId, generateItem(level, 'armor', 700 + level * 7 + s * 13, 'common', null, slot), slot);
+    game.equip(playerId, generateItem(level, 'armor', 700 + level * 7 + s * 13, rarity as any, null, slot), slot);
   }
 }
 
@@ -96,8 +102,11 @@ export function runScenario(spawnGame: () => { game: any; playerId: number }, sc
   const ticks = sc.ticks ?? 5400; // 90 s de teto
   const { game, playerId } = spawnGame();
   game.progress.level = level;
+  // Dons de santuário (E52): setados ANTES de equipar — o applyEquipment lê
+  // game.boons (ex.: 'casca' dá +20% de vida máx). Chave arbitrária, valor = id.
+  if (sc.boons?.length) game.boons = Object.fromEntries(sc.boons.map((b, i) => [`b${i}`, b]));
   equipForStyle(game, playerId, sc.style, level);
-  if (sc.armor) equipArmorSet(game, playerId, level); // piso "com gear" (E49)
+  if (sc.armor) equipArmorSet(game, playerId, level, sc.armorRarity ?? 'common'); // gear (E49/E52)
   // Forma ancestral (E44): concede+ativa a forma antes da luta. As formas usam o
   // ataque próprio (mordida/patada) e se sustentam com a seiva que o golpe rende.
   if (sc.form && sc.form !== 'humanoid') {
@@ -149,6 +158,10 @@ export interface MatrixSpec {
   reaction?: number;
   /** Veste armadura no tier do nível em todas as células (piso "com gear"). */
   armor?: boolean;
+  /** Raridade da armadura em todas as células ('common'|'rare'|'unique'). */
+  armorRarity?: string;
+  /** Dons de santuário ativos em todas as células (ids). */
+  boons?: string[];
 }
 
 /** Roda a matriz completa; devolve uma linha por (estilo × inimigo × qtd × nível),
@@ -160,7 +173,7 @@ export function runMatrix(spawnGame: () => { game: any; playerId: number }, spec
   const seeds = spec.seeds ?? [1, 2, 3];
   const rows: ScenarioResult[] = [];
   for (const style of styles) for (const enemy of spec.enemies) for (const count of counts) for (const level of levels) {
-    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks, reaction: spec.reaction, armor: spec.armor }));
+    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks, reaction: spec.reaction, armor: spec.armor, armorRarity: spec.armorRarity, boons: spec.boons }));
     const nums = (f: (r: ScenarioResult) => number) => runs.map(f).sort((a, b) => a - b);
     const median = (a: number[]) => a[Math.floor(a.length / 2)];
     const ttks = runs.map((r) => r.ttk).filter((v): v is number => v != null).sort((a, b) => a - b);

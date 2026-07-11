@@ -624,7 +624,9 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
   a L10–15 era quase-wipe; **com até a armadura mais fraca o vale some** (trio
   médio/difícil em toda a curva) — era artefato de medição, não desbalanceamento.
   Matar **1 comum** segue "médio" do L1 ao L20; o gear (arma+armadura) é o que dá
-  poder ao subir de nível (fiel ao MCD).
+  poder ao subir de nível (fiel ao MCD). O simulador também modela **afixos**
+  (`armorRarity`) e **dons** (`boons`) — no endgame kitado (unique+Casca) a
+  vida/mitigação sobem muito e os comuns viram triviais, como deve ser (E52).
 - **Tuning numérico** (curva de XP, drops, preços) é **pendente do Gate F** —
   playtest da primeira hora (§17).
 

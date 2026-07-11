@@ -41,6 +41,21 @@ Duas fatias candidatas: **E49** (modelar armadura no piso — medição fiel) e 
   fica bem acima do pelado (> +15 pts) e deixa de ser quase-wipe (> 30%).
 - 406 testes verdes, `tsc` limpo, `vite build` ok.
 
+## Adendo (E51/E52) — retrato com gear e endgame
+- **E51:** medido o piso com armadura (common) por **estilo** e **forma** (nível
+  10): melee é o piso confortável (89%/59% em 1/3 comuns), esquiva/ranged/caster
+  muito seguros; entre as formas o **Sapo** é a mais frágil e o **Urso** o mais
+  tanque. Nada trivial nem letal com gear.
+- **E52:** o simulador passou a modelar **afixos** (`armorRarity` → rare 1 /
+  unique 2 afixos, incl. Vitalidade/Baluarte) e **dons** (`boons`, ex.: 'casca'
+  +20% de vida). Endgame kitado (L15): vida 226→420, mitigação 34%→75%; 3 comuns
+  vão de 63% (common) a 93% (unique+Casca). O gear escala o poder de forma muito
+  relevante — comuns viram triviais no auge, como manda o design (o desafio de
+  endgame vem de chefes/elites). Tudo travado por `simBalance.test`.
+
+Nenhuma dessas fatias mudou balance de produção — só **capacidade de medição** no
+`simMatrix.ts`.
+
 ## Futuro
-Varrer o piso "com gear" por estilo/forma; modelar afixos de armadura (Vitalidade/
-Baluarte) e dons para uma medição ainda mais fiel do endgame.
+Medir chefes/elites com o personagem no endgame (onde mora o desafio real do topo);
+modelar afixos comportamentais (Espinhos/Sedento) e dons de dano no simulador.

@@ -179,6 +179,26 @@ de Lobo/Urso: fica no alcance do inimigo mas sem mitigação de forma), enquanto
 **Urso** é o mais tanque (35% de redução). Nada aparece trivial nem letal com gear
 — o balanceamento se sustenta em toda a leitura.
 
+## Endgame: afixos + dons (E52)
+O `common` do E49/E51 não tem afixos (rarity common = 0 mods). Para medir o
+**endgame kitado**, o simulador aceita `armorRarity` ('rare' = 1 afixo/peça,
+'unique' = 2) e `boons` (ex.: `['casca']`, o dom +20% de vida). Os afixos de
+armadura relevantes são **Vitalidade** (+vida) e **Baluarte** (+mitigação).
+Efeito no personagem (L15, set completo):
+
+| Gear | Vida máx | Mitigação |
+|---|--:|--:|
+| common | 226 | 34% |
+| rare | 262 | 53% |
+| unique | 350 | 75% |
+| unique + Casca | **420** | 75% |
+
+Dificuldade (3 comuns, L15, melee, média): common **63%** → unique **91%** →
+unique+Casca **93%**. Ou seja, o gear escala o poder de forma **muito** relevante
+— um personagem no auge trivializa comuns (como deve: o desafio de endgame vem de
+chefes/elites/biomas mais duros, não de comuns). O simulador agora modela isso, o
+que permite medir o topo da curva com fidelidade.
+
 ## Trava de regressão (canary)
 `tests/simBalance.test.ts` fixa as faixas: 1 comum não-trivial (vida < 90%) e não
 massacrado (> 45%); 3× muito mais duros (delta > 20 pts e vida < 55%); e o
