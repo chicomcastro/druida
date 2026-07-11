@@ -610,6 +610,14 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
 - **Progressão de grupo**: XP compartilhado; subir de nível dá pontos de encanto
   (a todos) + 1 ponto de talento. Existe também **XP de Craft** próprio (§7).
   `xpForLevel = base·nível^exp` (ver `data/balance.ts`).
+- **Dificuldade dos inimigos** (ADR 0175, E42 · `docs/balance-report.md`): a
+  escala em `scaleEnemy` usa fatores globais `enemy.hpBase` (1.4) e
+  `enemy.damageBase` (1.9) mais `player.baseHp` (118), **calibrados com o
+  simulador** (bot melee-sem-esquiva como piso) para que **1 comum dê trabalho**
+  e **3 juntos fiquem difíceis**. Alguns inimigos são **duros de propósito** — o
+  **Espectro de Cinza** é um "dodge-check": encarar de frente é fatal, mas
+  esquivar o telégrafo (ou lutar à distância) o vence. Um **canary** no CI
+  (`simBalance.test.ts`) trava essas faixas contra regressão.
 - **Tuning numérico** (curva de XP, drops, preços) é **pendente do Gate F** —
   playtest da primeira hora (§17).
 

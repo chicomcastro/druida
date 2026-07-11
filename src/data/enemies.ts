@@ -32,9 +32,14 @@ export const ENEMIES = {
     attackCooldown: 1.8, onHit: { poison: 2.5 }, xp: 14, loot: { dropChance: 0.34 },
   },
   ashwraith: {
+    // Inimigo "dodge-check" (E42/ADR 0175): rápido + atordoa, então encarar de
+    // frente (sem esquivar) é fatal — é o teste de mecânica do Bosque Cinza. Um
+    // jogador que ESQUIVA o telégrafo (ou luta à distância) o vence com folga.
+    // Nerf leve p/ não ser mais rápido que o herói a ponto de ser incatchável:
+    // speed 3.2→2.9, stun 0.5→0.4.
     name: 'Espectro de Cinza', mesh: 'ashwraith', behavior: 'melee',
-    hp: 40, speed: 3.2, damage: 10, radius: 0.5, aggroRange: 17, attackRange: 1.5,
-    attackCooldown: 1.4, onHit: { stun: 0.5 }, xp: 15, loot: { dropChance: 0.34 },
+    hp: 40, speed: 2.9, damage: 10, radius: 0.5, aggroRange: 17, attackRange: 1.5,
+    attackCooldown: 1.4, onHit: { stun: 0.4 }, xp: 15, loot: { dropChance: 0.34 },
   },
   frostfang: {
     name: 'Presa-Gélida', mesh: 'frostfang', behavior: 'melee',

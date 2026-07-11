@@ -19,8 +19,11 @@ export function scaleEnemy(game, def) {
   const players = Math.max(1, [...game.world.query(C.PlayerControlled)].length);
   const e = BALANCE.enemy;
   const hpMul = (1 + (lvl - 1) * e.hpPerLevel) * (e.hpPlayerBase + players * e.hpPerPlayer);
-  const dmgMul = 1 + (lvl - 1) * e.damagePerLevel;
-  return { ...def, hp: Math.round(def.hp * hpMul), damage: Math.round(def.damage * dmgMul) };
+  // `hpBase`/`damageBase` (E42): fatores globais de tuning de dificuldade — o
+  // simulador (ADR 0174) mostrou os comuns fáceis demais e os packs pouco duros.
+  const dmgMul = (1 + (lvl - 1) * e.damagePerLevel) * (e.damageBase ?? 1);
+  const hpBase = e.hpBase ?? 1;
+  return { ...def, hp: Math.round(def.hp * hpMul * hpBase), damage: Math.round(def.damage * dmgMul) };
 }
 
 export function spawnEnemyByKey(game, key, x, z) {

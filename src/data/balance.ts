@@ -6,7 +6,7 @@
  */
 export const BALANCE = {
   player: {
-    baseHp: 130,
+    baseHp: 118, // E42: leve corte (130→118) p/ o combate custar algo (ADR 0175)
     baseSapRegen: 15,
     sapMax: 100,
     sapStartFrac: 0.5,
@@ -26,6 +26,13 @@ export const BALANCE = {
     hpPlayerBase: 0.7,
     hpPerPlayer: 0.4,
     damagePerLevel: 0.07,
+    // Fatores globais de dificuldade (E42, ADR 0175): calibrados com o simulador
+    // (bot melee-sem-esquiva como PISO). Antes 1 comum era trivial (~90% de vida)
+    // e 3 juntos só "médio"; agora 1 comum dá trabalho (fácil/médio, ~78%) e 3
+    // juntos ficam difícil/brutal (~26%). Os inimigos mais duros (Casca Oca,
+    // Xamã, Espectro) em grupo passam a ameaçar de verdade.
+    hpBase: 1.4,
+    damageBase: 1.9,
   },
 
   spawn: {
