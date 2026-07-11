@@ -48,6 +48,7 @@ export function serialize(game): SaveV1 {
     fog: game.worldManager ? [...game.worldManager.explored] : [],
     chest: game.sharedChest ?? [],
     camps: game.poi ? [...game.poi.cleared] : [],
+    landmarks: game.landmarks?.serialize() ?? null,
     lore: game.lore ? [...game.lore.found] : [],
     quests: game.quests?.serialize() ?? {},
     sideQuests: game.sideQuests?.serialize() ?? null,
@@ -72,6 +73,7 @@ export function apply(game, data: SaveV1 | null | undefined): boolean {
     for (const camp of game.poi.camps) if (game.poi.cleared.has(camp.id)) camp.cleared = true;
   }
   if (data.lore && game.lore) game.lore.found = new Set(data.lore);
+  if (data.landmarks && game.landmarks) game.landmarks.restore(data.landmarks);
   if (data.quests && game.quests) game.quests.restore(data.quests);
   if (data.sideQuests && game.sideQuests) game.sideQuests.restore(data.sideQuests);
   if (data.boons) game.boons = { ...data.boons }; // antes do loop de players: applyEquipment lê os dons

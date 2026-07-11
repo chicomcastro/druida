@@ -219,6 +219,8 @@ export interface SaveV1 {
   fog: string[];
   chest: Item[];
   camps: string[];
+  /** Caçadas dos ermos concluídas (E37). Opcional (saves antigos). */
+  landmarks?: { done: string[] } | null;
   lore: string[];
   /** Missões de vila (ADR 0047): status/progresso por quest. Opcional (v1 antigos). */
   quests?: Record<string, { status: 'available' | 'active' | 'done'; progress: number }>;

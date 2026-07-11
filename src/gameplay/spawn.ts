@@ -29,6 +29,7 @@ export function spawnEnemyByKey(game, key, x, z) {
   const scaled = scaleEnemy(game, def);
   const id = createEnemy(game.world, game.renderer, scaled, { x, z });
   game.world.get(id, C.LootTable).xp = scaled.xp;
+  const r = game.world.get(id, C.Renderable); if (r) r.kind = key; // espécie p/ caçadas (E37)
   return id;
 }
 

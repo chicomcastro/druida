@@ -26,6 +26,7 @@ export function interactionSystem(game, dt) {
         else if (inter.kind === 'dungeon') game.dungeon.enter(inter.entranceId);
         else if (inter.kind === 'dungeon_reward') game.dungeon.claimReward();
         else if (inter.kind === 'villager') game.emit('dialogue', { lines: inter.lines });
+        else if (inter.kind === 'hermit') game.landmarks?.talk(inter.spotId); // ermos (E37)
         else if (inter.kind === 'house') game.interiors.enter(inter.interiorTheme, inter.houseLabel, inter.venueId);
         else if (inter.kind === 'house_exit') game.interiors.exit();
         else if (inter.kind === 'tavern') { game.emit('dialogue', { lines: inter.lines }); game.interiors.rest(); }
