@@ -183,6 +183,24 @@ export const SETTLEMENTS: SettlementDef[] = [
           'Lentilha: Beba água só das lanternas de musgo. O resto deste pântano é chá de podridão.',
         ],
       },
+      {
+        name: 'Remador Lódão',
+        x: 11,
+        z: -3,
+        lines: [
+          'Lódão: Minha palafita é a última do vau. De noite, só a água e as rãs — e eu gosto assim.',
+          'Lódão: Se a passarela ranger três vezes, volta. Na quarta, ela cede.',
+        ],
+      },
+      {
+        name: 'Filó dos Barcos',
+        x: -5,
+        z: -10,
+        lines: [
+          'Filó: Nasci nesta casa sobre estacas. Meus filhos vão nascer nela também, se o brejo deixar.',
+          'Filó: O forasteiro dorme na taverna? Pena. Cama de junco trançado é a mais macia do pântano.',
+        ],
+      },
     ],
     merchant: { x: -3, z: -10 },
     quest: {
@@ -266,6 +284,24 @@ export const SETTLEMENTS: SettlementDef[] = [
           'Cinza: O Baru fala dos fornos, mas são os braseiros que seguram a noite. Pode agradecer depois.',
         ],
       },
+      {
+        name: 'Empilhadora Tora',
+        x: 9,
+        z: 4,
+        lines: [
+          'Tora: Empilho lenha do amanhecer ao anoitecer. Cabana cheia é inverno tranquilo.',
+          'Tora: Minha casa é aquela de tora nova, a leste. Cheira a resina — cheiro de casa.',
+        ],
+      },
+      {
+        name: 'Velha Fagulha',
+        x: -6,
+        z: 6,
+        lines: [
+          'Fagulha: Costurei o teto de cada cabana desta paliçada. Agora só remendo o meu.',
+          'Fagulha: À noite, todos voltam pra dentro. A paliçada guarda quem dorme, o Baru guarda o fogo.',
+        ],
+      },
     ],
     merchant: { x: 3, z: -10 },
     quest: {
@@ -347,6 +383,24 @@ export const SETTLEMENTS: SettlementDef[] = [
         lines: [
           'Bruma: Eu levo caravanas até Cinzafolha quando o tempo abre. O tempo não abre há semanas.',
           'Bruma: Se a nevasca te pegar, procure os cairns. Cada pilha de pedra é alguém que chegou vivo.',
+        ],
+      },
+      {
+        name: 'Tecelona Lã',
+        x: 10,
+        z: -6,
+        lines: [
+          'Lã: Bato lã contra o vento o dia inteiro. De noite, minha tenda é a mais quente do abrigo.',
+          'Lã: A chama azul não aquece, forasteiro. Quem aquece é a pele empilhada e a família junto.',
+        ],
+      },
+      {
+        name: 'Menino Cairn',
+        x: -10,
+        z: -3,
+        lines: [
+          'Cairn: A Sira diz que um dia eu vou marcar a trilha sozinho. Por enquanto só empilho pedrinha.',
+          'Cairn: Minha tenda é aquela ali, ó. À noite a gente conta história até a chama baixar.',
         ],
       },
     ],

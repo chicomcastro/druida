@@ -29,11 +29,13 @@ const RESIDENCES: Record<string, { x: number; z: number }[]> = {
     { x: 0, z: 22 }, { x: 19, z: 11 }, { x: -19, z: 11 }, // moradias originais do anel externo
     { x: 19, z: -11 }, { x: -19, z: -11 }, { x: 22, z: 0 }, // casas de família novas (E22.3)
   ],
-  // Vilas 2–4 (E22.4): as próprias construções da vila são os lares das famílias
-  // (palafitas / cabanas / tendas) — o povo mora onde vive. Sem prédios novos.
-  palafitas: [{ x: -8, z: -4 }, { x: 6, z: -8 }, { x: -2, z: 8 }, { x: 10, z: 4 }, { x: -9, z: 6 }],
-  lenhadores: [{ x: -7, z: -6 }, { x: 7, z: -4 }, { x: 0, z: 9 }, { x: -12, z: 0 }],
-  degelo: [{ x: -7, z: 3 }, { x: 6, z: -3 }, { x: -3, z: -8 }, { x: 8, z: 8 }, { x: -9, z: -12 }],
+  // Vilas 2–4 (E38): agora têm LARES dedicados (palafitas/cabanas/tendas de
+  // família, temas *_home) — as famílias moram lá, um household por lar, para o
+  // cronograma recolher cada morador na SUA casa (fecha o gap do E36). As coords
+  // batem com os prédios-lar acrescentados nos builders _buildPalafitas etc.
+  palafitas: [{ x: 12, z: -2 }, { x: -14, z: -2 }],
+  lenhadores: [{ x: 12, z: 2 }, { x: 12, z: -3 }, { x: -9, z: 11 }],
+  degelo: [{ x: 11, z: -9 }, { x: -11, z: -2 }],
 };
 
 /** Alinha um ângulo ao grid voxel — só rotações de 90°, como no MCD (ADR 0076). */
@@ -129,13 +131,15 @@ export class SettlementManager {
       const s = tr && this.settlementAt(tr.x, tr.z);
       if (!s) continue;
       const arr = (this._venues[s.theme] ??= []);
-      const svc = interiorTheme(inter.interiorTheme).service;
-      if (inter.interiorTheme === 'home') {
-        // Moradia por-casa (E36): cada porta 'home' é um recinto PRÓPRIO — id único
-        // e a família (household) mais próxima do lar. A porta guarda seu venueId.
+      const def = interiorTheme(inter.interiorTheme);
+      const svc = def.service;
+      if (def.residence) {
+        // Moradia por-casa (E36/E38): cada porta de LAR é um recinto PRÓPRIO — id
+        // único e a família (household) mais próxima. O tema guarda o clima da
+        // vila (home/vau_home/cinza_home/degelo_home). A porta guarda seu venueId.
         const n = (homeN[s.theme] = (homeN[s.theme] ?? 0) + 1);
         const vid = `home#${s.theme}#${n}`;
-        arr.push({ id: vid, themeId: 'home', service: svc, kind: 'home', household: this._nearestHousehold(s.theme, tr.x, tr.z), x: tr.x, z: tr.z });
+        arr.push({ id: vid, themeId: inter.interiorTheme, service: svc, kind: 'home', household: this._nearestHousehold(s.theme, tr.x, tr.z), x: tr.x, z: tr.z });
         inter.venueId = vid;
       } else {
         inter.venueId = inter.interiorTheme; // recinto público: id = tema (1 por vila)
@@ -1043,7 +1047,13 @@ export class SettlementManager {
     // Casas sobre estacas.
     // Portas/escadas voltadas ao CENTRO (ADR 0083) — ninguém desce no vazio.
     // 5a casa a noroeste (ADR 0084): a vila cresce sobre a lagoa.
-    const huts = [[-8, -4, Math.PI / 2], [6, -8, 0], [-2, 8, Math.PI], [10, 4, -Math.PI / 2], [-9, 6, Math.PI / 2]];
+    // Vau viva (E38): as 5 primeiras são serviços/famílias-rixa; as 3 últimas são
+    // PALAFITAS-LAR (vau_home) — o Vau cresce até a escala da Clareira, com casas
+    // de família entráveis onde os coletores dormem (fecha o gap do E36).
+    const huts = [
+      [-8, -4, Math.PI / 2], [6, -8, 0], [-2, 8, Math.PI], [10, 4, -Math.PI / 2], [-9, 6, Math.PI / 2],
+      [12, -2, -Math.PI / 2], [-14, -2, Math.PI / 2], // lares (E38)
+    ];
     for (const [x, z, ry] of huts) {
       const hut = new THREE.Group();
       for (const [lx, lz] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) {
@@ -1109,7 +1119,7 @@ export class SettlementManager {
     huts.forEach(([x, z, ry], hi) => {
       const px = alignAxis(x, 5), pz = alignAxis(z, 5);
       const dp = this._spun(px, pz, ry, 0, 2.0); // na FRENTE do deck (ADR 0127) — não flutua sobre a água
-      this._houseDoor(w, dp.x, dp.z, PAL_THEMES[hi] ?? 'home');
+      this._houseDoor(w, dp.x, dp.z, PAL_THEMES[hi] ?? 'vau_home'); // extras = lar (E38)
     });
     // Passarelas de tábua: da BASE DA ESCADA de cada casa até o centro, em
     // L ortogonal (ADR 0083) — a rede de píer fica toda interligada.
@@ -1184,7 +1194,7 @@ export class SettlementManager {
     // Lanternas de musgo (verde-água): uma no CANTO EXTERNO do deck de cada
     // palafita (sobre a plataforma sólida, fora das passarelas), luz p/ o centro
     // (ADR 0127). Antes caíam no meio das passarelas.
-    for (const [hx, hz] of [[-8, -4], [6, -8], [-2, 8], [10, 4], [-9, 6]]) {
+    for (const [hx, hz] of [[-8, -4], [6, -8], [-2, 8], [10, 4], [-9, 6], [12, -2], [-14, -2]]) {
       const len = Math.hypot(hx, hz) || 1;
       this._lantern(w, hx + (hx / len) * 1.8, hz + (hz / len) * 1.8, 0x6affc8, 0, 0);
     }
@@ -1208,7 +1218,12 @@ export class SettlementManager {
     }
     // Cabanas de tronco com telhado de duas águas (prisma triangular).
     // Portas voltadas ao centro (ADR 0083).
-    const cabins = [[-7, -6, Math.PI / 2], [7, -4, -Math.PI / 2], [0, 9, Math.PI], [-12, 0, Math.PI / 2]];
+    // Cinzafolha viva (E38): 4 cabanas de serviço/rixa + 3 cabanas-LAR (cinza_home),
+    // onde as famílias de lenhadores dormem — a vila cresce à escala da Clareira.
+    const cabins = [
+      [-7, -6, Math.PI / 2], [7, -4, -Math.PI / 2], [0, 9, Math.PI], [-12, 0, Math.PI / 2],
+      [12, 2, 0], [12, -3, 0], [-9, 11, 0], // lares (E38)
+    ];
     for (const [x, z, ry] of cabins) {
       const cabin = new THREE.Group();
       // Paredes de toras: cilindros horizontais empilhados, com os topos
@@ -1269,7 +1284,7 @@ export class SettlementManager {
       const swap = Math.abs(Math.round(ry / (Math.PI / 2))) % 2 === 1;
       const px = alignAxis(x, swap ? 4 : 6), pz = alignAxis(z, swap ? 6 : 4);
       const dp = this._spun(px, pz, ry, -1.0, 2.6); // à frente da porta
-      this._houseDoor(w, dp.x, dp.z, LEN_THEMES[ci] ?? 'home');
+      this._houseDoor(w, dp.x, dp.z, LEN_THEMES[ci] ?? 'cinza_home'); // extras = lar (E38)
     });
     // Serraria: cavaletes com tronco e lâmina circular.
     const mill = new THREE.Group();
@@ -1371,7 +1386,13 @@ export class SettlementManager {
   _buildDegelo(w, rng) {
     // Tendas de pele com capuz de neve.
     // 5a tenda ao sul (ADR 0084), guardando a trilha dos cairns.
-    const tents = [[-7, 3, 0], [6, -3, -Math.PI / 2], [-3, -8, 0], [8, 8, Math.PI / 2], [-9, -12, 0]];
+    // Abrigo do Degelo vivo (E38): 5 tendas de serviço/rixa + 3 tendas-LAR
+    // (degelo_home) onde as famílias montanhesas se abrigam do frio (fecha o gap
+    // do E36). Posições longe dos cairns, cristais e do muro de gelo.
+    const tents = [
+      [-7, 3, 0], [6, -3, -Math.PI / 2], [-3, -8, 0], [8, 8, Math.PI / 2], [-9, -12, 0],
+      [11, -9, -Math.PI / 2], [-11, -2, Math.PI / 2], // lares (E38)
+    ];
     for (const [x, z, ry] of tents) {
       // Tenda em blocos (M15.8): pirâmide 3-2-1 de pele, no vocabulário MC.
       const tent = new THREE.Group();
@@ -1425,7 +1446,7 @@ export class SettlementManager {
     tents.forEach(([x, z], ti) => {
       const a = snap90(Math.atan2(-x, -z)); // entrada voltada ao centro
       const dx = x + Math.sin(a) * 2.9, dz = z + Math.cos(a) * 2.9;
-      this._houseDoor(w, dx, dz, DEG_THEMES[ti] ?? 'home');
+      this._houseDoor(w, dx, dz, DEG_THEMES[ti] ?? 'degelo_home'); // extras = lar (E38)
     });
     // Cairns: pilhas de pedra que marcam a trilha antiga ao Coração.
     const cairns = [[0, -13], [-11, -7], [12, 2], [-9, 10], [7, 13]]; // (7,13): fora do muro de gelo

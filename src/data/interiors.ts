@@ -22,6 +22,9 @@ export interface InteriorTheme {
   shopBias?: 'weapon' | 'armor' | null;
   /** Categoria de estoque especializada (E21): 'food' cozinheiro, 'garden' jardineiro. */
   shopKind?: 'food' | 'garden' | null;
+  /** Moradia (E36/E38): a porta abre um LAR — cada uma é um recinto próprio de
+   *  família (venue com household), não um serviço público compartilhado. */
+  residence?: boolean;
   /** Família à qual o NPC pertence (rixa — ADR 0095). */
   family?: string;
   /** Fragmento do codex revelado ao conversar (uma vez). */
@@ -109,7 +112,7 @@ export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
   },
   home: {
     id: 'home', name: '🏠 Moradia', npc: 'Morador', role: 'moradia',
-    service: 'talk',
+    service: 'talk', residence: true,
     floor: 0x3a2e22, wall: 0x5a4632, accent: 0xffd890, robe: 0x5a8f5f, trim: 0x6b4a2f,
     lines: ['Uma casa simples, mas quente. Fique à vontade.'],
   },
@@ -172,6 +175,28 @@ export const INTERIOR_THEMES: Record<string, InteriorTheme> = {
       'Pele e lã batida contra o vento gelado. Aquece e protege.',
       'Os Cairn fecham o melhor pasto por umas pedras… mas o rebanho anda fugindo por conta própria. Não sei mais o que pensar.',
     ],
+  },
+
+  // --- Moradias das vilas 2–4 (E38): cada povo mora onde vive, num lar com a
+  //     paleta e o clima da sua vila (verde-água do Vau, brasa de Cinzafolha,
+  //     gelo do Degelo). São recintos de família (residence), não serviços. ----
+  vau_home: {
+    id: 'vau_home', name: '🪵 Palafita da Família', npc: 'Morador', role: 'moradia',
+    service: 'talk', residence: true,
+    floor: 0x2b3a3a, wall: 0x33454f, accent: 0x6affc8, robe: 0x3f6a86, trim: 0xbfe0ea,
+    lines: ['O deck range com a maré, mas a lanterna de musgo mantém a casa quente.'],
+  },
+  cinza_home: {
+    id: 'cinza_home', name: '🪵 Cabana da Família', npc: 'Morador', role: 'moradia',
+    service: 'talk', residence: true,
+    floor: 0x2e2418, wall: 0x3f3122, accent: 0xff9a3a, robe: 0x6b4a2f, trim: 0xc89a5a,
+    lines: ['Toras empilhadas, brasa no fogão. Enquanto a chaminé fumega, a casa vive.'],
+  },
+  degelo_home: {
+    id: 'degelo_home', name: '⛺ Tenda da Família', npc: 'Morador', role: 'moradia',
+    service: 'talk', residence: true,
+    floor: 0x2b3038, wall: 0x37454f, accent: 0x9fdcff, robe: 0x4a6e86, trim: 0xdff0ff,
+    lines: ['Peles no chão, chama azul no centro. O frio fica do lado de fora.'],
   },
 };
 

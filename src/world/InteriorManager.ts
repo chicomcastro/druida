@@ -96,7 +96,15 @@ export class InteriorManager {
   _roomSpec(theme) {
     if (theme.id === 'hall') return { rx: 10, rz: 9 };     // salão grande
     if (theme.service === 'rest') return { rx: 9, rz: 8 };  // taverna ampla
-    if (theme.id === 'home') return { rx: 6, rz: 6 };       // moradia aconchegante
+    if (theme.residence) {
+      // Moradia aconchegante (E36) com formato próprio por vila (E38): o lar do
+      // Vau é raso, a cabana de Cinzafolha é funda, a tenda do Degelo é quadrada.
+      const homes: Record<string, { rx: number; rz: number }> = {
+        home: { rx: 6, rz: 6 }, vau_home: { rx: 7, rz: 5 },
+        cinza_home: { rx: 6, rz: 7 }, degelo_home: { rx: 6, rz: 6 },
+      };
+      return homes[theme.id] ?? { rx: 6, rz: 6 };
+    }
     if (theme.service === 'talk') return { rx: 7, rz: 6 };  // liderança: larga e rasa
     const h = [...theme.id].reduce((a, c) => ((a * 31 + c.charCodeAt(0)) >>> 0), 7);
     return { rx: 7 + (h % 2), rz: 7 + ((h >> 2) % 3) };     // lojas: 7..8 × 7..9
