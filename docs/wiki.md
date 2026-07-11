@@ -650,6 +650,10 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
     `caster`. `runMatrix(spawnGame, { styles, enemies, counts, levels })` varre
     **estilo × inimigo × quantidade × nível** e classifica cada célula
     (`rateDifficulty`: trivial→letal) — o mapa de dificuldade que guia o tuning.
+  - **Reação imperfeita** (`reaction`, 0..1 · E43): chance de o robô esquivar
+    cada golpe telegrafado. `0` = piso (nunca esquiva), `~0.6` = jogador médio,
+    `1` = esquivador perfeito. Foi o dial que **validou** o balanceamento (E42):
+    até ~0.6 a dificuldade é ~a do piso (ver `docs/balance-report.md`).
 
 ## 18. Lacunas conhecidas
 - ~~**Forma Lobo sem desbloqueio**~~ ✅ **Resolvido (ADR 0106)**.

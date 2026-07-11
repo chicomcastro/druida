@@ -48,6 +48,26 @@ em `src/gameplay/simMatrix.ts` (ver `tests/simBalance.test.ts`).
   `melee_dodge` (vence com 100% de vida) e para `ranged`. É intencional: os
   inimigos duros **cobram a mecânica** (esquivar/kitar), como o design pediu.
 
+## Validação com jogador realista (E43)
+O piso é o bot que **nunca esquiva**. Para conferir se o tuning vale para um
+**jogador médio** (que esquiva parte dos golpes), o `SimPlayer` ganhou o parâmetro
+`reaction` (0..1 = chance de esquivar cada telégrafo). Varredura nos comuns
+(`melee_dodge`, nível 1, vida restante média):
+
+| `reaction` | 1 inimigo | 3 inimigos | leitura |
+|---:|--:|--:|---|
+| 0.0 (nunca) | 76% | 22% | = piso do E42 |
+| 0.3 | 76% | 29% | quase igual ao piso |
+| **0.6 (médio)** | **79%** | **29%** | **difícil em grupo, como o piso** |
+| 0.85 | 81% | 50% | começa a aliviar |
+| 1.0 (perfeito) | 93% | 75% | jogador impecável trivializa (esperado) |
+
+**Conclusão:** até ~0.6 de reação (jogador médio) a dificuldade é praticamente a
+mesma do piso — esquivar só ~60% dos golpes ainda faz absorver quase toda a
+punição. Só a esquiva **quase perfeita** (0.85+) alivia de verdade. Ou seja: o
+tuning do E42 **não é duro só para o pior caso** — vale para o jogador médio; e
+recompensa quem domina a esquiva (o teto), como deve ser num ARPG.
+
 ## Trava de regressão (canary)
 `tests/simBalance.test.ts` fixa as faixas: 1 comum não-trivial (vida < 90%) e não
 massacrado (> 45%); 3× muito mais duros (delta > 20 pts e vida < 55%); e o

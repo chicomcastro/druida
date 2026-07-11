@@ -60,6 +60,12 @@ export interface SimPlayerOpts {
   /** Distância-alvo mínima/máxima do kite (ranged/caster). */
   kiteMin?: number;
   kiteMax?: number;
+  /**
+   * Qualidade de reação (0..1): chance de o robô ESQUIVAR cada golpe telegrafado.
+   * `1` = jogador perfeito (esquiva tudo, toma ~0 dano); `0` = nunca esquiva (piso);
+   * `~0.6` = jogador médio. Só vale para estilos com esquiva (default 1).
+   */
+  reaction?: number;
 }
 
 /**
@@ -74,7 +80,11 @@ export class SimPlayer {
   strike: number;
   kiteMin: number;
   kiteMax: number;
+  reaction: number;
   _exdx = 0; _exdz = 1; _exploreT = 0; _dodgeCd = 0; _artPulse = false;
+  // Estado da reação: decide UMA vez por telégrafo se vai esquivar aquele golpe
+  // (senão, rolar todo tick faria uma reação baixa ainda esquivar quase tudo).
+  _reacting = false; _willDodge = false;
   constructor(seed = 1, opts: SimPlayerOpts = {}) {
     this.rng = mulberry32(seed);
     this.style = opts.style ?? 'melee';
@@ -82,6 +92,7 @@ export class SimPlayer {
     this.strike = opts.strikeRange ?? 1.9;
     this.kiteMin = opts.kiteMin ?? 4.5;
     this.kiteMax = opts.kiteMax ?? 7.5;
+    this.reaction = opts.reaction ?? 1;
   }
 
   /** Ataque no ponto-doce do combo (ADR 0092): 1º golpe ao zerar o cooldown,
@@ -94,13 +105,19 @@ export class SimPlayer {
     return timer <= 0 || p >= 0.72;
   }
 
-  /** Esquiva o golpe telegrafado: inimigo em windup e no alcance, com dodge pronto. */
+  /** Esquiva o golpe telegrafado: inimigo em windup e no alcance, com dodge pronto.
+   *  Reação imperfeita (E43): decide UMA vez por telégrafo (rng < reaction) se
+   *  reage àquele golpe — modela um jogador médio, não um esquivador perfeito. */
   _shouldDodge(game: any, playerId: number, foe: any): boolean {
+    const ai = game.world.get(foe.eid, C.AI);
+    const threatened = !!(ai && ai.windup > 0 && foe.d <= (ai.attackRange ?? 1.5) + 1.1);
+    if (!threatened) { this._reacting = false; return false; } // golpe passou: rearma p/ o próximo
+    if (!this._reacting) { this._reacting = true; this._willDodge = this.rng() < this.reaction; } // rola 1x
+    if (!this._willDodge) return false;                        // este golpe ele resolveu encarar
     if (this._dodgeCd > 0) return false;
     const pc = game.world.get(playerId, C.PlayerControlled);
     if ((pc?.dodgeTimer ?? 0) > 0) return false;
-    const ai = game.world.get(foe.eid, C.AI);
-    return !!(ai && ai.windup > 0 && foe.d <= (ai.attackRange ?? 1.5) + 1.1);
+    return true;
   }
 
   /** Inimigo vivo mais próximo do jogador (facção ENEMY, não morto). */
