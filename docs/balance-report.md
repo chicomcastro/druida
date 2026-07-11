@@ -88,6 +88,39 @@ Além de melee/esquiva/ranged, o simulador agora mede o **caster** e as **formas
   com papéis distintos (Lobo = DPS móvel; Urso = dano/controle/tanque). Corvo/Sapo
   (formas à distância) ficam para uma próxima fatia.
 
+## Curva por nível / equipamento (E45)
+O simulador aceita `levels` — dá para varrer a dificuldade conforme o grupo sobe
+de nível (inimigos escalam por `hpPerLevel`/`damagePerLevel`; o jogador ganha
+poder pela **arma no tier do nível**, fiel ao MCD: "poder vem do gear, não de
+stat bruto de nível"). Medindo o piso (melee sem esquiva/sem armadura):
+
+| Nível | 1 comum | 3 comuns | | 1 comum | 3 comuns |
+|---|--:|--:|---|--:|--:|
+| | **antes (0.16/0.07)** | | | **depois (0.12/0.05)** | |
+| L1 | 76% | 22% | | 76% | 22% |
+| L5 | 76% | 19% | | 77% | 23% |
+| L10 | 66% | **4%** | | 73% | **10%** |
+| L15 | 63% | **4%** | | 68% | **7%** |
+| L20 | 75% | 17% | | 85% | 36% |
+
+**Drift encontrado:** matar **1 comum** ficava estável (médio) em toda a curva —
+ótimo. Mas um **trio no meio do jogo (L10–15)** virava quase invencível para o
+piso (4% de vida): a HP dos inimigos (`hpPerLevel 0.16`, composta) crescia mais
+rápido que o poder de arma do jogador, e a luta arrastava até o piso quase morrer.
+
+**Ajuste (design-fiel):** suavizei só as curvas de inimigo — `hpPerLevel
+0.16→0.12`, `damagePerLevel 0.07→0.05` (sem stat bruto de vida por nível, que o
+design MCD evita). O **L1 fica idêntico** (o termo por nível é 0 no L1, então o
+tuning do E42 não muda). O vale L10–15 sobe de 4%→7-10% e o L20 fica em 36%
+(médio-difícil). Singles seguem "médio" (68–85%) em toda a curva.
+
+**Nota honesta:** o vale L10–15 do TRIO ainda existe no piso — é o pior caso
+(sem esquiva, **sem armadura**, 3 inimigos idênticos de uma vez). Em jogo real, a
+**armadura** (mitigação + vida, que escala com o gear) e a **esquiva** enchem
+esse vale; fechá-lo por completo pediria mexer também na curva de poder da arma
+(`loot.lvlMul`), o que fica para uma próxima fatia. O canary trava o essencial:
+1 comum nunca fica trivial (L1–L10) nem vira massacre (qualquer nível).
+
 ## Trava de regressão (canary)
 `tests/simBalance.test.ts` fixa as faixas: 1 comum não-trivial (vida < 90%) e não
 massacrado (> 45%); 3× muito mais duros (delta > 20 pts e vida < 55%); e o
