@@ -70,47 +70,65 @@ const ROOM_R = 8;
 export class InteriorManager {
   game: any;
   active: any;
-  _built: boolean;
   _floorMat: any;
   _wallMats: any[];
   _lampMat: any;
   _props: any; // móveis temáticos, reconstruídos por visita (ADR 0104)
+  _rx = ROOM_R; // meia-largura (x) da sala ATUAL (varia por tema, E35)
+  _rz = ROOM_R; // meia-profundidade (z) da sala ATUAL (varia por tema, E35)
+  _room: any = null; // malhas/colisores da sala atual, p/ desmontar na saída (E35)
+  _lightMark = 0; // luzes registradas antes desta visita (p/ truncar na saída, E35)
 
   constructor(game) {
     this.game = game;
     this.active = null;
-    this._built = false;
     this._wallMats = [];
     // Se o grupo for derrotado dentro (não deveria haver combate), sai.
     game.on('wipe', () => { if (this.active) this.exit(); });
   }
 
-  _buildRoom() {
-    if (this._built) return;
-    this._built = true;
-    // Materiais recoloridos por tema no enter() — cores planas (indoor, sem
-    // textura) para leitura limpa e segurança headless.
-    this._floorMat = new THREE.MeshStandardMaterial({ color: 0x3a2e22, roughness: 1 });
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(ROOM_R * 2, 0.2, ROOM_R * 2), this._floorMat);
+  /**
+   * Dimensões da sala por tema (E35): tamanhos e proporções variados — moradia
+   * aconchegante, salão/taverna amplos, lojas com fundo/largura próprios. `rx`/`rz`
+   * são meia-largura (x) e meia-profundidade (z). Mínimo ~6 para caber os móveis
+   * e os lugares (o salão senta em x=±4.1). Determinístico por tema.
+   */
+  _roomSpec(theme) {
+    if (theme.id === 'hall') return { rx: 10, rz: 9 };     // salão grande
+    if (theme.service === 'rest') return { rx: 9, rz: 8 };  // taverna ampla
+    if (theme.id === 'home') return { rx: 6, rz: 6 };       // moradia aconchegante
+    if (theme.service === 'talk') return { rx: 7, rz: 6 };  // liderança: larga e rasa
+    const h = [...theme.id].reduce((a, c) => ((a * 31 + c.charCodeAt(0)) >>> 0), 7);
+    return { rx: 7 + (h % 2), rz: 7 + ((h >> 2) % 3) };     // lojas: 7..8 × 7..9
+  }
+
+  /**
+   * Constrói a sala do interior (E5, agora dimensionada por tema — E35). Refeita
+   * a cada visita (guarda malhas/colisores em `this._room` p/ desmontar na saída):
+   * chão, quatro paredes (colisores em fileira — não um único raião que prende o
+   * jogador, ADR 0162), lâmpadas de canto e o portal de saída na parede sul.
+   */
+  _buildRoom(theme) {
+    const rx = this._rx, rz = this._rz;
+    const meshes: any[] = [], colliders: number[] = [];
+    this._wallMats = [];
+    this._floorMat = new THREE.MeshStandardMaterial({ color: theme.floor, roughness: 1 });
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(rx * 2, 0.2, rz * 2), this._floorMat);
     floor.position.set(ROOM.x, 0.02, ROOM.z);
     floor.receiveShadow = true;
-    this.game.renderer.add(floor);
+    this.game.renderer.add(floor); meshes.push(floor);
     // Quatro paredes fechando a sala (colisores estáticos).
     const walls: [number, number, number, number][] = [
-      [0, -ROOM_R, ROOM_R * 2, 0.6], [0, ROOM_R, ROOM_R * 2, 0.6],
-      [-ROOM_R, 0, 0.6, ROOM_R * 2], [ROOM_R, 0, 0.6, ROOM_R * 2],
+      [0, -rz, rx * 2, 0.6], [0, rz, rx * 2, 0.6],
+      [-rx, 0, 0.6, rz * 2], [rx, 0, 0.6, rz * 2],
     ];
     for (const [lx, lz, sw, sd] of walls) {
-      const mat = new THREE.MeshStandardMaterial({ color: 0x4a3628, roughness: 1 });
+      const mat = new THREE.MeshStandardMaterial({ color: theme.wall, roughness: 1 });
       const wall = new THREE.Mesh(new THREE.BoxGeometry(sw, 5, sd), mat);
       wall.position.set(ROOM.x + lx, 2.5, ROOM.z + lz);
       wall.castShadow = true;
-      this.game.renderer.add(wall);
+      this.game.renderer.add(wall); meshes.push(wall);
       this._wallMats.push(mat);
-      // Barreira como FILEIRA de colisores pequenos ao longo da parede. Um único
-      // colisor circular de raio = metade do comprimento (bug do playtest, ADR
-      // 0162) tinha raio = ROOM_R e enchia a sala, prendendo o jogador num
-      // quadradinho central sem conseguir andar nem sair.
       const horiz = sw > sd;
       const len = horiz ? sw : sd;
       const n = Math.max(2, Math.round(len / 1.2));
@@ -122,27 +140,28 @@ export class InteriorManager {
           ROOM.z + lz + (horiz ? 0 : t * len),
         ));
         this.game.world.add(cid, C.Collider, Collider(0.7, true));
+        colliders.push(cid);
       }
     }
-    // Lâmpadas de canto (emissivo recolorido por tema).
-    this._lampMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffb46a, emissiveIntensity: 1.3 });
-    // Lâmpadas nos QUATRO cantos (antes só 2) — sala bem iluminada (ADR 0105).
-    for (const [lx, lz] of [[-ROOM_R + 1.2, -ROOM_R + 1.2], [ROOM_R - 1.2, -ROOM_R + 1.2], [-ROOM_R + 1.2, ROOM_R - 1.2], [ROOM_R - 1.2, ROOM_R - 1.2]]) {
+    // Lâmpadas nos quatro cantos (sala bem iluminada, ADR 0105) — escalam com a sala.
+    this._lampMat = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: theme.accent, emissiveIntensity: 1.3 });
+    for (const [lx, lz] of [[-rx + 1.2, -rz + 1.2], [rx - 1.2, -rz + 1.2], [-rx + 1.2, rz - 1.2], [rx - 1.2, rz - 1.2]]) {
       const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.4), this._lampMat);
       lamp.position.set(ROOM.x + lx, 2.6, ROOM.z + lz);
-      this.game.renderer.add(lamp);
+      this.game.renderer.add(lamp); meshes.push(lamp);
       this.game.lightPool?.register(ROOM.x + lx, 2.6, ROOM.z + lz, 0xffc27a, 32, 0.25);
     }
-    // Portal de saída (batente iluminado) na parede sul.
+    // Portal de saída (batente iluminado) na parede sul (+z).
     const arch = new THREE.Mesh(
       new THREE.BoxGeometry(1.6, 2.6, 0.3),
       new THREE.MeshStandardMaterial({ color: 0x241a12, emissive: 0x2a1a0a, emissiveIntensity: 0.5 }),
     );
-    arch.position.set(ROOM.x, 1.3, ROOM.z + ROOM_R - 0.4);
-    this.game.renderer.add(arch);
+    arch.position.set(ROOM.x, 1.3, ROOM.z + rz - 0.4);
+    this.game.renderer.add(arch); meshes.push(arch);
     const exit = this.game.world.createEntity();
-    this.game.world.add(exit, C.Transform, Transform(ROOM.x, ROOM.z + ROOM_R - 1.4));
+    this.game.world.add(exit, C.Transform, Transform(ROOM.x, ROOM.z + rz - 1.4));
     this.game.world.add(exit, C.Interactable, { kind: 'house_exit', prompt: 'E — Sair', range: 3, used: false });
+    this._room = { meshes, colliders, exitId: exit };
   }
 
   _teleport(x, z) {
@@ -160,18 +179,18 @@ export class InteriorManager {
   /** Entra num interior temático (chamado pela porta da casa). */
   enter(themeId, label?) {
     if (this.active) return;
-    this._buildRoom();
     const theme = interiorTheme(themeId);
-    this._floorMat.color.setHex(theme.floor);
-    for (const m of this._wallMats) m.color.setHex(theme.wall);
-    this._lampMat.emissive.setHex(theme.accent);
+    const spec = this._roomSpec(theme); // tamanho/formato por tema (E35)
+    this._rx = spec.rx; this._rz = spec.rz;
+    this._lightMark = this.game.lightPool?.mark?.() ?? 0; // luzes desta visita p/ limpar na saída
+    this._buildRoom(theme);
     this.game.inDungeon = true;
     const returnPos = { ...(this.game.groupCenter ?? { x: 0, z: 0 }) };
     // Vila de origem (ADR 0163): a porta guarda onde estávamos; o tema da vila
     // decide a decoração de sotaque do interior (rede no Vau, toras em Cinzafolha…).
     const village = this.game.settlements?.settlementAt?.(returnPos.x, returnPos.z)?.theme ?? 'druida';
     this.active = { themeId: theme.id, theme, returnPos, npcId: null, village, patrons: [], residents: [], seats: [] };
-    this._teleport(ROOM.x, ROOM.z - ROOM_R + 3);
+    this._teleport(ROOM.x, ROOM.z - this._rz + 3);
     this.active.npcId = this._spawnNpc(theme);
     this.active.props = this._buildProps(theme, village); // móveis temáticos + sotaque da vila (ADR 0104/0163)
     this.active.kitchenId = theme.kitchen ? this._buildKitchen() : null; // caldeirão (E19.6)
@@ -191,7 +210,7 @@ export class InteriorManager {
    * pra câmera isométrica (SE), então os OLHOS aparecem (bug do playtest).
    */
   _layout(theme) {
-    const nz = -ROOM_R + 6;
+    const nz = -this._rz + 6;
     if (theme.id === 'hall') {
       // Salão Comunal: banquete — várias mesas fartas e a vila reunida comendo.
       return {
@@ -246,7 +265,7 @@ export class InteriorManager {
       m.position.set(ROOM.x + x, y, ROOM.z + z); m.castShadow = true; g.add(m); return m;
     };
     const wood = 0x5a4028, wood2 = 0x6b4a33, stone = 0x6a6a72, acc = theme.accent;
-    const nz = -ROOM_R + 6; // linha do NPC
+    const nz = -this._rz + 6; // linha do NPC
     const layout = this._layout(theme);
 
     // --- Móveis reutilizáveis ------------------------------------------------
@@ -267,15 +286,15 @@ export class InteriorManager {
     };
     // Quadro na parede: moldura de madeira + tela colorida (cena da vila).
     const artColors = [acc, 0x4c7a34, 0x3f6a86, 0xb85a3a];
-    const paintN = (x, art) => { box(1.1, 0.86, 0.08, x, 2.65, -ROOM_R + 0.32, wood2); box(0.86, 0.62, 0.05, x, 2.65, -ROOM_R + 0.4, art); };
-    const paintW = (z, art) => { box(0.08, 0.86, 1.1, -ROOM_R + 0.32, 2.65, z, wood2); box(0.05, 0.62, 0.86, -ROOM_R + 0.4, 2.65, z, art); };
+    const paintN = (x, art) => { box(1.1, 0.86, 0.08, x, 2.65, -this._rz + 0.32, wood2); box(0.86, 0.62, 0.05, x, 2.65, -this._rz + 0.4, art); };
+    const paintW = (z, art) => { box(0.08, 0.86, 1.1, -this._rx + 0.32, 2.65, z, wood2); box(0.05, 0.62, 0.86, -this._rx + 0.4, 2.65, z, art); };
 
     // Quadros nas paredes do fundo (norte) e esquerda (oeste) — visíveis na iso.
     paintN(-3.2, artColors[0]); paintN(3.2, artColors[1]);
     paintW(-2.5, artColors[2]); paintW(2.5, artColors[3]);
     // Tapete central quente sob a cena e um vaso de planta perto da porta.
     box(4.6, 0.05, 4.4, 0, 0.05, nz + 2.6, 0x5a3a2a);
-    plant(ROOM_R - 1.6, ROOM_R - 1.6);
+    plant(this._rx - 1.6, this._rz - 1.6);
 
     // Mesas + banquetas de quem senta (comida sobre as mesas).
     for (const [tx, tz] of layout.tables) feastTable(tx, tz);
@@ -308,26 +327,26 @@ export class InteriorManager {
       // Barris + lareira acesa no canto (mesas fartas já vieram do layout).
       box(0.8, 1.0, 0.8, -3.2, 0.5, nz - 0.5, wood2); box(0.8, 1.0, 0.8, 3.4, 0.5, nz - 0.6, wood); // barris
       jar(-4.4, nz - 0.4, 0xb0783a); jar(4.6, nz - 0.5, 0xa8c0d0);
-      box(2.0, 0.4, 1.2, ROOM_R - 2.2 - ROOM.x, 0.2, -ROOM_R + 1.6, stone);
-      box(1.0, 0.6, 0.7, ROOM_R - 2.2 - ROOM.x, 0.5, -ROOM_R + 1.6, 0xff8a3a, 0xff7a2a);
-      this.game.lightPool?.register(ROOM.x + ROOM_R - 2.2, 0.8, ROOM.z - ROOM_R + 1.6, 0xff7a2a, 22, 0.6);
+      box(2.0, 0.4, 1.2, this._rx - 2.2, 0.2, -this._rz + 1.6, stone);
+      box(1.0, 0.6, 0.7, this._rx - 2.2, 0.5, -this._rz + 1.6, 0xff8a3a, 0xff7a2a);
+      this.game.lightPool?.register(ROOM.x + this._rx - 2.2, 0.8, ROOM.z - this._rz + 1.6, 0xff7a2a, 22, 0.6);
     } else if (theme.id === 'hall') {
       // Salão comunal: caldeirão já é a cozinha; aqui só estandarte + barris de
       // bebida pros que se servem, além do mesão de banquete (layout).
-      box(0.9, 2.0, 0.08, 0, 3.4, -ROOM_R + 0.5, acc, acc); // estandarte
-      box(0.9, 1.1, 0.9, ROOM_R - 2.4, 0.55, nz + 0.2, wood2); // barril de bebida
-      box(0.95, 0.14, 0.95, ROOM_R - 2.4, 1.18, nz + 0.2, 0xd8a24a); // tampa/concha
+      box(0.9, 2.0, 0.08, 0, 3.4, -this._rz + 0.5, acc, acc); // estandarte
+      box(0.9, 1.1, 0.9, this._rx - 2.4, 0.55, nz + 0.2, wood2); // barril de bebida
+      box(0.95, 0.14, 0.95, this._rx - 2.4, 1.18, nz + 0.2, 0xd8a24a); // tampa/concha
     } else {
       // Salão/liderança e moradia: cadeira alta atrás do NPC, estante, estandarte.
       box(1.0, 1.8, 0.5, 0, 0.9, nz - 0.9, wood2);        // encosto da cadeira
       box(1.1, 0.3, 1.0, 0, 0.55, nz - 0.7, wood);        // assento
-      box(2.4, 2.2, 0.5, -ROOM_R + 1.4, 1.1, nz + 0.5, wood); // estante lateral (parede)
-      for (const jy of [1.4, 1.9]) box(0.3, 0.44, 0.3, -ROOM_R + 1.4, jy, nz + 0.3, 0xb98a4a); // jarros na estante
-      box(0.9, 1.8, 0.08, 0, 3.3, -ROOM_R + 0.5, acc, acc); // estandarte na parede do fundo
+      box(2.4, 2.2, 0.5, -this._rx + 1.4, 1.1, nz + 0.5, wood); // estante lateral (parede)
+      for (const jy of [1.4, 1.9]) box(0.3, 0.44, 0.3, -this._rx + 1.4, jy, nz + 0.3, 0xb98a4a); // jarros na estante
+      box(0.9, 1.8, 0.08, 0, 3.3, -this._rz + 0.5, acc, acc); // estandarte na parede do fundo
     }
     // Sotaque da vila (ADR 0163): um cantinho decorado com a cara do assentamento,
     // no canto dianteiro-esquerdo, perto da porta. Cada vila deixa sua marca.
-    const dx = -ROOM_R + 2, dz = ROOM_R - 3;
+    const dx = -this._rx + 2, dz = this._rz - 3;
     if (village === 'palafitas') {
       box(1.0, 1.0, 0.9, dx, 0.5, dz, 0x3f6a5a);            // barril de peixe
       box(0.9, 0.12, 0.9, dx, 1.05, dz, 0x8ad0ff, 0x2a5a7a); // peixe/água
@@ -360,7 +379,7 @@ export class InteriorManager {
   _buildKitchen() {
     const { game } = this;
     // Canto dos fundos à esquerda (a lareira da taverna ocupa o canto direito).
-    const kx = ROOM.x - ROOM_R + 2.4, kz = ROOM.z - ROOM_R + 2.4;
+    const kx = ROOM.x - this._rx + 2.4, kz = ROOM.z - this._rz + 2.4;
     const g = this._cauldronMesh();
     g.position.set(kx, 0, kz);
     game.renderer.add(g);
@@ -395,7 +414,7 @@ export class InteriorManager {
   _spawnNpc(theme) {
     const { game } = this;
     const g = buildVoxelGroup(makeVillagerSpec({ robe: theme.robe, trim: theme.trim, elder: theme.service === 'talk' }));
-    const nx = ROOM.x, nz = ROOM.z - ROOM_R + 6;
+    const nx = ROOM.x, nz = ROOM.z - this._rz + 6;
     g.position.set(nx, 0, nz);
     game.renderer.add(g);
     const id = game.world.createEntity();
@@ -435,7 +454,7 @@ export class InteriorManager {
   _spawnCook() {
     const { game } = this;
     const g = buildVoxelGroup(makeVillagerSpec({ robe: 0xb85a3a, trim: 0xe8d8b0 }));
-    const nx = ROOM.x + 3.4, nz = ROOM.z - ROOM_R + 6;
+    const nx = ROOM.x + 3.4, nz = ROOM.z - this._rz + 6;
     g.position.set(nx, 0, nz);
     game.renderer.add(g);
     const id = game.world.createEntity();
@@ -547,6 +566,14 @@ export class InteriorManager {
     if (a.kitchenId != null && this.game.world.entities.has(a.kitchenId)) this.game.world.destroyEntity(a.kitchenId);
     if (a.kitchenMesh) this.game.renderer.remove?.(a.kitchenMesh); // remove o caldeirão (E19.6)
     if (a.props) this.game.renderer.remove?.(a.props); // remove os móveis (ADR 0104)
+    // Desmonta a sala desta visita (dimensionada por tema, E35) e limpa as luzes.
+    if (this._room) {
+      for (const m of this._room.meshes) this.game.renderer.remove?.(m);
+      for (const cid of this._room.colliders) if (this.game.world.entities.has(cid)) this.game.world.destroyEntity(cid);
+      if (this.game.world.entities.has(this._room.exitId)) this.game.world.destroyEntity(this._room.exitId);
+      this._room = null;
+    }
+    this.game.lightPool?.truncate?.(this._lightMark);
     this._teleport(a.returnPos.x, a.returnPos.z);
     this.game.inDungeon = false;
     this.active = null;

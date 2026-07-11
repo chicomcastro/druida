@@ -39,6 +39,20 @@ export class LightPool {
     this.regs.push({ x, y, z, color, intensity, seed: this.regs.length * 1.7 + x, flicker });
   }
 
+  /** Marca a quantidade atual de luzes registradas — para descartar depois (E35). */
+  mark() { return this.regs.length; }
+
+  /**
+   * Descarta luzes registradas a partir de `n` (interiores registram lâmpadas/
+   * lareira/caldeirão por visita; ao sair, `truncate(mark)` limpa todas de uma
+   * vez, evitando acúmulo). Força um repick para as removidas apagarem já.
+   */
+  truncate(n: number) {
+    if (n >= 0 && n < this.regs.length) this.regs.length = n;
+    this._active = [];
+    this._lastC = null;
+  }
+
   update(dt: number) {
     this._t += dt;
     this._repick += dt;

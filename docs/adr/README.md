@@ -171,4 +171,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0165](0165-interior-integrado-moradores-reais.md) | Interior integrado à vila: moradores reais, rotina e vida (E32) | Aceito |
 | [0166](0166-saida-de-interior-pela-porta.md) | Saída de interior pela porta: continuidade de movimento (E33) | Aceito (refinado pelo 0167) |
 | [0167](0167-cronograma-npc-determinista.md) | Cronograma determinístico dos NPCs, independente do jogador (E34) | Aceito |
+| [0168](0168-interiores-dimensionados-por-tema.md) | Interiores dimensionados por tema (tamanhos e formatos variados) (E35) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

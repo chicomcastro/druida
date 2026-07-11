@@ -380,6 +380,34 @@ describe('Interiores povoados e vivos (E31)', () => {
     expect(Math.abs(rot - Math.PI)).toBeGreaterThan(0.5); // não virado de costas (norte)
     expect(Math.abs(rot)).toBeLessThan(Math.PI / 2);       // rosto pra frente (+z, câmera)
   });
+
+  it('a sala varia de tamanho/forma por tema e não prende o jogador (E35)', () => {
+    const g = makeGame();
+    const im = new InteriorManager(g);
+    addPlayer(g, 0);
+    const sizes: Record<string, { rx: number; rz: number }> = {};
+    for (const t of ['home', 'market', 'hall']) {
+      im.enter(t);
+      sizes[t] = { rx: im._rx, rz: im._rz };
+      const pEntry = [...g.world.query(C.Transform, C.PlayerControlled)][0] as any;
+      const pid = pEntry[0], ptr = pEntry[1];
+      // O jogador não nasce dentro de nenhum colisor de parede (não fica preso).
+      let minD = Infinity;
+      for (const [id, tr, c] of g.world.query(C.Transform, C.Collider) as any) {
+        if (id === pid || !c.solid) continue; // ignora o próprio colisor do jogador
+        minD = Math.min(minD, Math.hypot(tr.x - ptr.x, tr.z - ptr.z));
+      }
+      expect(minD).toBeGreaterThan(0.9);
+      im.exit();
+      g.world.flushDestroyed(); // no jogo o loop faz isto todo quadro; aqui, à mão
+    }
+    // Formatos/tamanhos diferentes: moradia acolhedora < salão grande.
+    expect(sizes.home.rx).toBeLessThan(sizes.hall.rx);
+    expect(sizes.home.rz).toBeLessThan(sizes.hall.rz);
+    // A saída desmonta a sala (colisores e portal removidos).
+    const exits = [...g.world.query(C.Interactable)].filter(([, i]: any) => i.kind === 'house_exit');
+    expect(exits.length).toBe(0);
+  });
 });
 
 describe('Interação — porta abre o interior', () => {

@@ -27,7 +27,7 @@ describe('Bugs do playtest (ADR 0162)', () => {
   it('as paredes do interior não enchem a sala (colisores pequenos)', () => {
     const g = makeGame();
     const im = new InteriorManager(g);
-    im._buildRoom();
+    im.enter('market'); // constrói a sala (dimensionada por tema, E35)
     const solid = [...g.world.query(C.Transform, C.Collider)].filter(([, , c]: any) => c.solid);
     expect(solid.length).toBeGreaterThan(0);
     // Nenhum colisor gigante (o bug tinha raio = ROOM_R = 8, enchia a sala).
