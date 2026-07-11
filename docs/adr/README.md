@@ -181,4 +181,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0175](0175-balanceamento-guiado-por-simulacao.md) | Passada de balanceamento guiada pelo simulador + canary de ritmo (E42) | Aceito |
 | [0176](0176-anti-jitter-movimento.md) | Anti-jitter do movimento sintético (NPCs/fauna): suavização de velocidade + histerese de fuga (E46) | Aceito |
 | [0177](0177-curva-dificuldade-por-nivel.md) | Curva de dificuldade por nível/equipamento: suaviza a escala de inimigo por nível (E45) | Aceito |
+| [0178](0178-armadura-no-piso-do-simulador.md) | Armadura no piso do simulador: o vale do meio do jogo era artefato de medição; loot.lvlMul não muda (E49/E50) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

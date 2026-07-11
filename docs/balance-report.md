@@ -132,6 +132,31 @@ esse vale; fechá-lo por completo pediria mexer também na curva de poder da arm
 (`loot.lvlMul`), o que fica para uma próxima fatia. O canary trava o essencial:
 1 comum nunca fica trivial (L1–L10) nem vira massacre (qualquer nível).
 
+## Piso COM gear (armadura) — o vale era medição (E49/E50)
+O piso do E45 luta **pelado** (só arma). Mas a armadura dá **mitigação + vida** que
+escalam com o tier — e o design é "poder vem do gear". `runScenario({ armor: true })`
+veste um set completo (rarity **common**, o mais fraco, para ser conservador).
+3 inimigos, comuns, média:
+
+| Nível | pelado | com armadura (common) |
+|---|--:|--:|
+| L1 | 22% | 50% |
+| L5 | 23% | 58% |
+| L10 | **10%** | **60%** |
+| L15 | **7%** | **64%** |
+| L20 | 36% | 69% |
+
+**Veredito:** com **até a armadura mais fraca**, o vale L10–15 **some** — o trio
+volta a ser médio/difícil (50–69%) em toda a curva. Ou seja, o vale era um
+**artefato de medição** (o bot lutava sem armadura), não um desbalanceamento. A
+curva de poder do **gear** (arma + armadura) já casa com a escala de inimigo.
+
+Por isso a fatia **E50** (mexer no `loot.lvlMul`, a curva de poder da arma) foi
+avaliada e **descartada**: seria churn de balance sem motivo — a medição mostra
+que o jogo é bem balanceado do L1 ao L20 quando o jogador está equipado (como
+deve estar). O que faltava era o simulador **modelar** a armadura, não o jogo
+mudar. Fica travado por canary (com armadura o trio deixa de ser quase-wipe no vale).
+
 ## Trava de regressão (canary)
 `tests/simBalance.test.ts` fixa as faixas: 1 comum não-trivial (vida < 90%) e não
 massacrado (> 45%); 3× muito mais duros (delta > 20 pts e vida < 55%); e o

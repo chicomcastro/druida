@@ -618,11 +618,13 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
   **Espectro de Cinza** é um "dodge-check": encarar de frente é fatal, mas
   esquivar o telégrafo (ou lutar à distância) o vence. Um **canary** no CI
   (`simBalance.test.ts`) trava essas faixas contra regressão.
-- **Curva por nível** (ADR 0177, E45): a escala de inimigo por nível foi suavizada
-  (`enemy.hpPerLevel 0.12`, `damagePerLevel 0.05`) porque, a 0.16/0.07, um **trio
-  no meio do jogo (L10–15)** crescia mais rápido que o poder de arma e virava
-  quase invencível pro piso. Matar **1 comum** segue "médio" do L1 ao L20; o gear
-  (arma+armadura) é o que dá poder ao subir de nível (fiel ao MCD).
+- **Curva por nível** (ADR 0177/0178, E45/E49): a escala de inimigo por nível foi
+  suavizada (`enemy.hpPerLevel 0.12`, `damagePerLevel 0.05`); e o simulador passou
+  a **modelar armadura** no piso (`runScenario({ armor })`). Sem armadura, um trio
+  a L10–15 era quase-wipe; **com até a armadura mais fraca o vale some** (trio
+  médio/difícil em toda a curva) — era artefato de medição, não desbalanceamento.
+  Matar **1 comum** segue "médio" do L1 ao L20; o gear (arma+armadura) é o que dá
+  poder ao subir de nível (fiel ao MCD).
 - **Tuning numérico** (curva de XP, drops, preços) é **pendente do Gate F** —
   playtest da primeira hora (§17).
 

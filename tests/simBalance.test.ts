@@ -62,6 +62,23 @@ describe('Canary de balanceamento (E42)', () => {
     expect(BALANCE.enemy.damagePerLevel).toBeLessThanOrEqual(0.05);
   });
 
+  it('COM ARMADURA o vale do meio do jogo some — era artefato de medição (E49)', () => {
+    // Piso pelado tem um vale no trio a L10-15 (a HP do inimigo cresce mais que a
+    // arma). Vestindo armadura no tier (mitigação + vida que escalam com o gear),
+    // o trio volta a ser médio/difícil — o "poder vem do gear" cobre a curva.
+    const nu = (level: number, armor: boolean) => {
+      const rows = runMatrix(spawnGame, {
+        styles: ['melee'], enemies: ['husk', 'bogbrute'], counts: [3], levels: [level], seeds: [1, 2, 3], ticks: 3000, armor,
+      });
+      return rows.reduce((s, r) => s + r.hpLeftFrac, 0) / rows.length * 100;
+    };
+    for (const level of [10, 15]) {
+      const pelado = nu(level, false), comGear = nu(level, true);
+      expect(comGear).toBeGreaterThan(pelado + 15); // armadura ajuda MUITO no vale
+      expect(comGear).toBeGreaterThan(30);          // trio deixa de ser quase-wipe
+    }
+  });
+
   it('o inimigo "duro" (Espectro) é fatal para quem não esquiva, mas justo p/ quem esquiva', () => {
     // Piso (melee sem esquiva): não consegue derrubá-lo (é rápido e atordoa —
     // encarar de frente não funciona). Sinal robusto: não limpa (ttk nulo).
