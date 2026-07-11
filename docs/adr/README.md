@@ -176,4 +176,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0170](0170-ermos-cenarios-eremitas-cacadas.md) | Ermos: cenários únicos, eremitas e caçadas exploratórias (E37) | Aceito |
 | [0171](0171-vila-viva-nas-demais-vilas.md) | Vila viva nas demais vilas: moradia por-casa em Vau/Cinzafolha/Degelo (E38) | Aceito |
 | [0172](0172-bosses-nao-humanoides.md) | Chefes com modelos e animações não-humanoides (ooze/floating/rooted) (E39) | Aceito |
+| [0173](0173-simulador-sintetico.md) | Simulador sintético: jogador-robô + métricas de balanceamento (E40) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

@@ -8,6 +8,8 @@ import '@fontsource/cinzel/700.css'; // fonte de títulos (OFL, empacotada)
 import { Game } from './core/Game.js';
 import { apply, loadFromStorage, setupAutosave } from './gameplay/save.js';
 import { preloadModels } from './entities/modelLoader.js';
+import { C } from './core/ecs/components.js';
+import { SimPlayer, SimMetrics, installSyntheticInput } from './gameplay/simulator.js';
 
 const canvas = document.getElementById('game');
 const game = new Game(canvas);
@@ -33,3 +35,21 @@ game.menus.showMain(
 
 // Exposto para depuração no console.
 (window as any).DRUIDA = game;
+
+// Simulador sintético (E40): no console, `DRUIDA.sim.drive()` acopla o
+// jogador-robô ao P1 e o jogo passa a se jogar sozinho (coletando métricas);
+// `DRUIDA.sim.metrics.report()` mostra o balanceamento; a função devolvida por
+// `drive()` restaura o controle humano.
+(window as any).DRUIDA.sim = {
+  SimPlayer, SimMetrics, installSyntheticInput,
+  metrics: null as any,
+  drive(opts: any = {}) {
+    const p1 = [...game.world.query(C.PlayerControlled, C.Transform)][0];
+    if (!p1) { console.warn('[sim] entre no jogo primeiro'); return () => {}; }
+    const pid = p1[0] as number;
+    this.metrics = new SimMetrics().attach(game, pid);
+    const off = installSyntheticInput(game, pid, opts);
+    console.log('[sim] jogador-robô no controle — DRUIDA.sim.metrics.report()');
+    return off;
+  },
+};
