@@ -93,3 +93,27 @@ export function steer(desire: Pt, sep: Pt, avoid: Pt, wSep = 1.3, wAvoid = 1.8):
   const d = Math.hypot(x, z);
   return d > 1e-4 ? { x: x / d, z: z / d } : { x: 0, z: 0 };
 }
+
+/**
+ * Filtro passa-baixa (E46): aproxima um valor do alvo em ~`tau` segundos. Usado
+ * para SUAVIZAR a velocidade dos aldeões/bichos — sem isso, quando as forças de
+ * steering (desejo × desvio × rua) se invertem na borda de uma estrutura, a
+ * direção pula 180° a cada frame e o NPC "vibra" pra frente/trás na tela. Com o
+ * filtro, uma inversão de 1 frame só freia o NPC (ele PÁRA na borda), não o joga
+ * pra trás. `dt/tau` limitado a 1 (nunca ultrapassa o alvo).
+ */
+export function approach(cur: number, target: number, dt: number, tau = 0.18): number {
+  return cur + (target - cur) * Math.min(1, dt / Math.max(1e-4, tau));
+}
+
+/**
+ * Gira `cur` em direção a `target` (radianos) pelo menor arco, no máximo
+ * `dt*rate` por frame — evita o "flip" instantâneo de 180° na rotação quando o
+ * rumo se inverte. Normaliza a diferença para [-π, π].
+ */
+export function turnToward(cur: number, target: number, dt: number, rate = 8): number {
+  let diff = target - cur;
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  while (diff < -Math.PI) diff += 2 * Math.PI;
+  return cur + diff * Math.min(1, dt * rate);
+}

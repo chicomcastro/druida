@@ -6,6 +6,7 @@ import { SettlementManager } from '../src/world/SettlementManager.js';
 import { biomeAt } from '../src/world/WorldManager.js';
 import { interactionSystem } from '../src/systems/interaction.js';
 import { makeVillagerSpec, buildVoxelModel } from '../src/entities/voxelModels.js';
+import { movementSystem } from '../src/systems/movement.js';
 
 describe('SETTLEMENTS (dados)', () => {
   it('há pelo menos 3 cidades e cada uma está no anel do seu bioma', () => {
@@ -165,8 +166,10 @@ describe('mundo vivo (ADR 0055)', () => {
     const tr0 = g.world.get(v.id, C.Transform);
     v.wait = 0;
     v.target = { x: tr0.x + 5, z: tr0.z }; // alvo fixo/longe: sem flakiness de RNG
-    sm._wander(0.016); // anda em direção ao alvo
+    // A velocidade é suavizada (E46: passa-baixa mata o jitter), então RAMPA em
+    // ~0.18s — roda alguns ticks até engrenar a caminhada.
     const vel = g.world.get(v.id, C.Velocity);
+    for (let i = 0; i < 20; i++) { v.wait = 0; sm._wander(0.016); }
     expect(Math.hypot(vel.vx, vel.vz)).toBeGreaterThan(0.5);
     // Jogador chega perto -> para (disponível para conversa).
     const tr = g.world.get(v.id, C.Transform);
@@ -174,6 +177,34 @@ describe('mundo vivo (ADR 0055)', () => {
     sm._wander(0.016);
     expect(vel.vx).toBe(0);
     expect(vel.vz).toBe(0);
+  });
+
+  it('moradores NÃO vibram pra frente/trás ao passear (anti-jitter E46)', () => {
+    // Regressão do bug reportado: sem suavização, o steering invertia 180° na
+    // borda de estruturas/ruas e o aldeão "piscava". Roda a vila de verdade e
+    // conta inversões de direção por morador — devem ser raras.
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    const s = SETTLEMENTS[0];
+    g.groupCenter = { x: s.x, z: s.z };
+    g.dayNight = { time: 0.15 }; // manhã: andarilhos passeiam (sem jogador por perto)
+    const st = new Map<number, { rev: number; pvx: number; pvz: number }>();
+    for (const v of sm._villagers) st.set(v.id, { rev: 0, pvx: 0, pvz: 0 });
+    for (let i = 0; i < 480; i++) {
+      sm.update(1 / 60); movementSystem(g, 1 / 60);
+      for (const v of sm._villagers) {
+        const vel = g.world.get(v.id, C.Velocity); if (!vel) continue;
+        const t = st.get(v.id)!; const sp = Math.hypot(vel.vx, vel.vz);
+        if (sp > 0.05) {
+          const dot = vel.vx * t.pvx + vel.vz * t.pvz, pp = Math.hypot(t.pvx, t.pvz);
+          if (pp > 0.05 && dot < -0.3 * sp * pp) t.rev += 1; // inverteu o rumo
+        }
+        t.pvx = vel.vx; t.pvz = vel.vz;
+      }
+    }
+    const worst = Math.max(...[...st.values()].map((t) => t.rev));
+    // Antes do fix o pior morador invertia ~500+ vezes; com a suavização, poucas.
+    expect(worst).toBeLessThan(25);
   });
 
   it('vilas têm fumaça, bandeiras e água viva registradas para animar', () => {

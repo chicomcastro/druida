@@ -6,6 +6,7 @@ import { INGREDIENTS } from '../gameplay/ingredients.js';
 import { createLootOrb } from '../entities/factories.js';
 import { buildFaunaModel } from '../entities/faunaModel.js';
 import { makeRng } from '../utils/math.js';
+import { approach, turnToward } from '../gameplay/steering.js';
 
 /**
  * Fauna ambiente (ADR 0098, E8): mantém um punhado de bichos vagueando perto do
@@ -125,12 +126,18 @@ export class FaunaManager {
     for (const cr of this.critters) {
       const tr = this.game.world.get(cr.id, C.Transform);
       if (!tr) continue;
+      // Fuga com HISTERESE (E46): começa a fugir dentro de `flee`, mas só relaxa
+      // quando passa de `flee*1.6`. Sem isso, o bicho ping-pongava na borda do
+      // raio (foge → sai do raio → volta a passear → entra no raio → foge),
+      // "piscando" pra frente/trás. A banda separa os dois estados.
       let fx = 0, fz = 0, fleeing = false;
+      const keep = cr._fleeing ? cr.def.flee * 1.6 : cr.def.flee;
       for (const [, ptr] of this.game.world.query(C.Transform, C.PlayerControlled)) {
         const dx = tr.x - ptr.x, dz = tr.z - ptr.z;
         const d = Math.hypot(dx, dz);
-        if (d < cr.def.flee && d > 0.001) { fx += dx / d; fz += dz / d; fleeing = true; }
+        if (d < keep && d > 0.001) { fx += dx / d; fz += dz / d; fleeing = true; }
       }
+      cr._fleeing = fleeing;
       let vx = 0, vz = 0;
       if (fleeing) {
         const fl = Math.hypot(fx, fz) || 1;
@@ -147,10 +154,15 @@ export class FaunaManager {
           vx = (dx / d) * cr.def.speed; vz = (dz / d) * cr.def.speed;
         }
       }
-      tr.x += vx * dt; tr.z += vz * dt;
-      if (vx || vz) tr.rot = Math.atan2(vx, vz);
+      // Velocidade suavizada (E46) — como nos aldeões, evita o tranco pra
+      // frente/trás quando o rumo muda (fuga↔passeio ou troca de alvo).
+      cr._vx = approach(cr._vx ?? 0, vx, dt);
+      cr._vz = approach(cr._vz ?? 0, vz, dt);
+      tr.x += cr._vx * dt; tr.z += cr._vz * dt;
+      const sp = Math.hypot(cr._vx, cr._vz);
+      if (sp > 0.06) tr.rot = turnToward(tr.rot ?? 0, Math.atan2(cr._vx, cr._vz), dt);
       // Pulinho (sapo/lebre) ou bob leve; anima só o objeto (sem rig).
-      const moving = Math.abs(vx) + Math.abs(vz) > 0.01;
+      const moving = sp > 0.05;
       const bob = cr.def.hop
         ? Math.max(0, Math.sin(this._t * 8 + cr.phase)) * (moving ? 0.28 : 0.04)
         : (moving ? Math.abs(Math.sin(this._t * 6 + cr.phase)) * 0.06 : 0);
