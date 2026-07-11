@@ -227,6 +227,26 @@ alvo − 0.5)`. Sem isso, contra um chefe grande (raio 1.6) a colisão travava o
 a ~2.1u e o arco (2.0u) nunca conectava — DPS zerava. Não muda nada contra comuns
 (raio 0.5).
 
+## Afixos comportamentais + dons de dano (E54)
+Faltava o simulador modelar os afixos de **comportamento** (não-stat): Sedento
+(lifesteal), Espinhos (thorns/reflete), Ceifar (cleave) — e os dons de **dano**.
+`runScenario({ affixes: [...] })` injeta o afixo no gear certo (arma/armadura);
+o dom de dano (`boons: ['cacada']`) já vinha do E52. Impacto (3 comuns L10, rare
+armor, melee, média):
+
+| Build | vida restante | DPS |
+|---|--:|--:|
+| baseline | 76% | 119 |
+| + Sedento (lifesteal) | **95%** | 119 |
+| + Espinhos (thorns) | 76% | **124** |
+| + Instinto de Caça (dom) | 76% | **126** |
+
+Cada um faz o que promete e é mensurável: **Sedento** = sustentação (cura por
+golpe), **Espinhos** = mais DPS efetivo (reflete dano, os inimigos morrem antes),
+**Instinto de Caça** = +dano bruto. O simulador agora cobre os três tipos de
+modificador — `stat` (E52), `behavior` (E54) e os dons — fechando a modelagem de
+build.
+
 ## Trava de regressão (canary)
 `tests/simBalance.test.ts` fixa as faixas: 1 comum não-trivial (vida < 90%) e não
 massacrado (> 45%); 3× muito mais duros (delta > 20 pts e vida < 55%); e o

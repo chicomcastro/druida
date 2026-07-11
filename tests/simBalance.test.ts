@@ -144,6 +144,20 @@ describe('Canary de balanceamento (E42)', () => {
     expect(elite.survived).toBe(true);                              // mas o kitado vence
   });
 
+  it('afixos comportamentais e dom de dano entram e mudam o combate (E54)', () => {
+    const base = (opts: any) => runScenario(spawnGame, {
+      style: 'melee', enemy: 'husk', count: 3, level: 10, seed: 1,
+      armor: true, armorRarity: 'rare', ticks: 3000, ...opts,
+    });
+    const baseline = base({});
+    const lifesteal = base({ affixes: ['lifesteal'] });
+    const thorns = base({ affixes: ['thorns'] });
+    const cacada = base({ boons: ['cacada'] });
+    expect(lifesteal.hpLeftFrac).toBeGreaterThan(baseline.hpLeftFrac + 0.05); // Sedento sustenta a vida
+    expect(thorns.dps).toBeGreaterThan(baseline.dps);   // Espinhos reflete → morte mais rápida (mais DPS efetivo)
+    expect(cacada.dps).toBeGreaterThan(baseline.dps);   // dom Instinto de Caça: +dano
+  });
+
   it('o inimigo "duro" (Espectro) é fatal para quem não esquiva, mas justo p/ quem esquiva', () => {
     // Piso (melee sem esquiva): não consegue derrubá-lo (é rápido e atordoa —
     // encarar de frente não funciona). Sinal robusto: não limpa (ttk nulo).
