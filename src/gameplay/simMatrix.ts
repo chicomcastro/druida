@@ -9,7 +9,7 @@
  * real; um script/nó pode passar a sua. Assim `src/` não importa `tests/`.
  */
 import { C } from '../core/ecs/components.js';
-import { generateItem } from './loot.js';
+import { generateItem, ARMOR_SLOTS } from './loot.js';
 import { SimPlayer, SimMetrics, DEFAULT_SIM_SYSTEMS, type SimStyle } from './simulator.js';
 
 export interface Scenario {
@@ -23,6 +23,8 @@ export interface Scenario {
   reaction?: number;
   /** Forma ancestral a medir (ex.: 'wolf', 'bear'); concede+ativa antes da luta. */
   form?: string;
+  /** Veste um set de armadura no tier do nível (piso "com gear", E49). Default false. */
+  armor?: boolean;
 }
 
 export interface ScenarioResult extends Scenario {
@@ -46,6 +48,20 @@ export function equipForStyle(game: any, playerId: number, style: SimStyle, leve
   const ranged = style === 'ranged' || style === 'caster';
   const seed = (ranged ? 300 : 100) + level;
   game.equip(playerId, generateItem(level, 'weapon', seed, null, ranged ? 'ranged' : 'melee'));
+}
+
+/**
+ * Veste um set completo de armadura no tier do nível (E49). O piso do simulador
+ * lutava PELADO — o que subestima o jogador no meio do jogo (a armadura dá
+ * mitigação + vida que escalam com o gear). Rarity fixa 'common' (o gear mais
+ * fraco possível) para uma medição determinística e CONSERVADORA: se até armadura
+ * comum já cobre o vale, um jogador de verdade (que acha peças raras) cobre mais.
+ */
+export function equipArmorSet(game: any, playerId: number, level = 1) {
+  for (let s = 0; s < ARMOR_SLOTS.length; s++) {
+    const slot = ARMOR_SLOTS[s];
+    game.equip(playerId, generateItem(level, 'armor', 700 + level * 7 + s * 13, 'common', null, slot), slot);
+  }
 }
 
 /** Cria `count` inimigos ao redor do jogador (na origem), espalhados em anel. */
@@ -81,6 +97,7 @@ export function runScenario(spawnGame: () => { game: any; playerId: number }, sc
   const { game, playerId } = spawnGame();
   game.progress.level = level;
   equipForStyle(game, playerId, sc.style, level);
+  if (sc.armor) equipArmorSet(game, playerId, level); // piso "com gear" (E49)
   // Forma ancestral (E44): concede+ativa a forma antes da luta. As formas usam o
   // ataque próprio (mordida/patada) e se sustentam com a seiva que o golpe rende.
   if (sc.form && sc.form !== 'humanoid') {
@@ -130,6 +147,8 @@ export interface MatrixSpec {
   ticks?: number;
   /** Qualidade de reação da esquiva (0..1) aplicada a todas as células. */
   reaction?: number;
+  /** Veste armadura no tier do nível em todas as células (piso "com gear"). */
+  armor?: boolean;
 }
 
 /** Roda a matriz completa; devolve uma linha por (estilo × inimigo × qtd × nível),
@@ -141,7 +160,7 @@ export function runMatrix(spawnGame: () => { game: any; playerId: number }, spec
   const seeds = spec.seeds ?? [1, 2, 3];
   const rows: ScenarioResult[] = [];
   for (const style of styles) for (const enemy of spec.enemies) for (const count of counts) for (const level of levels) {
-    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks, reaction: spec.reaction }));
+    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks, reaction: spec.reaction, armor: spec.armor }));
     const nums = (f: (r: ScenarioResult) => number) => runs.map(f).sort((a, b) => a - b);
     const median = (a: number[]) => a[Math.floor(a.length / 2)];
     const ttks = runs.map((r) => r.ttk).filter((v): v is number => v != null).sort((a, b) => a - b);
