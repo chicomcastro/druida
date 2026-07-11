@@ -552,19 +552,23 @@ animais (§7).
 
 ## 14. Chefes & masmorras
 **Chefes** (`src/data/enemies.ts`, ADR 0101) — fases por % de vida, slam em
-área, invocações (via `bossSystem`):
-- **O Apodrecedor** (`rotlord`) — chefe final da campanha (Coração).
+área, invocações (via `bossSystem`). No **E39** os três deixaram de ser bípedes
+humanoides e ganharam **silhueta e animação próprias** (andaduras não-humanoides,
+`src/systems/animation.ts`):
+- **O Apodrecedor** (`rotlord`) — chefe final da campanha (Coração). Andadura
+  **`rooted`**: horror arraigado — um tronco corrompido de maw em brasa sobre
+  raízes que se contorcem (não caminha, balança no lugar).
 - **Senhor do Lodo** (`mirelord`) — invoca Atoladiços; clímax da masmorra do
-  Pântano.
+  Pântano. Andadura **`ooze`**: massa amorfa que se espalha da base, com núcleo
+  úmido pulsante e tentáculos-clava.
 - **Ceifador Gélido** (`frostreaver`) — congela, foice de gelo; clímax da
-  masmorra dos Picos.
+  masmorra dos Picos. Andadura **`floating`**: espectro que paira, com cauda de
+  névoa no lugar das pernas e cacos de gelo que orbitam.
 
 <p align="center">
-  <img src="img/chefe-rotlord.png" width="150" alt="O Apodrecedor" />
-  <img src="img/chefe-mirelord.png" width="150" alt="Senhor do Lodo" />
-  <img src="img/chefe-frostreaver.png" width="150" alt="Ceifador Gélido" />
+  <img src="img/bosses-e39.jpg" width="820" alt="Os três chefes remodelados" />
 </p>
-<sub>Os três chefes: O Apodrecedor, o Senhor do Lodo e o Ceifador Gélido.</sub>
+<sub>Os três chefes remodelados (E39), agora não-humanoides: <b>O Apodrecedor</b> (tronco arraigado), o <b>Senhor do Lodo</b> (massa de lodo) e o <b>Ceifador Gélido</b> (espectro que paira).</sub>
 
 **Masmorras** (`src/data/dungeons.ts`, ADR 0048) — POI instanciado por bioma:
 ondas + perigo ambiental + mini-chefe (ou chefe pleno no Pântano/Picos) e

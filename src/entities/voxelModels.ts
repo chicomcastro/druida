@@ -10,7 +10,11 @@ import { pixelTexture } from '../core/render/pixelTextures.js';
  * caixas relativas — assim o animador (procedural) pode girar a parte em torno
  * da junta. `gait` diz ao animador como mover (bípede/quadrúpede/ave/estático).
  */
-export type Gait = 'biped' | 'quadruped' | 'bird' | 'static';
+// Andaduras: bípede/quadrúpede/ave/estático + as 3 formas NÃO-humanoides dos
+// chefes (E39): 'ooze' (colosso pantanoso que se ondula), 'floating' (espectro
+// que paira e orbita cacos) e 'rooted' (horror arraigado que balança e cujas
+// raízes se contorcem).
+export type Gait = 'biped' | 'quadruped' | 'bird' | 'static' | 'ooze' | 'floating' | 'rooted';
 
 export interface VoxelBox {
   size: [number, number, number];
@@ -257,25 +261,46 @@ const shaman: VoxelModelSpec = {
   ],
 };
 
+// O Apodrecedor (E39): horror ARRAIGADO — não anda em pernas, é um tronco
+// gigante corrompido que se ergue sobre raízes contorcidas, com braços-cipó,
+// um maw em brasa e uma copa de galhos podres. Andadura 'rooted'.
 const rotlord: VoxelModelSpec = {
-  gait: 'biped', scale: 1.0,
+  gait: 'rooted', scale: 1.1,
   parts: [
-    { name: 'torso', joint: [0, 1.6, 0], boxes: [
-      b([2.2, 2.0, 1.8], [0, 0, 0], C.lord),
-      b([2.4, 0.5, 2.0], [0, 0.7, 0], C.lordRot),      // ombros podres
-      b([1.0, 0.8, 0.6], [0, 0.1, 0.7], C.ember),      // núcleo em brasa
+    // Raízes que se contorcem no lugar das pernas (contraforte da base).
+    { name: 'root1', joint: [-0.8, 0.9, 0.6], boxes: [b([0.55, 1.5, 0.55], [-0.2, -0.7, 0.2], C.lord)] },
+    { name: 'root2', joint: [0.8, 0.9, 0.6], boxes: [b([0.55, 1.5, 0.55], [0.2, -0.7, 0.2], C.lord)] },
+    { name: 'root3', joint: [-0.8, 0.9, -0.6], boxes: [b([0.55, 1.4, 0.55], [-0.2, -0.7, -0.2], C.lordLt)] },
+    { name: 'root4', joint: [0.8, 0.9, -0.6], boxes: [b([0.55, 1.4, 0.55], [0.2, -0.7, -0.2], C.lordLt)] },
+    { name: 'torso', joint: [0, 1.8, 0], boxes: [
+      b([2.3, 2.6, 1.9], [0, 0, 0], C.lord),           // tronco nodoso
+      b([2.0, 0.5, 1.7], [0, 1.0, 0], C.lordRot),      // casca podre no topo
+      b([0.4, 2.2, 0.3], [-1.0, 0, 0.3], C.lordLt),    // sulcos de casca
+      b([0.4, 2.2, 0.3], [1.0, 0, 0.3], C.lordLt),
     ] },
-    { name: 'head', joint: [0, 2.7, 0], boxes: [
-      b([1.1, 1.0, 1.0], [0, 0.4, 0], C.lordLt),
-      b([0.2, 0.24, 0.1], [-0.3, 0.45, 0.5], C.ember),
-      b([0.2, 0.24, 0.1], [0.3, 0.45, 0.5], C.ember),
-      b([0.3, 0.5, 0.3], [-0.5, 1.0, 0], C.bone),      // chifres
-      b([0.3, 0.5, 0.3], [0.5, 1.0, 0], C.bone),
+    // Núcleo em brasa (pulsa) — o coração da corrupção, um maw ardente.
+    { name: 'core', joint: [0, 1.7, 0.8], boxes: [
+      b([1.2, 1.1, 0.5], [0, 0, 0], C.ember),
+      b([0.8, 0.2, 0.3], [0, 0.35, 0.1], 0xffd27a),
+      b([0.8, 0.2, 0.3], [0, -0.35, 0.1], 0xffd27a),
     ] },
-    { name: 'armL', joint: [-1.3, 2.4, 0], boxes: [b([0.5, 1.6, 0.5], [0, -0.8, 0], C.lordLt)] },
-    { name: 'armR', joint: [1.3, 2.4, 0], boxes: [b([0.5, 1.6, 0.5], [0, -0.8, 0], C.lordLt)] },
-    { name: 'legL', joint: [-0.55, 1.0, 0], boxes: [b([0.7, 1.1, 0.8], [0, -0.55, 0], C.lord)] },
-    { name: 'legR', joint: [0.55, 1.0, 0], boxes: [b([0.7, 1.1, 0.8], [0, -0.55, 0], C.lord)] },
+    { name: 'head', joint: [0, 3.3, 0], boxes: [
+      b([1.2, 1.0, 1.1], [0, 0.35, 0], C.lordLt),
+      b([0.22, 0.26, 0.1], [-0.32, 0.45, 0.55], C.ember),
+      b([0.22, 0.26, 0.1], [0.32, 0.45, 0.55], C.ember),
+      b([0.28, 0.7, 0.28], [-0.55, 1.0, -0.1], C.bone), // galhos-chifre
+      b([0.28, 0.7, 0.28], [0.55, 1.0, -0.1], C.bone),
+      b([0.24, 0.5, 0.24], [0, 1.15, -0.2], C.lordRot),
+    ] },
+    // Braços-cipó longos e nodosos (o slam do bossSystem os arremessa à frente).
+    { name: 'armL', joint: [-1.35, 2.6, 0], boxes: [
+      b([0.5, 1.8, 0.5], [0, -0.9, 0], C.lord),
+      b([0.4, 0.7, 0.4], [0.05, -1.9, 0.1], C.lordRot),
+    ] },
+    { name: 'armR', joint: [1.35, 2.6, 0], boxes: [
+      b([0.5, 1.8, 0.5], [0, -0.9, 0], C.lord),
+      b([0.4, 0.7, 0.4], [-0.05, -1.9, 0.1], C.lordRot),
+    ] },
   ],
 };
 
@@ -453,36 +478,64 @@ const frostfang: VoxelModelSpec = {
     { name: 'legBR', joint: [0.26, 0.34, -0.4], boxes: [b([0.2, 0.42, 0.22], [0, -0.21, 0], C.iceDk)] },
   ],
 };
-// --- Novos bosses (ADR 0103) ----------------------------------------------
-// Senhor do Lodo: colosso pantanoso, núcleo de lodo, braços-clava.
+// --- Novos bosses (ADR 0103, remodelados no E39) --------------------------
+// Senhor do Lodo: massa amorfa de lodo — sem pernas, se ergue de uma base que
+// se espalha, com tentáculos-clava que se ondulam e um núcleo úmido que pulsa.
+// Andadura 'ooze'.
 const mirelord: VoxelModelSpec = {
-  gait: 'biped', scale: 1.0,
+  gait: 'ooze', scale: 1.0,
   parts: [
-    { name: 'torso', joint: [0, 1.6, 0], boxes: [
-      b([2.0, 1.9, 1.6], [0, 0, 0], C.mireDk),
-      b([2.3, 0.5, 1.9], [0, 0.7, 0], C.mire),           // ombros de lodo
-      b([1.0, 0.9, 0.6], [0, 0.05, 0.7], C.mireWet),     // núcleo úmido brilhante
+    // Base que se espalha (poça viva) — não são pernas, é a massa se arrastando.
+    { name: 'base', joint: [0, 0.3, 0], boxes: [
+      b([2.9, 0.55, 2.4], [0, 0, 0], C.mireDk),
+      b([1.2, 0.4, 1.0], [-1.4, -0.05, 0.6], C.mire),    // pseudópodes escorridos
+      b([1.0, 0.4, 1.2], [1.5, -0.05, -0.4], C.mire),
     ] },
-    { name: 'head', joint: [0, 2.6, 0], boxes: [
-      b([1.0, 0.9, 0.95], [0, 0.35, 0], C.mire),
-      b([0.22, 0.2, 0.1], [-0.28, 0.4, 0.48], 0xffe08a),
-      b([0.22, 0.2, 0.1], [0.28, 0.4, 0.48], 0xffe08a),
-      b([0.9, 0.3, 0.5], [0, 0.0, 0.4], C.mireWet),      // mandíbula escorrida
+    { name: 'torso', joint: [0, 0.9, 0], boxes: [
+      b([2.3, 1.5, 1.9], [0, 0, 0], C.mire),             // montículo de lodo
+      b([1.9, 0.5, 1.6], [0, 0.75, 0], C.mireDk),        // dorso encharcado
+      b([1.6, 0.7, 1.3], [0, 1.15, 0], C.mire),          // giba
     ] },
-    { name: 'armL', joint: [-1.2, 2.3, 0], boxes: [b([0.55, 1.7, 0.55], [0, -0.85, 0], C.mireDk)] },
-    { name: 'armR', joint: [1.2, 2.3, 0], boxes: [b([0.55, 1.7, 0.55], [0, -0.85, 0], C.mireDk)] },
-    { name: 'legL', joint: [-0.5, 1.0, 0], boxes: [b([0.65, 1.1, 0.75], [0, -0.55, 0], C.mireDk)] },
-    { name: 'legR', joint: [0.5, 1.0, 0], boxes: [b([0.65, 1.1, 0.75], [0, -0.55, 0], C.mireDk)] },
+    // Núcleo úmido reluzente que PULSA (batimento do pântano).
+    { name: 'core', joint: [0, 1.15, 0.75], boxes: [
+      b([1.0, 1.0, 0.55], [0, 0, 0], C.mireWet),
+      b([0.5, 0.5, 0.2], [0, 0, 0.25], 0xd8ff9a),
+    ] },
+    { name: 'head', joint: [0, 2.05, 0.1], boxes: [
+      b([1.1, 0.8, 1.0], [0, 0.2, 0], C.mire),
+      b([0.24, 0.22, 0.1], [-0.3, 0.28, 0.5], 0xffe08a),
+      b([0.24, 0.22, 0.1], [0.3, 0.28, 0.5], 0xffe08a),
+      b([1.0, 0.35, 0.5], [0, -0.15, 0.35], C.mireWet),  // mandíbula escorrida
+    ] },
+    // Tentáculos-clava (o slam do bossSystem os lança à frente).
+    { name: 'armL', joint: [-1.35, 1.6, 0.1], boxes: [
+      b([0.55, 1.9, 0.55], [0, -0.9, 0], C.mireDk),
+      b([0.7, 0.7, 0.7], [0, -1.9, 0.05], C.mire),       // clava na ponta
+    ] },
+    { name: 'armR', joint: [1.35, 1.6, 0.1], boxes: [
+      b([0.55, 1.9, 0.55], [0, -0.9, 0], C.mireDk),
+      b([0.7, 0.7, 0.7], [0, -1.9, 0.05], C.mire),
+    ] },
   ],
 };
-// Ceifador Gélido: alto e esguio, coroa de gelo e uma foice de gelo.
+// Ceifador Gélido: espectro que PAIRA — sem pernas, o corpo afina numa cauda de
+// névoa gélida, cacos de gelo orbitam à volta e a foice varre no ataque.
+// Andadura 'floating'.
 const frostreaver: VoxelModelSpec = {
-  gait: 'biped', scale: 1.05,
+  gait: 'floating', scale: 1.05,
   parts: [
     { name: 'torso', joint: [0, 1.7, 0], boxes: [
       b([1.2, 1.7, 0.9], [0, 0, 0], C.iceDk),
-      b([1.5, 0.4, 1.1], [0, 0.75, 0], C.ice),           // ombreiras de gelo
-      b([0.6, 0.5, 0.4], [0, 0.1, 0.5], C.iceGlow),      // peito reluzente
+      b([1.6, 0.4, 1.1], [0, 0.8, 0], C.ice),            // ombreiras de caco
+    ] },
+    { name: 'core', joint: [0, 1.75, 0.5], boxes: [
+      b([0.6, 0.7, 0.35], [0, 0, 0], C.iceGlow),         // peito reluzente (pulsa)
+    ] },
+    // Cauda de névoa que afina para baixo (no lugar das pernas) — balança ao pairar.
+    { name: 'wisp', joint: [0, 0.95, 0], boxes: [
+      b([0.7, 0.9, 0.6], [0, -0.3, 0], C.iceDk),
+      b([0.42, 0.7, 0.36], [0, -0.95, 0], C.ice),
+      b([0.2, 0.6, 0.18], [0, -1.5, 0], C.iceGlow),
     ] },
     { name: 'head', joint: [0, 2.75, 0], boxes: [
       b([0.85, 0.85, 0.85], [0, 0.3, 0], C.ice),
@@ -491,15 +544,17 @@ const frostreaver: VoxelModelSpec = {
       b([0.2, 0.6, 0.2], [-0.35, 0.95, 0], C.iceGlow),   // coroa/chifres de gelo
       b([0.2, 0.6, 0.2], [0.35, 0.95, 0], C.iceGlow),
     ] },
-    { name: 'armL', joint: [-0.85, 2.4, 0], boxes: [b([0.35, 1.5, 0.38], [0, -0.75, 0], C.iceDk)] },
-    { name: 'armR', joint: [0.85, 2.4, 0], boxes: [b([0.35, 1.5, 0.38], [0, -0.75, 0], C.iceDk)] },
+    { name: 'armL', joint: [-0.9, 2.4, 0], boxes: [b([0.35, 1.5, 0.38], [0, -0.75, 0], C.iceDk)] },
+    { name: 'armR', joint: [0.9, 2.4, 0], boxes: [b([0.35, 1.5, 0.38], [0, -0.75, 0], C.iceDk)] },
     { name: 'weapon', parent: 'armR', joint: [0, -1.3, 0.1], boxes: [
       b([0.12, 2.2, 0.12], [0, 0.4, 0], C.bone),         // cabo
       b([1.0, 0.18, 0.14], [0.4, 1.4, 0], C.iceGlow),    // lâmina de foice
       b([0.5, 0.5, 0.14], [0.8, 1.15, 0], C.iceGlow),
     ] },
-    { name: 'legL', joint: [-0.35, 1.0, 0], boxes: [b([0.42, 1.1, 0.5], [0, -0.55, 0], C.iceDk)] },
-    { name: 'legR', joint: [0.35, 1.0, 0], boxes: [b([0.42, 1.1, 0.5], [0, -0.55, 0], C.iceDk)] },
+    // Cacos de gelo que ORBITAM o espectro (giram no animador).
+    { name: 'shardL', joint: [-1.2, 1.8, 0], boxes: [b([0.28, 0.7, 0.28], [-0.5, 0, 0], C.iceGlow)] },
+    { name: 'shardR', joint: [1.2, 1.8, 0], boxes: [b([0.28, 0.7, 0.28], [0.5, 0, 0], C.iceGlow)] },
+    { name: 'shardT', joint: [0, 3.6, 0], boxes: [b([0.24, 0.6, 0.24], [0.6, 0, 0], C.ice)] },
   ],
 };
 

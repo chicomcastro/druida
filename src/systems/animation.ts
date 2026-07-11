@@ -84,6 +84,41 @@ export function animateBody(body: any, dt: number, st: AnimState): void {
     const flap = Math.sin(ph * 1.6) * (st.moving ? 0.9 : 0.4);
     if (parts.wingL) parts.wingL.rotation.z = flap;
     if (parts.wingR) parts.wingR.rotation.z = -flap;
+  } else if (st.gait === 'ooze') {
+    // Chefe amorfo (E39): a massa se ondula — esmaga e estica com peso, o núcleo
+    // pulsa e os tentáculos-clava balançam preguiçosamente. Não há passada.
+    const s = Math.sin(ph);
+    if (parts.torso) { parts.torso.scale.y = 1 + 0.09 * s; parts.torso.scale.x = 1 - 0.05 * s; parts.torso.scale.z = 1 - 0.05 * s; }
+    if (parts.base) { parts.base.scale.x = 1 + 0.06 * s; parts.base.scale.z = 1 + 0.06 * s; }
+    if (parts.core) parts.core.scale.setScalar(1 + 0.2 * (0.5 - 0.5 * Math.cos(ph * 1.3)));
+    if (parts.armL) { parts.armL.rotation.z = 0.24 * Math.sin(ph * 0.85); parts.armL.rotation.x = 0.14 * Math.sin(ph * 0.85 + 1); }
+    if (parts.armR) { parts.armR.rotation.z = -0.24 * Math.sin(ph * 0.85 + 0.7); parts.armR.rotation.x = 0.14 * Math.sin(ph * 0.85 + 2); }
+    if (parts.head) parts.head.rotation.z = 0.1 * Math.sin(ph * 0.6);
+    if (body.position) body.position.y += 0.05 * s;
+    headX = 0.1 * Math.sin(ph * 0.55);
+  } else if (st.gait === 'floating') {
+    // Espectro que paira (E39): flutua acima do chão, a cauda de névoa balança e
+    // os cacos de gelo orbitam. Sem pés — a altura é constante + respiração.
+    const orb = ph * 0.7;
+    if (body.position) body.position.y += 0.35 + 0.13 * Math.sin(ph * 0.8);
+    if (parts.wisp) { parts.wisp.rotation.z = 0.2 * Math.sin(ph * 0.9); parts.wisp.rotation.x = 0.1 * Math.sin(ph * 0.7 + 1); }
+    if (parts.shardL) parts.shardL.rotation.y = orb;
+    if (parts.shardR) parts.shardR.rotation.y = -orb;
+    if (parts.shardT) { parts.shardT.rotation.y = orb * 1.4; parts.shardT.position.y = 0.12 * Math.sin(ph * 0.9); }
+    if (parts.core) parts.core.scale.setScalar(1 + 0.14 * (0.5 - 0.5 * Math.cos(ph)));
+    headX = 0.05 * Math.sin(ph * 0.5);
+  } else if (st.gait === 'rooted') {
+    // Horror arraigado (E39): não caminha — balança o tronco no lugar e as raízes
+    // se contorcem, cada uma com sua fase; o núcleo em brasa pulsa.
+    for (let i = 1; i <= 4; i++) {
+      const rt = parts['root' + i];
+      if (rt) { rt.rotation.x = 0.18 * Math.sin(ph * 0.8 + i * 1.5); rt.rotation.z = 0.14 * Math.sin(ph * 0.6 + i); }
+    }
+    if (parts.armL) parts.armL.rotation.z = 0.16 * Math.sin(ph * 0.7);
+    if (parts.armR) parts.armR.rotation.z = -0.16 * Math.sin(ph * 0.7 + 0.5);
+    if (parts.core) parts.core.scale.setScalar(1 + 0.16 * (0.5 - 0.5 * Math.cos(ph * 1.3)));
+    if (parts.head) parts.head.rotation.z = 0.05 * Math.sin(ph * 0.5);
+    headX = 0.08 * Math.sin(ph * 0.5);
   }
 
   // --- Sobreposição de ataque (investida) ----------------------------------
