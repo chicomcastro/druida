@@ -11,6 +11,7 @@
 import { C } from '../core/ecs/components.js';
 import { generateItem, ARMOR_SLOTS } from './loot.js';
 import { promoteToElite } from './spawn.js';
+import { MODIFIERS, modValue } from './modifiers.js';
 import { bossSystem } from '../systems/boss.js';
 import { SimPlayer, SimMetrics, DEFAULT_SIM_SYSTEMS, type SimStyle } from './simulator.js';
 
@@ -35,6 +36,8 @@ export interface Scenario {
   boss?: boolean;
   /** Promove cada inimigo do pack a ELITE com este afixo (petreo/volatil/sanguessuga, E53). */
   eliteAffix?: string;
+  /** Afixos comportamentais no gear do jogador (ex.: ['lifesteal','thorns'], E54). */
+  affixes?: string[];
 }
 
 export interface ScenarioResult extends Scenario {
@@ -73,6 +76,25 @@ export function equipArmorSet(game: any, playerId: number, level = 1, rarity: st
   for (let s = 0; s < ARMOR_SLOTS.length; s++) {
     const slot = ARMOR_SLOTS[s];
     game.equip(playerId, generateItem(level, 'armor', 700 + level * 7 + s * 13, rarity as any, null, slot), slot);
+  }
+}
+
+/**
+ * Injeta afixos COMPORTAMENTAIS no gear já equipado (E54): para cada id, casa o
+ * tipo (arma/armadura, via MODIFIERS) e anexa `{id, value}` no item certo. Ex.:
+ * 'lifesteal' (arma → cura % do dano), 'thorns' (armadura → reflete %), 'cleave'.
+ * Os afixos de dom de dano (ex.: 'cacada') vão por `boons`, não aqui.
+ */
+export function applyAffixes(game: any, playerId: number, ids: string[], level = 1) {
+  const eq = game.world.get(playerId, C.Equipment);
+  if (!eq) return;
+  for (const id of ids) {
+    const def = (MODIFIERS as any)[id];
+    if (!def) continue;
+    const mod = { id, value: modValue(def, level) };
+    if (def.types.includes('weapon') && eq.weapon) (eq.weapon.mods ??= []).push(mod);
+    if (def.types.includes('armor')) for (const s of ARMOR_SLOTS) if (eq.armor?.[s]) (eq.armor[s].mods ??= []).push(mod);
+    if (def.types.includes('artifact')) for (const a of eq.artifacts ?? []) if (a) (a.mods ??= []).push(mod);
   }
 }
 
@@ -119,6 +141,7 @@ export function runScenario(spawnGame: () => { game: any; playerId: number }, sc
     const f = game.world.get(playerId, C.Form);
     if (f) { if (!f.list.includes(sc.form)) f.list.push(sc.form); f.current = sc.form; }
   }
+  if (sc.affixes?.length) applyAffixes(game, playerId, sc.affixes, level); // afixos comportamentais (E54)
   // Alvos: chefe único (roda o bossSystem), pack de elites, ou pack comum.
   let foes: number[];
   if (sc.boss) {
@@ -177,6 +200,8 @@ export interface MatrixSpec {
   armorRarity?: string;
   /** Dons de santuário ativos em todas as células (ids). */
   boons?: string[];
+  /** Afixos comportamentais no gear em todas as células (ex.: ['lifesteal']). */
+  affixes?: string[];
 }
 
 /** Roda a matriz completa; devolve uma linha por (estilo × inimigo × qtd × nível),
@@ -188,7 +213,7 @@ export function runMatrix(spawnGame: () => { game: any; playerId: number }, spec
   const seeds = spec.seeds ?? [1, 2, 3];
   const rows: ScenarioResult[] = [];
   for (const style of styles) for (const enemy of spec.enemies) for (const count of counts) for (const level of levels) {
-    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks, reaction: spec.reaction, armor: spec.armor, armorRarity: spec.armorRarity, boons: spec.boons }));
+    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks, reaction: spec.reaction, armor: spec.armor, armorRarity: spec.armorRarity, boons: spec.boons, affixes: spec.affixes }));
     const nums = (f: (r: ScenarioResult) => number) => runs.map(f).sort((a, b) => a - b);
     const median = (a: number[]) => a[Math.floor(a.length / 2)];
     const ttks = runs.map((r) => r.ttk).filter((v): v is number => v != null).sort((a, b) => a - b);

@@ -34,7 +34,16 @@ comuns, e `bossSystem` (fases/slam/invocação) nem rodava na sim.
 - 410 testes verdes, `tsc` limpo, `vite build` ok. Só medição + o fix de alcance
   do bot — nenhuma mudança de balance de produção.
 
+## Adendo (E54) — afixos comportamentais + dons de dano
+`runScenario({ affixes: [...] })` injeta afixos de **comportamento** no gear:
+**Sedento** (lifesteal, arma), **Espinhos** (thorns, armadura), **Ceifar**
+(cleave). Os dons de dano (ex.: 'cacada') já vinham por `boons` (E52). Impacto
+medido (3 comuns L10): Sedento leva a vida de 76%→**95%** (sustenta); Espinhos
+sobe o DPS efetivo (reflete → inimigos morrem antes); Instinto de Caça +dano
+bruto. Com isso o simulador cobre os três tipos de modificador — `stat` (E52),
+`behavior` (E54) e dons — fechando a modelagem de build. Travado por
+`simBalance.test`. Só medição, nenhuma mudança de balance.
+
 ## Futuro
 Medir chefes por estilo (ranged/caster limpam invocações?); afinar o `mirelord`
-se o stalemate for forte demais para melee no jogo real; afixos comportamentais
-no bot (E54).
+se o stalemate for forte demais para melee no jogo real.
