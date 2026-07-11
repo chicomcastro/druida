@@ -2,10 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { npcPlace, classifyVenues, type Venue } from '../src/gameplay/npcSchedule.js';
 
 const VENUES: Venue[] = [
-  { themeId: 'market', service: 'shop', x: 10, z: 0 },
-  { themeId: 'weapons', service: 'shop', x: 12, z: 2 },
-  { themeId: 'tavern', service: 'rest', x: 0, z: 8 },
-  { themeId: 'hall', service: 'talk', x: -4, z: 6 },
+  { id: 'market', themeId: 'market', service: 'shop', kind: 'public', x: 10, z: 0 },
+  { id: 'weapons', themeId: 'weapons', service: 'shop', kind: 'public', x: 12, z: 2 },
+  { id: 'tavern', themeId: 'tavern', service: 'rest', kind: 'public', x: 0, z: 8 },
+  { id: 'hall', themeId: 'hall', service: 'talk', kind: 'public', x: -4, z: 6 },
+  { id: 'home#1', themeId: 'home', service: 'talk', kind: 'home', x: 3, z: -5 },
 ];
 
 describe('Cronograma dos moradores (E34)', () => {
@@ -52,6 +53,21 @@ describe('Cronograma dos moradores (E34)', () => {
     const places = new Set<string>();
     for (let day = 0; day < 12; day++) places.add(JSON.stringify(npcPlace(npc, 0.8, day, VENUES)));
     expect(places.size).toBeGreaterThan(1); // não é sempre igual
+  });
+
+  it('moradias não contam como recinto social (são privadas — E36)', () => {
+    const { work, social } = classifyVenues(VENUES);
+    expect(social.map((v) => v.id)).not.toContain('home#1');
+    expect(work.map((v) => v.id)).not.toContain('home#1');
+  });
+
+  it('quando a rotina é "casa", vai à PRÓPRIA moradia (homeVenueId — E36)', () => {
+    const npc = { seed: 7, archetype: 'homebody' as const, homeVenueId: 'home#1' };
+    const p = npcPlace(npc, 0.15, 0, VENUES); // manhã: caseiro fica em casa
+    expect(p.goal).toBe('home');
+    expect(p.inside).toBe('home#1');
+    // Sem moradia atribuída, 'casa' não vira recinto (fica fora).
+    expect(npcPlace({ seed: 7, archetype: 'homebody' }, 0.15, 0, VENUES).inside).toBeNull();
   });
 
   it('sem recintos, o NPC nunca está "dentro" (fica na rotina externa)', () => {

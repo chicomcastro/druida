@@ -176,8 +176,9 @@ export class InteriorManager {
     this.game.camera?.snapTo?.({ x, z });
   }
 
-  /** Entra num interior temático (chamado pela porta da casa). */
-  enter(themeId, label?) {
+  /** Entra num interior temático (chamado pela porta da casa). `venueId` distingue
+   * QUAL recinto quando o tema se repete — cada moradia é uma casa própria (E36). */
+  enter(themeId, label?, venueId?) {
     if (this.active) return;
     const theme = interiorTheme(themeId);
     const spec = this._roomSpec(theme); // tamanho/formato por tema (E35)
@@ -189,14 +190,14 @@ export class InteriorManager {
     // Vila de origem (ADR 0163): a porta guarda onde estávamos; o tema da vila
     // decide a decoração de sotaque do interior (rede no Vau, toras em Cinzafolha…).
     const village = this.game.settlements?.settlementAt?.(returnPos.x, returnPos.z)?.theme ?? 'druida';
-    this.active = { themeId: theme.id, theme, returnPos, npcId: null, village, patrons: [], residents: [], seats: [] };
+    this.active = { themeId: theme.id, theme, returnPos, npcId: null, village, venueId: venueId ?? theme.id, patrons: [], residents: [], seats: [] };
     this._teleport(ROOM.x, ROOM.z - this._rz + 3);
     this.active.npcId = this._spawnNpc(theme);
     this.active.props = this._buildProps(theme, village); // móveis temáticos + sotaque da vila (ADR 0104/0163)
     this.active.kitchenId = theme.kitchen ? this._buildKitchen() : null; // caldeirão (E19.6)
     // Cozinheiro na taverna (E21.2): um 2º NPC que vende comida pronta e ingredientes.
     this.active.cookId = theme.service === 'rest' ? this._spawnCook() : null;
-    this._populateInterior(theme, village); // moradores reais vivendo o interior (E31/E32)
+    this._populateInterior(theme, village, this.active.venueId); // moradores reais vivendo o interior (E31/E32/E36)
     this.game.renderer.setBiomeMood?.(INDOOR_MOOD); // sela a sala (fundo escuro)
     this.game.emit('objective', { text: `${theme.name} — ${label ?? theme.role}` });
     this.game.emit('interiorEntered', { themeId: theme.id });
@@ -482,12 +483,12 @@ export class InteriorManager {
    * encontra as mesmas pessoas; outro dia/horário, pode ser diferente. Sem
    * SettlementManager (testes), cai em figurantes efêmeros.
    */
-  _populateInterior(theme, village) {
+  _populateInterior(theme, village, venueId = theme.id) {
     const seats = this._layout(theme).patrons;
     this.active.seats = seats;
     const sm = this.game.settlements;
     if (sm?.residentsInVenue) {
-      const occ = sm.residentsInVenue(village, theme.id).slice(0, seats.length);
+      const occ = sm.residentsInVenue(village, venueId).slice(0, seats.length);
       occ.forEach((rec, i) => { this.active.residents.push(rec); this._showInRoom(rec, seats[i]); });
     } else {
       for (const seat of seats) this._spawnPatron(seat, village); // fallback sem vila (testes)
