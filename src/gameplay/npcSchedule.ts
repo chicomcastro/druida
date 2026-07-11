@@ -17,7 +17,7 @@
 
 import { routineGoal, type Archetype, type Goal } from './routine.js';
 
-export interface Venue { themeId: string; service: string; x: number; z: number; }
+export interface Venue { id: string; themeId: string; service: string; x: number; z: number; kind?: 'public' | 'home'; }
 
 /** Hash determinístico (mesma família do routine.ts) — semente + dia. */
 function vary(seed: number, day: number, mod: number): number {
@@ -26,32 +26,46 @@ function vary(seed: number, day: number, mod: number): number {
   return mod > 0 ? h % mod : 0;
 }
 
-/** Separa os recintos da vila em locais de trabalho (lojas) e sociais (taverna/salão/liderança). */
+/**
+ * Separa os recintos PÚBLICOS da vila em locais de trabalho (lojas) e sociais
+ * (taverna/salão/liderança). Moradias (kind 'home') NÃO entram aqui — são privadas
+ * e o NPC vai à SUA casa (npc.homeVenueId), não a uma casa qualquer (E36).
+ */
 export function classifyVenues(venues: Venue[]): { work: Venue[]; social: Venue[] } {
   const work: Venue[] = [], social: Venue[] = [];
-  for (const v of venues) (v.service === 'shop' ? work : social).push(v);
+  for (const v of venues) {
+    if (v.kind === 'home') continue;
+    (v.service === 'shop' ? work : social).push(v);
+  }
   return { work, social };
 }
 
 export interface Place { goal: Goal; inside: string | null; }
 
 /**
- * Lugar do NPC agora: objetivo da rotina + recinto (themeId) se estiver DENTRO.
+ * Lugar do NPC agora: objetivo da rotina + recinto (id) se estiver DENTRO.
  * - trabalho → dentro de uma loja (se houver), senão no posto (fora);
- * - salão (entardecer) → dentro de um recinto social;
- * - dormir (noite) → parte no recinto social (taverna), parte em casa (fora);
- * - passear/casa → fora.
+ * - salão (entardecer) → dentro de um recinto social público;
+ * - casa → dentro da PRÓPRIA moradia (npc.homeVenueId, E36);
+ * - dormir (noite) → parte na taverna (social), parte dorme na PRÓPRIA casa;
+ * - passear → fora.
  * A escolha do recinto é determinística por (semente, dia) → estável no bloco,
- * varia de um dia pro outro.
+ * varia de um dia pro outro. Casa é sempre a mesma (a do NPC).
  */
-export function npcPlace(npc: { seed?: number; id?: number; archetype?: Archetype }, time: number, day: number, venues: Venue[]): Place {
+export function npcPlace(npc: { seed?: number; id?: number; archetype?: Archetype; homeVenueId?: string | null }, time: number, day: number, venues: Venue[]): Place {
   const seed = npc.seed ?? npc.id ?? 0;
   const goal = routineGoal(npc.archetype ?? 'social', time, { seed, day });
   const { work, social } = classifyVenues(venues);
   const pick = (arr: Venue[], salt: number) => (arr.length ? arr[vary(seed, day + salt, arr.length)] : null);
+  const home = npc.homeVenueId ?? null;
+  if (goal === 'home') return { goal, inside: home };
+  if (goal === 'sleep') {
+    // Noite: ~2/3 ainda na taverna (social), o resto dorme na PRÓPRIA casa.
+    const v = social.length && vary(seed, day, 3) !== 0 ? pick(social, 22) : null;
+    return { goal, inside: v ? v.id : home };
+  }
   let inside: Venue | null = null;
   if (goal === 'work') inside = pick(work, 11);
   else if (goal === 'hall') inside = pick(social, 22);
-  else if (goal === 'sleep' && social.length && vary(seed, day, 3) !== 0) inside = pick(social, 22); // ~2/3 no recinto à noite
-  return { goal, inside: inside ? inside.themeId : null };
+  return { goal, inside: inside ? inside.id : null };
 }

@@ -371,6 +371,29 @@ describe('Interiores povoados e vivos (E31)', () => {
     expect(sets.size).toBeGreaterThan(1);
   });
 
+  it('moradia por-casa: cada lar é um recinto próprio e mostra a SUA família (E36)', () => {
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    g.settlements = sm;
+    const clareira = sm.list.find((s: any) => s.theme === 'druida');
+    const im = new InteriorManager(g);
+    addPlayer(g, 0, clareira.x, clareira.z);
+    g.groupCenter = { x: clareira.x, z: clareira.z };
+    // Várias moradias DISTINTAS (não colapsadas num 'home' só).
+    const homeVenues = (sm._venues['druida'] as any[]).filter((v) => v.kind === 'home');
+    expect(homeVenues.length).toBeGreaterThan(1);
+    // Almoço: parte dos moradores está em casa.
+    const byVenue = driveSchedule(g, sm, 'druida', 0.3);
+    const homeKey = Object.keys(byVenue).find((k) => k.startsWith('home#') && byVenue[k].length > 0);
+    expect(homeKey).toBeTruthy();
+    // Todos os que estão nesta casa MORAM aqui (sua própria moradia).
+    for (const rec of byVenue[homeKey!]) expect(rec.homeVenueId).toBe(homeKey);
+    // Entrar NESTA porta mostra exatamente essa família.
+    im.enter('home', 'Moradia', homeKey!);
+    expect(im.active.residents.length).toBeGreaterThan(0);
+    for (const rec of im.active.residents) expect(rec.homeVenueId).toBe(homeKey);
+  });
+
   it('o NPC encara a câmera (rosto/olhos à mostra, não de costas)', () => {
     const g = makeGame();
     const im = new InteriorManager(g);

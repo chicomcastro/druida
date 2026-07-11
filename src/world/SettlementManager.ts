@@ -64,7 +64,7 @@ export class SettlementManager {
   _water: any[]; // superfícies de água com pulso
   _villagers: any[]; // moradores que seguem uma rotina de dia/noite (ADR 0055/E22)
   _emerging: any[]; // fila de moradores saindo de um interior pela porta (E33)
-  _venues: Record<string, { themeId: string; service: string; x: number; z: number }[]> = {}; // recintos por vila (E34)
+  _venues: Record<string, any[]> = {}; // recintos por vila: {id, themeId, service, kind, household?, x, z} (E34/E36)
   _lastTime: number | null = null; // hora do último tick (detecta virada do dia)
   _day = 0; // contador de dias (variação diária da rotina — E22)
   _clock = 0; // relógio em segundos (cooldown de conversa — E22.5)
@@ -122,26 +122,65 @@ export class SettlementManager {
    */
   _indexVenues() {
     this._venues = {};
+    const homeN: Record<string, number> = {};
     for (const [id, inter] of this.game.world.query(C.Interactable)) {
       if (inter.kind !== 'house') continue;
       const tr = this.game.world.get(id, C.Transform);
       const s = tr && this.settlementAt(tr.x, tr.z);
       if (!s) continue;
       const arr = (this._venues[s.theme] ??= []);
-      if (arr.some((v) => v.themeId === inter.interiorTheme)) continue;
-      arr.push({ themeId: inter.interiorTheme, service: interiorTheme(inter.interiorTheme).service, x: tr.x, z: tr.z });
+      const svc = interiorTheme(inter.interiorTheme).service;
+      if (inter.interiorTheme === 'home') {
+        // Moradia por-casa (E36): cada porta 'home' é um recinto PRÓPRIO — id único
+        // e a família (household) mais próxima do lar. A porta guarda seu venueId.
+        const n = (homeN[s.theme] = (homeN[s.theme] ?? 0) + 1);
+        const vid = `home#${s.theme}#${n}`;
+        arr.push({ id: vid, themeId: 'home', service: svc, kind: 'home', household: this._nearestHousehold(s.theme, tr.x, tr.z), x: tr.x, z: tr.z });
+        inter.venueId = vid;
+      } else {
+        inter.venueId = inter.interiorTheme; // recinto público: id = tema (1 por vila)
+        if (arr.some((v) => v.id === inter.interiorTheme)) continue;
+        arr.push({ id: inter.interiorTheme, themeId: inter.interiorTheme, service: svc, kind: 'public', x: tr.x, z: tr.z });
+      }
     }
+    // Cada morador aponta pra SUA moradia (por família; senão a casa mais próxima).
+    for (const v of this._villagers) v.homeVenueId = this._homeVenueFor(v);
   }
 
-  /** Moradores atualmente DENTRO de um recinto (venue) da vila (E34). */
-  residentsInVenue(villageTheme, themeId) {
-    return this._villagers.filter((v) => v.theme === villageTheme && v.insideVenue === themeId
+  /** Família (householdId) cujo lar está mais perto da porta — para casar casa↔família. */
+  _nearestHousehold(theme, x, z) {
+    let best = null, bd = Infinity;
+    for (const v of this._villagers) {
+      if (v.theme !== theme || v.householdId === undefined || !v.home) continue;
+      const d = (v.home.x - x) * (v.home.x - x) + (v.home.z - z) * (v.home.z - z);
+      if (d < bd) { bd = d; best = v.householdId; }
+    }
+    return best;
+  }
+
+  /** Recinto de moradia do morador (E36): a casa da sua família, senão a mais próxima do lar. */
+  _homeVenueFor(v) {
+    const homes = (this._venues[v.theme] ?? []).filter((x) => x.kind === 'home');
+    if (!homes.length) return null;
+    if (v.householdId !== undefined) {
+      const own = homes.find((x) => x.household === v.householdId);
+      if (own) return own.id;
+    }
+    const h = v.home ?? { x: v.center?.x ?? 0, z: v.center?.z ?? 0 };
+    let best = homes[0], bd = Infinity;
+    for (const x of homes) { const d = (x.x - h.x) * (x.x - h.x) + (x.z - h.z) * (x.z - h.z); if (d < bd) { bd = d; best = x; } }
+    return best.id;
+  }
+
+  /** Moradores atualmente DENTRO de um recinto (venue) da vila, por id (E34/E36). */
+  residentsInVenue(villageTheme, venueId) {
+    return this._villagers.filter((v) => v.theme === villageTheme && v.insideVenue === venueId
       && !v._emergingFlag && this.game.world.entities.has(v.id));
   }
 
-  /** Posição da porta de um recinto (para emergir na porta). */
-  _venueDoor(villageTheme, themeId) {
-    return (this._venues[villageTheme] ?? []).find((v) => v.themeId === themeId) ?? null;
+  /** Posição da porta de um recinto (para emergir na porta), por id. */
+  _venueDoor(villageTheme, venueId) {
+    return (this._venues[villageTheme] ?? []).find((v) => v.id === venueId) ?? null;
   }
 
   /** Recolhe um morador para dentro de um recinto (some da multidão externa). */
