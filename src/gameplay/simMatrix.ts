@@ -116,6 +116,8 @@ export interface MatrixSpec {
   levels?: number[];
   /** Sementes por célula (média sobre elas suaviza o ruído do RNG). */
   seeds?: number[];
+  /** Teto de ticks por cenário (para o canary rodar rápido no CI). */
+  ticks?: number;
 }
 
 /** Roda a matriz completa; devolve uma linha por (estilo × inimigo × qtd × nível),
@@ -127,7 +129,7 @@ export function runMatrix(spawnGame: () => { game: any; playerId: number }, spec
   const seeds = spec.seeds ?? [1, 2, 3];
   const rows: ScenarioResult[] = [];
   for (const style of styles) for (const enemy of spec.enemies) for (const count of counts) for (const level of levels) {
-    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed }));
+    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks }));
     const nums = (f: (r: ScenarioResult) => number) => runs.map(f).sort((a, b) => a - b);
     const median = (a: number[]) => a[Math.floor(a.length / 2)];
     const ttks = runs.map((r) => r.ttk).filter((v): v is number => v != null).sort((a, b) => a - b);

@@ -8,7 +8,7 @@ import { BIOMES } from '../src/data/biomes.js';
 describe('Novos inimigos (ADR 0100, E8.3)', () => {
   it('existem no catálogo com status no golpe', () => {
     expect(ENEMIES.bogbrute.onHit).toEqual({ poison: 2.5 });
-    expect(ENEMIES.ashwraith.onHit).toEqual({ stun: 0.5 });
+    expect(ENEMIES.ashwraith.onHit).toEqual({ stun: 0.4 }); // E42: nerf leve (0.5→0.4)
     expect(ENEMIES.frostfang.onHit).toEqual({ freeze: 0.9 });
   });
 
