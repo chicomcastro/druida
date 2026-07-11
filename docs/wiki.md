@@ -637,6 +637,11 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
     acopla o robô ao **jogo real** — o jogo passa a se jogar sozinho, coletando
     métricas (`DRUIDA.sim.metrics.report()`). Serve para gerar sessões repetíveis
     e comparar tunings (mudar HP de um inimigo e medir o impacto no DPS/ritmo).
+  - **Estilos de jogo** (ADR 0174 · `simMatrix.ts`, E41): o robô joga como
+    `melee`, `melee_dodge` (esquiva o golpe telegrafado), `ranged` (kite) ou
+    `caster`. `runMatrix(spawnGame, { styles, enemies, counts, levels })` varre
+    **estilo × inimigo × quantidade × nível** e classifica cada célula
+    (`rateDifficulty`: trivial→letal) — o mapa de dificuldade que guia o tuning.
 
 ## 18. Lacunas conhecidas
 - ~~**Forma Lobo sem desbloqueio**~~ ✅ **Resolvido (ADR 0106)**.

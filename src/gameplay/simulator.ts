@@ -41,27 +41,66 @@ function idleInput(): SimInput {
     attack: false, dodge: false, artifact: [false, false, false], switchForm: 0, interact: false };
 }
 
+/**
+ * Estilo de jogo do robô (E41): mede cada forma de jogar separadamente.
+ *  - `melee`       — corpo-a-corpo puro, sem esquiva (pior caso do melee).
+ *  - `melee_dodge` — corpo-a-corpo que ESQUIVA o golpe telegrafado (rola p/ trás).
+ *  - `ranged`      — mantém distância (kite) e ataca à distância; esquiva golpes.
+ *  - `caster`      — como o ranged, e ainda dispara o artefato quando disponível.
+ */
+export type SimStyle = 'melee' | 'melee_dodge' | 'ranged' | 'caster';
+
 export interface SimPlayerOpts {
+  /** Estilo de jogo (default `melee`). */
+  style?: SimStyle;
   /** Alcance para engajar um inimigo (u). */
   aggro?: number;
-  /** Distância em que o robô ataca em vez de se aproximar (u). */
+  /** Distância em que o robô ataca em vez de se aproximar (u), no melee. */
   strikeRange?: number;
+  /** Distância-alvo mínima/máxima do kite (ranged/caster). */
+  kiteMin?: number;
+  kiteMax?: number;
 }
 
 /**
- * Cérebro do jogador sintético: caça o inimigo vivo mais próximo (aproxima →
- * ataca no alcance, esquiva ocasional quando colado) e, sem inimigos por perto,
- * EXPLORA em linha reta trocando de rumo a cada ~1.3 s. Determinístico por semente.
+ * Cérebro do jogador sintético: caça o inimigo vivo mais próximo e o combate
+ * conforme o ESTILO (melee/esquiva/ranged/caster); sem inimigos por perto,
+ * EXPLORA em linha reta trocando de rumo a cada ~1 s. Determinístico por semente.
  */
 export class SimPlayer {
   rng: () => number;
+  style: SimStyle;
   aggro: number;
   strike: number;
-  _exdx = 0; _exdz = 1; _exploreT = 0; _atkPulse = false;
+  kiteMin: number;
+  kiteMax: number;
+  _exdx = 0; _exdz = 1; _exploreT = 0; _dodgeCd = 0; _artPulse = false;
   constructor(seed = 1, opts: SimPlayerOpts = {}) {
     this.rng = mulberry32(seed);
-    this.aggro = opts.aggro ?? 16;
+    this.style = opts.style ?? 'melee';
+    this.aggro = opts.aggro ?? (this.style === 'ranged' || this.style === 'caster' ? 22 : 16);
     this.strike = opts.strikeRange ?? 1.9;
+    this.kiteMin = opts.kiteMin ?? 4.5;
+    this.kiteMax = opts.kiteMax ?? 7.5;
+  }
+
+  /** Ataque no ponto-doce do combo (ADR 0092): 1º golpe ao zerar o cooldown,
+   *  encadeamentos na janela boa (~75%). Vale p/ melee e projétil. */
+  _comboReady(game: any, playerId: number): boolean {
+    const pc = game.world.get(playerId, C.PlayerControlled);
+    const timer = pc?.attackTimer ?? 0;
+    const total = pc?.castTotal ?? 0;
+    const p = total > 0 ? 1 - timer / total : 1;
+    return timer <= 0 || p >= 0.72;
+  }
+
+  /** Esquiva o golpe telegrafado: inimigo em windup e no alcance, com dodge pronto. */
+  _shouldDodge(game: any, playerId: number, foe: any): boolean {
+    if (this._dodgeCd > 0) return false;
+    const pc = game.world.get(playerId, C.PlayerControlled);
+    if ((pc?.dodgeTimer ?? 0) > 0) return false;
+    const ai = game.world.get(foe.eid, C.AI);
+    return !!(ai && ai.windup > 0 && foe.d <= (ai.attackRange ?? 1.5) + 1.1);
   }
 
   /** Inimigo vivo mais próximo do jogador (facção ENEMY, não morto). */
@@ -75,33 +114,17 @@ export class SimPlayer {
     return best;
   }
 
-  /** Decide o input deste tick a partir do estado do mundo. */
+  /** Decide o input deste tick a partir do estado do mundo, conforme o estilo. */
   decide(game: any, playerId: number): SimInput {
     const inp = idleInput();
+    const dt = game.dt ?? 1 / 60;
+    this._dodgeCd = Math.max(0, this._dodgeCd - dt);
     const tr = game.world.get(playerId, C.Transform);
     if (!tr) return inp;
+
     const foe = this._nearestEnemy(game, tr);
-    if (foe && foe.d <= this.aggro) {
-      const dx = foe.etr.x - tr.x, dz = foe.etr.z - tr.z;
-      const len = Math.hypot(dx, dz) || 1;
-      const ux = dx / len, uz = dz / len;
-      inp.aimX = ux; inp.aimZ = uz; inp.hasAim = true;
-      if (foe.d > this.strike) {
-        inp.moveX = ux; inp.moveZ = uz;            // aproxima
-      } else {
-        inp.moveX = ux * 0.25; inp.moveZ = uz * 0.25; // encara o alvo
-        // Golpe no COMBO (ADR 0092): como um jogador hábil lendo a barra de
-        // combo, toca o botão no ponto-doce (~75% do cooldown), não spamando.
-        // Primeiro golpe quando o cooldown zera; encadeamentos na janela boa.
-        const pc = game.world.get(playerId, C.PlayerControlled);
-        const timer = pc?.attackTimer ?? 0;
-        const total = pc?.castTotal ?? 0;
-        const p = total > 0 ? 1 - timer / total : 1;
-        inp.attack = timer <= 0 || p >= 0.72;      // edge tratado no playerControl
-        if (foe.d < 1.3 && this.rng() < 0.04) inp.dodge = true; // esquiva ocasional
-      }
-    } else {
-      this._exploreT -= game.dt ?? 1 / 60;
+    if (!foe || foe.d > this.aggro) {           // --- sem alvo: explora ---
+      this._exploreT -= dt;
       if (this._exploreT <= 0) {
         const a = this.rng() * Math.PI * 2;
         this._exdx = Math.sin(a); this._exdz = Math.cos(a);
@@ -109,6 +132,40 @@ export class SimPlayer {
       }
       inp.moveX = this._exdx; inp.moveZ = this._exdz;
       inp.aimX = this._exdx; inp.aimZ = this._exdz; inp.hasAim = true;
+      return inp;
+    }
+
+    const dx = foe.etr.x - tr.x, dz = foe.etr.z - tr.z;
+    const len = Math.hypot(dx, dz) || 1;
+    const ux = dx / len, uz = dz / len;
+    inp.aimX = ux; inp.aimZ = uz; inp.hasAim = true;
+
+    // Esquiva reativa (estilos com dodge): rola PARA TRÁS do golpe telegrafado.
+    const dodges = this.style !== 'melee';
+    if (dodges && this._shouldDodge(game, playerId, foe)) {
+      inp.moveX = -ux; inp.moveZ = -uz; inp.dodge = true;
+      this._dodgeCd = 0.5;
+      return inp;
+    }
+
+    if (this.style === 'ranged' || this.style === 'caster') {
+      // Kite: mantém a distância-alvo e ataca à distância.
+      if (foe.d < this.kiteMin) { inp.moveX = -ux; inp.moveZ = -uz; }      // recua
+      else if (foe.d > this.kiteMax) { inp.moveX = ux; inp.moveZ = uz; }   // aproxima
+      if (foe.d <= this.aggro) inp.attack = this._comboReady(game, playerId);
+      if (this.style === 'caster') {
+        // Dispara o artefato do slot 0 quando puder (pulsado; cooldown/seiva gerem).
+        this._artPulse = !this._artPulse;
+        if (this._artPulse) inp.artifact = [true, false, false];
+      }
+      return inp;
+    }
+
+    // Melee / melee_dodge: aproxima e golpeia no combo.
+    if (foe.d > this.strike) { inp.moveX = ux; inp.moveZ = uz; }
+    else {
+      inp.moveX = ux * 0.25; inp.moveZ = uz * 0.25;
+      inp.attack = this._comboReady(game, playerId);
     }
     return inp;
   }
@@ -137,11 +194,15 @@ export class SimMetrics {
 
   attach(game: any, playerId: number) {
     this.playerId = playerId;
+    // Atribuição robusta (numa sim solo, todo dano/abate num INIMIGO é do jogador):
+    // os projéteis aplicam dano com `attackerId` = a entidade do projétil (não o
+    // jogador), então casar só por attackerId perderia o dano ranged/caster.
     game.on('damage', (e: any) => {
-      if (e.attackerId === playerId && e.id !== playerId) this.damageDealt += e.amount ?? 0;
-      else if (e.id === playerId) this.damageTaken += e.amount ?? 0;
+      if (e.id === playerId) { this.damageTaken += e.amount ?? 0; return; }
+      const fac = game.world.get(e.id, C.Faction);
+      if (e.attackerId === playerId || fac?.team === Factions.ENEMY) this.damageDealt += e.amount ?? 0;
     });
-    game.on('kill', (e: any) => { if (e.attackerId === playerId) this.kills += 1; });
+    game.on('kill', (e: any) => { if (e.id !== playerId) this.kills += 1; });
     game.on('playerDowned', (e: any) => { if (e.id === playerId) this.deaths += 1; });
     game.on('essence', (e: any) => { this.essence += e.amount ?? 0; });
     game.on('itemPickup', (e: any) => {
