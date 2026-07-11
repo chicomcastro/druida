@@ -625,6 +625,18 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
   opt-out, exporta JSON na pausa. **Funil da 1ª hora**: essência ganha×gasta,
   itens comprados, níveis, vilas/interiores/descansos, e marcos
   (`firstKill/Level/Purchase/Down/QuestAt`). É o que embasa o tuning do Gate F.
+- **Simulador sintético** (ADR 0173 · `src/gameplay/simulator.ts`, E40): um
+  **jogador-robô** que joga **de verdade** — lê o ECS e injeta inputs (caça o
+  inimigo mais próximo, golpeia no **ponto-doce do combo**, esquiva, e sem
+  inimigos **explora**), tudo puro/determinístico (RNG semeado) e headless.
+  - `runSimulation(game, { playerId, ticks, seed })` roda o loop dirigido pelo
+    bot e devolve um **relatório de balanceamento**: DPS causado/sofrido,
+    abates/min, mortes, sobrevivência, essência, drops por raridade e
+    deslocamento. Repetível: mesma semente → mesmo relatório.
+  - `installSyntheticInput(game, playerId)` (ou, no console, **`DRUIDA.sim.drive()`**)
+    acopla o robô ao **jogo real** — o jogo passa a se jogar sozinho, coletando
+    métricas (`DRUIDA.sim.metrics.report()`). Serve para gerar sessões repetíveis
+    e comparar tunings (mudar HP de um inimigo e medir o impacto no DPS/ritmo).
 
 ## 18. Lacunas conhecidas
 - ~~**Forma Lobo sem desbloqueio**~~ ✅ **Resolvido (ADR 0106)**.
