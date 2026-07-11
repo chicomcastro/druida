@@ -273,6 +273,11 @@ cozinha (§7). O salão comunal é o ponto de encontro noturno dos moradores (§
 </p>
 <sub>Interiores temáticos (micro-instância selada, com móveis e NPC próprios): forja de armas, armaduraria, mercado geral, casa do jardineiro, taverna (com caldeirão) e salão comunal.</sub>
 
+<p align="center">
+  <img src="img/moradias-vilas.jpg" width="820" alt="Moradias das vilas 2–4" />
+</p>
+<sub>Moradia por-casa nas demais vilas (E38): entrar num lar mostra a família daquele horário, cada uma com a paleta e o formato da sua vila — <b>palafita-lar</b> do Vau (verde-água), <b>cabana-lar</b> de Cinzafolha (brasa) e <b>tenda-lar</b> do Degelo (gelo).</sub>
+
 ## 7. Culinária, forrageamento & despensa
 Fonte: `src/gameplay/recipes.ts`, `ingredients.ts`, `consumables.ts`,
 `world/ForageManager.ts` (ADR 0134 + E19/E21). Uma cadeia leve de sobrevivência
