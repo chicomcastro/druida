@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pointInRects, separationForce, avoidForce, steer, streetForce } from '../src/gameplay/steering.js';
+import { pointInRects, separationForce, avoidForce, steer, streetForce, approach, turnToward } from '../src/gameplay/steering.js';
 
 const rect = (x0, z0, x1, z1) => ({ x0, z0, x1, z1 });
 
@@ -56,5 +56,33 @@ describe('steering — IA dos aldeões (E23.5)', () => {
     const cells: [number, number][] = [[0.5, 0]];
     expect(streetForce(0, 0, cells, 0.9)).toEqual({ x: 0, z: 0 });
     expect(streetForce(0, 0, [], 0.9)).toEqual({ x: 0, z: 0 }); // sem ruas: neutro
+  });
+});
+
+describe('suavização de movimento (E46 — anti-jitter)', () => {
+  it('approach anda em direção ao alvo sem ultrapassar', () => {
+    // De 0 rumo a 1: cada passo aproxima uma fração; converge, nunca passa de 1.
+    let v = 0;
+    for (let i = 0; i < 200; i++) v = approach(v, 1, 1 / 60);
+    expect(v).toBeGreaterThan(0.99);
+    expect(v).toBeLessThanOrEqual(1);
+    // Um passo único fica ENTRE origem e alvo (é a chave do anti-jitter: uma
+    // inversão de 1 frame só freia, não reverte).
+    const one = approach(0, 1, 1 / 60);
+    expect(one).toBeGreaterThan(0);
+    expect(one).toBeLessThan(0.5);
+    // Alvo oposto no frame seguinte não joga pra -1 num passo:
+    expect(approach(one, -1, 1 / 60)).toBeGreaterThan(-0.1);
+  });
+
+  it('turnToward gira pelo menor arco e não ultrapassa o alvo', () => {
+    // Vira de ~0 para π/2 progressivamente; chega perto sem estourar.
+    let a = 0;
+    for (let i = 0; i < 60; i++) a = turnToward(a, Math.PI / 2, 1 / 60);
+    expect(a).toBeGreaterThan(Math.PI / 2 - 0.05);
+    expect(a).toBeLessThan(Math.PI / 2 + 1e-6);
+    // Menor arco: de -3.0 rad para +3.0 rad passa pelo ±π (não pelo 0).
+    const step = turnToward(-3.0, 3.0, 1 / 60, 8);
+    expect(step).toBeLessThan(-3.0); // foi na direção de -π, não de 0
   });
 });

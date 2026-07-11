@@ -10,7 +10,7 @@ import { goalSpread, ROUTINE_ARCHETYPES } from '../gameplay/routine.js';
 import { npcPlace } from '../gameplay/npcSchedule.js';
 import { assignHouseholds } from '../gameplay/households.js';
 import { shouldChat, pickChatLine, CHAT_RANGE, CHAT_COOLDOWN } from '../gameplay/chatter.js';
-import { separationForce, avoidForce, steer, pointInRects, streetForce } from '../gameplay/steering.js';
+import { separationForce, avoidForce, steer, pointInRects, streetForce, approach, turnToward } from '../gameplay/steering.js';
 
 /** Ponto de reunião (salão comunal) de cada vila, em coord LOCAL — onde os
  *  moradores almoçam e se reúnem ao entardecer (E22). */
@@ -278,9 +278,9 @@ export class SettlementManager {
       for (const [, ptr] of game.world.query(C.Transform, C.PlayerControlled)) {
         if (Math.hypot(ptr.x - tr.x, ptr.z - tr.z) < 3.5) { playerNear = true; break; }
       }
-      if (playerNear) { vel.vx = 0; vel.vz = 0; continue; }
+      if (playerNear) { vel.vx = vel.vz = v._vx = v._vz = 0; continue; }
       if (v.wait > 0) {
-        v.wait -= dt; vel.vx = 0; vel.vz = 0;
+        v.wait -= dt; vel.vx = vel.vz = v._vx = v._vz = 0;
         this._maybeChat(v, tr); // parado: pode puxar prosa com um vizinho (E22.5)
         continue;
       }
@@ -335,10 +335,18 @@ export class SettlementManager {
       const sep = separationForce(tr.x, tr.z, neighbors, 1.5);
       const avoid = avoidForce(tr.x - cx, tr.z - cz, v.fps ?? [], 2.0);
       const dir = steer(desire, sep, avoid);
-      if (dir.x === 0 && dir.z === 0) { vel.vx = 0; vel.vz = 0; continue; }
-      vel.vx = dir.x * 1.1;
-      vel.vz = dir.z * 1.1;
-      tr.rot = Math.atan2(dir.x, dir.z);
+      // Velocidade SUAVIZADA (E46): sem o filtro, quando o steering inverte na
+      // borda de uma estrutura/rua o aldeão vibra pra frente/trás na tela. Com o
+      // passa-baixa, uma inversão de 1 frame só o freia (ele pára na borda em vez
+      // de ser jogado pra trás). O alvo é 0 quando nada empurra → desacelera liso.
+      const SPEED = 1.1;
+      const tvx = dir.x * SPEED, tvz = dir.z * SPEED;
+      v._vx = approach(v._vx ?? 0, tvx, dt);
+      v._vz = approach(v._vz ?? 0, tvz, dt);
+      vel.vx = v._vx; vel.vz = v._vz;
+      // Vira suave para o rumo do movimento (nada de flip instantâneo de 180°).
+      const sp = Math.hypot(vel.vx, vel.vz);
+      if (sp > 0.06) tr.rot = turnToward(tr.rot ?? 0, Math.atan2(vel.vx, vel.vz), dt);
     }
   }
 
