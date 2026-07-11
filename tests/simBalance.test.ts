@@ -3,6 +3,13 @@ import { makeGame, addPlayer } from './helpers.js';
 import { runMatrix, runScenario } from '../src/gameplay/simMatrix.js';
 import { BALANCE } from '../src/data/balance.js';
 
+const avgHpAt = (level: number, count: number) => {
+  const rows = runMatrix(spawnGame, {
+    styles: ['melee'], enemies: ['rotboar', 'frostfang'], counts: [count], levels: [level], seeds: [1, 2], ticks: 2400,
+  });
+  return rows.reduce((s, r) => s + r.hpLeftFrac, 0) / rows.length * 100;
+};
+
 const spawnGame = () => { const g = makeGame(); const pid = addPlayer(g, 0, 0, 0); return { game: g, playerId: pid }; };
 const avgHp = (rows: any[]) => rows.reduce((s, r) => s + r.hpLeftFrac, 0) / rows.length * 100;
 
@@ -34,6 +41,25 @@ describe('Canary de balanceamento (E42)', () => {
     // 3 juntos custam MUITO mais que 1 (delta grande) e ficam genuinamente duros.
     expect(soloHp - packHp).toBeGreaterThan(20);
     expect(packHp).toBeLessThan(55);
+  });
+
+  it('a curva por nível não drifta: 1 comum dá trabalho do início ao fim (E45)', () => {
+    // O grande risco da escala por nível é o jogo virar trivial (super-gear) ou
+    // impossível (inimigos disparam) conforme se sobe. Aqui travamos que matar 1
+    // comum continua "médio" (nem trivial, nem massacre) do L1 ao L20 — a curva
+    // suavizada (enemy.hpPerLevel/damagePerLevel) mantém o piso estável.
+    // Durante a jornada (L1–L10) matar 1 comum continua custando (nem trivial).
+    for (const level of [1, 10]) {
+      const hp = avgHpAt(level, 1);
+      expect(hp).toBeLessThan(92);   // não é trivial
+      expect(hp).toBeGreaterThan(40); // nem massacre
+    }
+    // No endgame (L20, arma de tier alto), 1 comum LEVE pode ser fácil — poder
+    // vem do gear (design MCD) — mas nunca vira um massacre contra o jogador.
+    expect(avgHpAt(20, 1)).toBeGreaterThan(40);
+    // As curvas por nível ficaram mais suaves que o default histórico (0.16/0.07).
+    expect(BALANCE.enemy.hpPerLevel).toBeLessThanOrEqual(0.12);
+    expect(BALANCE.enemy.damagePerLevel).toBeLessThanOrEqual(0.05);
   });
 
   it('o inimigo "duro" (Espectro) é fatal para quem não esquiva, mas justo p/ quem esquiva', () => {

@@ -21,11 +21,16 @@ export const BALANCE = {
   },
 
   enemy: {
-    // Escala com nível de grupo e nº de jogadores (coop).
-    hpPerLevel: 0.16,
+    // Escala com nível de grupo e nº de jogadores (coop). As curvas POR NÍVEL
+    // foram suavizadas (E45, ADR 0177): a 0.16/0.07 os inimigos cresciam mais
+    // rápido que o poder de equipamento do jogador no meio do jogo (L10–15), e
+    // um trio virava quase invencível pro piso (melee sem esquiva/sem armadura).
+    // 0.12/0.05 achata esse vale mantendo o L1 idêntico (o termo por nível é 0
+    // no L1) e o endgame ainda ameaçador. Ver docs/balance-report.md.
+    hpPerLevel: 0.12,
     hpPlayerBase: 0.7,
     hpPerPlayer: 0.4,
-    damagePerLevel: 0.07,
+    damagePerLevel: 0.05,
     // Fatores globais de dificuldade (E42, ADR 0175): calibrados com o simulador
     // (bot melee-sem-esquiva como PISO). Antes 1 comum era trivial (~90% de vida)
     // e 3 juntos só "médio"; agora 1 comum dá trabalho (fácil/médio, ~78%) e 3
