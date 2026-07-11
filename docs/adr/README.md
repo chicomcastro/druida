@@ -174,4 +174,5 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0168](0168-interiores-dimensionados-por-tema.md) | Interiores dimensionados por tema (tamanhos e formatos variados) (E35) | Aceito |
 | [0169](0169-moradia-por-casa.md) | Moradia por-casa (cada lar é um recinto próprio) (E36) | Aceito |
 | [0170](0170-ermos-cenarios-eremitas-cacadas.md) | Ermos: cenários únicos, eremitas e caçadas exploratórias (E37) | Aceito |
+| [0171](0171-vila-viva-nas-demais-vilas.md) | Vila viva nas demais vilas: moradia por-casa em Vau/Cinzafolha/Degelo (E38) | Aceito |
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |

@@ -237,13 +237,24 @@ sala fechada, clima escuro selado, **móveis temáticos** e um NPC responsável.
 | `garden` | loja de jardim (sementes) | Fiora, a jardineira | balcão, canteiros | vende sementes/ingredientes (ADR 0146) |
 | `tavern` | descanso + **cozinha** | Vesna + **cozinheiro/a** | mesas, barris, **lareira**, **caldeirão** | cura + refeição; caldeirão para cozinhar (§7) |
 | `leader` / `hall` | diálogo + **cozinha** | Anciã Maroa / Tovar | tapete, estante, **caldeirão** | salão comunal (segredo/codex + refeição em grupo) |
-| `home` | diálogo | Morador | genérico | moradias |
+| `home` | moradia (família) | Morador + família | genérico aconchegante | Clareira |
+| `vau_home` / `cinza_home` / `degelo_home` | moradia (família) | Morador + família | clima da vila | **lares** de Vau / Cinzafolha / Degelo (E38) |
 
 **Distribuição por vila** (ADR 0097/0107/0146): Clareira = weapons, armor,
 garden, tavern, leader, hall + casas. Vau = **vau_arpo, vau_couro**, tavern,
 market, casas. Cinzafolha = **cinza_serra, cinza_forno**, tavern (mercador ao ar
 livre). Degelo = **degelo_trilha, degelo_pasto**, tavern, market, casas. Cada
 vila tem seu par de lojas-família rivais (§4).
+
+**Moradia por-casa em TODAS as vilas** (ADR 0169/0171 · E36/E38). Cada porta de
+**lar** é um recinto próprio de família (`residence: true` → venue único
+`home#<vila>#<n>`, com o household mais próximo). O E36 fez isso na Clareira; o
+**E38 estendeu às demais vilas**: Vau ganhou **palafitas-lar** sobre a lagoa,
+Cinzafolha **cabanas-lar** de tora e Degelo **tendas-lar** de pele, cada uma com
+o tema de interior da vila (`vau_home`/`cinza_home`/`degelo_home` — paleta e
+formato próprios, somando ao E35). Assim, **em qualquer vila**, entrar numa casa
+mostra exatamente a família que o cronograma (§ cronograma) pôs ali naquele
+horário, e à noite cada morador recolhe-se ao **seu** lar.
 
 **Taverna & salão comunal** (ADR 0094/0140): descansar cura o grupo, passa a
 noite e **salva**; a refeição dá **+12% de dano por 120s** ("bem alimentado"). A
@@ -261,6 +272,11 @@ cozinha (§7). O salão comunal é o ponto de encontro noturno dos moradores (§
   <img src="img/interior-hall.jpg" width="270" alt="Salão comunal" />
 </p>
 <sub>Interiores temáticos (micro-instância selada, com móveis e NPC próprios): forja de armas, armaduraria, mercado geral, casa do jardineiro, taverna (com caldeirão) e salão comunal.</sub>
+
+<p align="center">
+  <img src="img/moradias-vilas.jpg" width="820" alt="Moradias das vilas 2–4" />
+</p>
+<sub>Moradia por-casa nas demais vilas (E38): entrar num lar mostra a família daquele horário, cada uma com a paleta e o formato da sua vila — <b>palafita-lar</b> do Vau (verde-água), <b>cabana-lar</b> de Cinzafolha (brasa) e <b>tenda-lar</b> do Degelo (gelo).</sub>
 
 ## 7. Culinária, forrageamento & despensa
 Fonte: `src/gameplay/recipes.ts`, `ingredients.ts`, `consumables.ts`,
