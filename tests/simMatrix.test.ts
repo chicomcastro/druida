@@ -78,6 +78,20 @@ describe('Matriz de simulação por estilo (E41)', () => {
     expect(bear).toBeGreaterThan(humano);  // Urso: patada pesada + atordoa
   });
 
+  it('FORMAS à distância: Corvo kita/atira e Sapo agarra à média distância (E47)', () => {
+    // Corvo = projétil rápido (raven_peck) + voa → kita sem apanhar.
+    const raven = runScenario(spawnGame, { style: 'ranged', enemy: 'husk', count: 1, seed: 2, ticks: 3000, form: 'raven' });
+    expect(raven.ttk).toBeGreaterThan(0);
+    expect(raven.dps).toBeGreaterThan(20);
+    expect(raven.dmgTaken).toBeLessThan(5);
+    // Sapo = língua (arco de 3.2u, veneno + puxão) → precisa se aproximar; à
+    // distância (ranged) não alcança, no corpo-a-corpo causa dano.
+    const frogRanged = runScenario(spawnGame, { style: 'ranged', enemy: 'husk', count: 1, seed: 2, ticks: 3000, form: 'frog' });
+    const frogMelee = runScenario(spawnGame, { style: 'melee', enemy: 'husk', count: 1, seed: 2, ticks: 3000, form: 'frog' });
+    expect(frogRanged.dps).toBeLessThan(5);       // longe demais: a língua não pega
+    expect(frogMelee.dps).toBeGreaterThan(15);    // aproximando, morde e envenena
+  });
+
   it('runMatrix devolve uma linha por (estilo × inimigo × qtd × nível)', () => {
     const rows = runMatrix(spawnGame, {
       styles: ['melee', 'ranged'], enemies: ['rotboar', 'husk'], counts: [1, 3], levels: [1], seeds: [1],

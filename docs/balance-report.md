@@ -85,8 +85,19 @@ Além de melee/esquiva/ranged, o simulador agora mede o **caster** e as **formas
   | **Urso** | **42** | **45** | patada pesada + atordoa + 35% de redução (tank) |
 
   Ambas as formas batem bem mais que a arma inicial — são um upgrade de poder real,
-  com papéis distintos (Lobo = DPS móvel; Urso = dano/controle/tanque). Corvo/Sapo
-  (formas à distância) ficam para uma próxima fatia.
+  com papéis distintos (Lobo = DPS móvel; Urso = dano/controle/tanque).
+
+  As **formas à distância / de controle** (E47) completam o quadro:
+
+  | Forma | estilo medido | DPS (husk) | papel |
+  |---|---|--:|---|
+  | **Corvo** | ranged (kite) | ~41 | projétil rápido + voa → kita sem apanhar |
+  | **Sapo** | melee (aprox.) | ~34 | língua de 3.2u: veneno + PUXÃO (controle médio-alcance) |
+
+  O Corvo é o kiter puro (dano à distância, quase intocável); o Sapo é curto-médio
+  alcance (precisa se aproximar; agarra e envenena). Ou seja, as 4 Formas Ancestrais
+  cobrem papéis distintos: **Lobo** (DPS móvel), **Urso** (tanque/burst), **Corvo**
+  (ranged), **Sapo** (controle).
 
 ## Curva por nível / equipamento (E45)
 O simulador aceita `levels` — dá para varrer a dificuldade conforme o grupo sobe
