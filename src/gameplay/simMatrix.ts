@@ -21,6 +21,8 @@ export interface Scenario {
   ticks?: number;
   /** Qualidade de reação da esquiva (0..1); ver SimPlayer.reaction. Default 1. */
   reaction?: number;
+  /** Forma ancestral a medir (ex.: 'wolf', 'bear'); concede+ativa antes da luta. */
+  form?: string;
 }
 
 export interface ScenarioResult extends Scenario {
@@ -79,6 +81,12 @@ export function runScenario(spawnGame: () => { game: any; playerId: number }, sc
   const { game, playerId } = spawnGame();
   game.progress.level = level;
   equipForStyle(game, playerId, sc.style, level);
+  // Forma ancestral (E44): concede+ativa a forma antes da luta. As formas usam o
+  // ataque próprio (mordida/patada) e se sustentam com a seiva que o golpe rende.
+  if (sc.form && sc.form !== 'humanoid') {
+    const f = game.world.get(playerId, C.Form);
+    if (f) { if (!f.list.includes(sc.form)) f.list.push(sc.form); f.current = sc.form; }
+  }
   const foes = spawnPack(game, sc.enemy, count);
 
   const bot = new SimPlayer(sc.seed ?? 1, { style: sc.style, reaction: sc.reaction });

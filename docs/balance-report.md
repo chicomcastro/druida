@@ -68,6 +68,26 @@ punição. Só a esquiva **quase perfeita** (0.85+) alivia de verdade. Ou seja: 
 tuning do E42 **não é duro só para o pior caso** — vale para o jogador médio; e
 recompensa quem domina a esquiva (o teto), como deve ser num ARPG.
 
+## Caster e Formas Ancestrais (E44)
+Além de melee/esquiva/ranged, o simulador agora mede o **caster** e as **formas**:
+
+- **Caster** = kite + dispara o **artefato** do slot 0 além do ataque básico. Rende
+  um pouco MAIS de DPS que o ranged puro (ex.: rotboar 39 vs 33; husk 40 vs 38) —
+  confirma que o artefato soma dano (e é atribuído ao jogador).
+- **Formas** (`runScenario({ form })` concede+ativa a forma; ela se sustenta com a
+  seiva que o próprio golpe rende). DPS bruto (melee puro, nível 1, média de 3
+  sementes):
+
+  | Forma | DPS rotboar | DPS husk | perfil |
+  |---|--:|--:|---|
+  | Humanoide (arma inicial) | 30 | 36 | base |
+  | **Lobo** | **50** | **59** | cadência rápida → maior DPS sustentado |
+  | **Urso** | **42** | **45** | patada pesada + atordoa + 35% de redução (tank) |
+
+  Ambas as formas batem bem mais que a arma inicial — são um upgrade de poder real,
+  com papéis distintos (Lobo = DPS móvel; Urso = dano/controle/tanque). Corvo/Sapo
+  (formas à distância) ficam para uma próxima fatia.
+
 ## Trava de regressão (canary)
 `tests/simBalance.test.ts` fixa as faixas: 1 comum não-trivial (vida < 90%) e não
 massacrado (> 45%); 3× muito mais duros (delta > 20 pts e vida < 55%); e o

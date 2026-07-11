@@ -60,6 +60,24 @@ describe('Matriz de simulação por estilo (E41)', () => {
     expect(always).toBeLessThan(5);        // esquivador perfeito quase não apanha
   });
 
+  it('CASTER dispara o artefato: causa dano atribuído e não fica atrás do ranged (E44)', () => {
+    const ranged = runScenario(spawnGame, { style: 'ranged', enemy: 'husk', count: 1, seed: 2, ticks: 3000 });
+    const caster = runScenario(spawnGame, { style: 'caster', enemy: 'husk', count: 1, seed: 2, ticks: 3000 });
+    expect(caster.ttk).toBeGreaterThan(0);       // limpou
+    expect(caster.dps).toBeGreaterThan(20);      // dano real atribuído (basic + artefato)
+    expect(caster.dps).toBeGreaterThan(ranged.dps * 0.9); // o artefato SOMA ao ataque básico
+  });
+
+  it('FORMAS Lobo/Urso ativam e batem mais forte que o humanoide inicial (E44)', () => {
+    const dps = (form?: string) => {
+      let s = 0; for (const seed of [1, 2, 3]) s += runScenario(spawnGame, { style: 'melee', enemy: 'rotboar', count: 1, seed, ticks: 3000, form }).dps;
+      return s / 3;
+    };
+    const humano = dps(), wolf = dps('wolf'), bear = dps('bear');
+    expect(wolf).toBeGreaterThan(humano);  // Lobo: cadência rápida → DPS alto
+    expect(bear).toBeGreaterThan(humano);  // Urso: patada pesada + atordoa
+  });
+
   it('runMatrix devolve uma linha por (estilo × inimigo × qtd × nível)', () => {
     const rows = runMatrix(spawnGame, {
       styles: ['melee', 'ranged'], enemies: ['rotboar', 'husk'], counts: [1, 3], levels: [1], seeds: [1],

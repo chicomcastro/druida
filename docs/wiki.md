@@ -654,6 +654,10 @@ Fonte: `src/gameplay/economy.ts` (ADR 0104/0145/0146), `reputation.ts` (ADR
     cada golpe telegrafado. `0` = piso (nunca esquiva), `~0.6` = jogador médio,
     `1` = esquivador perfeito. Foi o dial que **validou** o balanceamento (E42):
     até ~0.6 a dificuldade é ~a do piso (ver `docs/balance-report.md`).
+  - **Caster e Formas** (E44): o estilo `caster` dispara o **artefato** além do
+    ataque (mais DPS que o ranged puro); `runScenario({ form })` concede+ativa uma
+    **Forma Ancestral** (Lobo/Urso) e mede seu combate — ambas batem bem mais que
+    a arma inicial (Lobo = DPS rápido; Urso = pancada+atordoa+tanque).
 
 ## 18. Lacunas conhecidas
 - ~~**Forma Lobo sem desbloqueio**~~ ✅ **Resolvido (ADR 0106)**.
