@@ -37,7 +37,15 @@ skills) em **cada cenário** (1 vs 3 inimigos, por nível/equipamento), não um 
   (fix do projétil); `runMatrix` gera uma linha por combinação e 3 inimigos
   custam mais que 1). 392 testes verdes, `tsc` limpo, `vite build` ok.
 
+## Adendo (E43) — reação imperfeita
+O `SimPlayer` ganhou `reaction` (0..1): a chance de **esquivar cada golpe
+telegrafado** (decidida uma vez por telégrafo). `1` = esquivador perfeito (o
+"teto", toma ~0 de dano); `0` = nunca esquiva (o piso); `~0.6` = jogador médio.
+Isso transformou a esquiva de um extremo binário num **dial de perícia**, usado
+para **validar o balanceamento** (E42): até ~0.6 de reação a dificuldade é
+praticamente a do piso — ou seja, o tuning vale para o jogador médio, não só para
+o pior caso. Ver `docs/balance-report.md` (seção "jogador realista").
+
 ## Futuro
-Estilo `caster`/formas com skills medidos a fundo; ajustar a IA de esquiva do bot
-(hoje ela esquiva demais e demora a matar — é o "jogador perfeito"); usar a matriz
-na passada de balanceamento (E42) e como **canary de ritmo** no CI.
+Estilo `caster`/formas com skills medidos a fundo; usar `reaction` para varrer
+faixas de perícia por bioma; manter a matriz como **canary de ritmo** no CI.

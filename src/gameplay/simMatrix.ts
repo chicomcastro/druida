@@ -19,6 +19,8 @@ export interface Scenario {
   level?: number;
   seed?: number;
   ticks?: number;
+  /** Qualidade de reação da esquiva (0..1); ver SimPlayer.reaction. Default 1. */
+  reaction?: number;
 }
 
 export interface ScenarioResult extends Scenario {
@@ -79,7 +81,7 @@ export function runScenario(spawnGame: () => { game: any; playerId: number }, sc
   equipForStyle(game, playerId, sc.style, level);
   const foes = spawnPack(game, sc.enemy, count);
 
-  const bot = new SimPlayer(sc.seed ?? 1, { style: sc.style });
+  const bot = new SimPlayer(sc.seed ?? 1, { style: sc.style, reaction: sc.reaction });
   const metrics = new SimMetrics().attach(game, playerId);
   let clearedAt = -1;
   for (let i = 0; i < ticks; i++) {
@@ -118,6 +120,8 @@ export interface MatrixSpec {
   seeds?: number[];
   /** Teto de ticks por cenário (para o canary rodar rápido no CI). */
   ticks?: number;
+  /** Qualidade de reação da esquiva (0..1) aplicada a todas as células. */
+  reaction?: number;
 }
 
 /** Roda a matriz completa; devolve uma linha por (estilo × inimigo × qtd × nível),
@@ -129,7 +133,7 @@ export function runMatrix(spawnGame: () => { game: any; playerId: number }, spec
   const seeds = spec.seeds ?? [1, 2, 3];
   const rows: ScenarioResult[] = [];
   for (const style of styles) for (const enemy of spec.enemies) for (const count of counts) for (const level of levels) {
-    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks }));
+    const runs = seeds.map((seed) => runScenario(spawnGame, { style, enemy, count, level, seed, ticks: spec.ticks, reaction: spec.reaction }));
     const nums = (f: (r: ScenarioResult) => number) => runs.map(f).sort((a, b) => a - b);
     const median = (a: number[]) => a[Math.floor(a.length / 2)];
     const ttks = runs.map((r) => r.ttk).filter((v): v is number => v != null).sort((a, b) => a - b);

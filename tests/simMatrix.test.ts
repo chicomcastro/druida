@@ -50,6 +50,16 @@ describe('Matriz de simulação por estilo (E41)', () => {
     expect(r.dmgTaken).toBeLessThan(5); // manteve distância
   });
 
+  it('REAÇÃO imperfeita: quanto mais o robô esquiva, menos dano toma (E43)', () => {
+    // husk telegrafa um golpe corpo-a-corpo limpo — dá sinal monotônico.
+    const taken = (reaction: number) =>
+      runScenario(spawnGame, { style: 'melee_dodge', enemy: 'husk', count: 1, seed: 7, ticks: 2400, reaction }).dmgTaken;
+    const never = taken(0), half = taken(0.5), always = taken(1);
+    expect(never).toBeGreaterThan(half);   // nunca esquivar sofre mais que às vezes
+    expect(half).toBeGreaterThan(always);  // ...que sempre esquivar
+    expect(always).toBeLessThan(5);        // esquivador perfeito quase não apanha
+  });
+
   it('runMatrix devolve uma linha por (estilo × inimigo × qtd × nível)', () => {
     const rows = runMatrix(spawnGame, {
       styles: ['melee', 'ranged'], enemies: ['rotboar', 'husk'], counts: [1, 3], levels: [1], seeds: [1],
