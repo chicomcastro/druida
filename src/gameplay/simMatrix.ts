@@ -10,6 +10,8 @@
  */
 import { C } from '../core/ecs/components.js';
 import { generateItem, ARMOR_SLOTS } from './loot.js';
+import { promoteToElite } from './spawn.js';
+import { bossSystem } from '../systems/boss.js';
 import { SimPlayer, SimMetrics, DEFAULT_SIM_SYSTEMS, type SimStyle } from './simulator.js';
 
 export interface Scenario {
@@ -29,6 +31,10 @@ export interface Scenario {
   armorRarity?: string;
   /** Dons de santuário ativos (ids, ex.: ['casca']) — modela endgame (E52). */
   boons?: string[];
+  /** `enemy` é uma chave de CHEFE (BOSSES); spawna 1 chefe + roda o bossSystem (E53). */
+  boss?: boolean;
+  /** Promove cada inimigo do pack a ELITE com este afixo (petreo/volatil/sanguessuga, E53). */
+  eliteAffix?: string;
 }
 
 export interface ScenarioResult extends Scenario {
@@ -99,7 +105,7 @@ export function rateDifficulty(r: { survived: boolean; hpLeftFrac: number; ttk: 
 export function runScenario(spawnGame: () => { game: any; playerId: number }, sc: Scenario): ScenarioResult {
   const count = sc.count ?? 1;
   const level = sc.level ?? 1;
-  const ticks = sc.ticks ?? 5400; // 90 s de teto
+  const ticks = sc.ticks ?? (sc.boss ? 12000 : 5400); // chefe: teto maior (200 s)
   const { game, playerId } = spawnGame();
   game.progress.level = level;
   // Dons de santuário (E52): setados ANTES de equipar — o applyEquipment lê
@@ -113,7 +119,16 @@ export function runScenario(spawnGame: () => { game: any; playerId: number }, sc
     const f = game.world.get(playerId, C.Form);
     if (f) { if (!f.list.includes(sc.form)) f.list.push(sc.form); f.current = sc.form; }
   }
-  const foes = spawnPack(game, sc.enemy, count);
+  // Alvos: chefe único (roda o bossSystem), pack de elites, ou pack comum.
+  let foes: number[];
+  if (sc.boss) {
+    const id = game.spawnBossByKey(sc.enemy, 6, 0);
+    foes = id != null ? [id] : [];
+  } else {
+    foes = spawnPack(game, sc.enemy, count);
+    if (sc.eliteAffix) for (const id of foes) promoteToElite(game, id, sc.eliteAffix);
+  }
+  const systems = sc.boss ? [...DEFAULT_SIM_SYSTEMS, bossSystem] : DEFAULT_SIM_SYSTEMS;
 
   const bot = new SimPlayer(sc.seed ?? 1, { style: sc.style, reaction: sc.reaction });
   const metrics = new SimMetrics().attach(game, playerId);
@@ -122,7 +137,7 @@ export function runScenario(spawnGame: () => { game: any; playerId: number }, sc
     game.dt = 1 / 60;
     const intent = game.world.get(playerId, C.Intent);
     if (intent) Object.assign(intent, bot.decide(game, playerId));
-    for (const s of DEFAULT_SIM_SYSTEMS) s(game, 1 / 60);
+    for (const s of systems) s(game, 1 / 60);
     game.tickScheduled?.(1 / 60);
     game.world.flushDestroyed?.();
     metrics.tick(1 / 60);

@@ -120,6 +120,30 @@ describe('Canary de balanceamento (E42)', () => {
     expect(maxedTrio).toBeGreaterThan(50);                    // e o trio fica confortável (médio)
   });
 
+  it('CHEFES são o desafio do endgame — não comuns (E53)', () => {
+    // Personagem kitado (unique+Casca). Contra comuns ele passeia (E52 ~90%+);
+    // contra um CHEFE a luta custa caro, mesmo esquivando.
+    const boss = runScenario(spawnGame, {
+      style: 'melee_dodge', enemy: 'rotlord', boss: true, level: 15, seed: 1,
+      armor: true, armorRarity: 'unique', boons: ['casca'], reaction: 0.6, ticks: 5000,
+    });
+    expect(boss.dps).toBeGreaterThan(0);        // fix de alcance: o bot acerta o chefe grande (raio 1.6)
+    expect(boss.hpLeftFrac).toBeLessThan(0.7);  // o chefe cobra caro (vs. comuns ~0.9+)
+  });
+
+  it('ELITES são um degrau acima do comum, mas o kitado aguenta (E53)', () => {
+    const plain = runScenario(spawnGame, {
+      style: 'melee_dodge', enemy: 'husk', count: 3, level: 10, seed: 1,
+      armor: true, armorRarity: 'unique', boons: ['casca'], reaction: 0.6, ticks: 3000,
+    });
+    const elite = runScenario(spawnGame, {
+      style: 'melee_dodge', enemy: 'husk', count: 3, level: 10, seed: 1, eliteAffix: 'petreo',
+      armor: true, armorRarity: 'unique', boons: ['casca'], reaction: 0.6, ticks: 3000,
+    });
+    expect(elite.hpLeftFrac).toBeLessThanOrEqual(plain.hpLeftFrac); // elite não é mais fácil
+    expect(elite.survived).toBe(true);                              // mas o kitado vence
+  });
+
   it('o inimigo "duro" (Espectro) é fatal para quem não esquiva, mas justo p/ quem esquiva', () => {
     // Piso (melee sem esquiva): não consegue derrubá-lo (é rápido e atordoa —
     // encarar de frente não funciona). Sinal robusto: não limpa (ttk nulo).
