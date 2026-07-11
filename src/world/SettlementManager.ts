@@ -6,7 +6,8 @@ import { buildVoxelGroup, makeVillagerSpec } from '../entities/voxelModels.js';
 import { pixelTexture, tiledPixelTexture } from '../core/render/pixelTextures.js';
 import { buildMerchantStall } from './landmarks.js';
 import { interiorTheme } from '../data/interiors.js';
-import { routineGoal, goalSpread, ROUTINE_ARCHETYPES } from '../gameplay/routine.js';
+import { goalSpread, ROUTINE_ARCHETYPES } from '../gameplay/routine.js';
+import { npcPlace } from '../gameplay/npcSchedule.js';
 import { assignHouseholds } from '../gameplay/households.js';
 import { shouldChat, pickChatLine, CHAT_RANGE, CHAT_COOLDOWN } from '../gameplay/chatter.js';
 import { separationForce, avoidForce, steer, pointInRects, streetForce } from '../gameplay/steering.js';
@@ -63,6 +64,7 @@ export class SettlementManager {
   _water: any[]; // superfícies de água com pulso
   _villagers: any[]; // moradores que seguem uma rotina de dia/noite (ADR 0055/E22)
   _emerging: any[]; // fila de moradores saindo de um interior pela porta (E33)
+  _venues: Record<string, { themeId: string; service: string; x: number; z: number }[]> = {}; // recintos por vila (E34)
   _lastTime: number | null = null; // hora do último tick (detecta virada do dia)
   _day = 0; // contador de dias (variação diária da rotina — E22)
   _clock = 0; // relógio em segundos (cooldown de conversa — E22.5)
@@ -104,10 +106,58 @@ export class SettlementManager {
       // Cozinhar deixou de ficar exposto na praça (E19.6): o caldeirão agora
       // vive dentro da taverna e do salão comunal (ver InteriorManager).
     }
+    this._indexVenues(); // recintos entráveis por vila, p/ o cronograma (E34)
     // Aviso em dev: nenhuma estrutura pode nascer dentro de outra (ADR 0085).
     for (const o of this.overlaps()) {
       console.warn(`[settlements] sobreposição em ${o.settlement}: ${o.a} × ${o.b}`);
     }
+  }
+
+  /**
+   * Indexa os recintos entráveis (portas de casa) por vila (E34): cada tema de
+   * interior presente na vila vira um "venue" com a posição da porta (para o
+   * cronograma recolher/emergir moradores). Temas repetidos (ex.: várias casas
+   * 'home') colapsam num só — coerente com o interior ser uma sala compartilhada
+   * por tema.
+   */
+  _indexVenues() {
+    this._venues = {};
+    for (const [id, inter] of this.game.world.query(C.Interactable)) {
+      if (inter.kind !== 'house') continue;
+      const tr = this.game.world.get(id, C.Transform);
+      const s = tr && this.settlementAt(tr.x, tr.z);
+      if (!s) continue;
+      const arr = (this._venues[s.theme] ??= []);
+      if (arr.some((v) => v.themeId === inter.interiorTheme)) continue;
+      arr.push({ themeId: inter.interiorTheme, service: interiorTheme(inter.interiorTheme).service, x: tr.x, z: tr.z });
+    }
+  }
+
+  /** Moradores atualmente DENTRO de um recinto (venue) da vila (E34). */
+  residentsInVenue(villageTheme, themeId) {
+    return this._villagers.filter((v) => v.theme === villageTheme && v.insideVenue === themeId
+      && !v._emergingFlag && this.game.world.entities.has(v.id));
+  }
+
+  /** Posição da porta de um recinto (para emergir na porta). */
+  _venueDoor(villageTheme, themeId) {
+    return (this._venues[villageTheme] ?? []).find((v) => v.themeId === themeId) ?? null;
+  }
+
+  /** Recolhe um morador para dentro de um recinto (some da multidão externa). */
+  _enterVenue(v, themeId) {
+    v.insideVenue = themeId;
+    const vel = this.game.world.get(v.id, C.Velocity);
+    if (vel) { vel.vx = 0; vel.vz = 0; }
+    const r = this.game.world.get(v.id, C.Renderable);
+    if (r?.object3d) r.object3d.visible = false; // escondido enquanto está no recinto
+  }
+
+  /** Enfileira a saída pela porta (emerge escalonado quando o overworld tocar). */
+  _queueEmerge(v) {
+    const door = this._venueDoor(v.theme, v.insideVenue) ?? { x: v.center?.x ?? 0, z: v.center?.z ?? 0 };
+    this._emerging.push({ rec: v, x: door.x, z: door.z, t: 0.2 + this._emerging.length * 0.4 });
+    v._emergingFlag = true; // continua fora da multidão até emergir de fato
   }
 
   /** Zona segura: dentro de qualquer assentamento (com margem opcional). */
@@ -155,8 +205,28 @@ export class SettlementManager {
     this._clock += dt;
     const day = this._day ?? 0;
     for (const v of this._villagers) {
-      if (v.indoor) continue; // morador está dentro de um interior (E32) — não perambula
       if (!game.world.entities.has(v.id)) continue;
+      // Cronograma (E34): a hora do jogo decide se o morador está DENTRO de um
+      // recinto agora — independente de onde o jogador esteja. Dentro → some da
+      // multidão externa (aparece só se o jogador entrar naquela porta).
+      const place = npcPlace(v, time, day, this._venues[v.theme] ?? []);
+      v.goal = place.goal;
+      if (place.inside) {
+        if (v.insideVenue === place.inside) continue;        // já recolhido (escondido)
+        if (v.insideVenue) { this._enterVenue(v, place.inside); continue; } // troca de recinto (já escondido)
+        // Vindo de fora: caminha até a PORTA do recinto e some ao chegar — nada
+        // de sumir no meio da rua. (a chegada/entrada é tratada no bloco abaixo.)
+        if (v._headingVenue !== place.inside) {
+          const door = this._venueDoor(v.theme, place.inside);
+          v._headingVenue = place.inside;
+          v.target = door ? { x: door.x, z: door.z } : null;
+          v._enterT = 8; v.wait = 0;
+        }
+      } else {
+        v._headingVenue = null; // cancelou a entrada
+        if (v.insideVenue && !v._emergingFlag) this._queueEmerge(v); // o cronograma o tirou → sai pela porta
+        if (v.insideVenue) continue; // ainda escondido até emergir de fato
+      }
       const tr = game.world.get(v.id, C.Transform);
       const vel = game.world.get(v.id, C.Velocity);
       if (!tr || !vel) continue;
@@ -171,9 +241,17 @@ export class SettlementManager {
         this._maybeChat(v, tr); // parado: pode puxar prosa com um vizinho (E22.5)
         continue;
       }
+      // Chegou à porta do recinto (ou esgotou o tempo) → entra e some (E34).
+      if (v._headingVenue) {
+        v._enterT = (v._enterT ?? 8) - dt;
+        if (!v.target || Math.hypot(v.target.x - tr.x, v.target.z - tr.z) < 1.0 || v._enterT <= 0) {
+          this._enterVenue(v, v._headingVenue); v._headingVenue = null; v.target = null;
+          continue;
+        }
+        // senão, deixa o steering abaixo levar até a porta (v.target), sem re-sortear.
+      }
       if (!v.target || Math.hypot(v.target.x - tr.x, v.target.z - tr.z) < 0.4) {
-        const goal = routineGoal(v.archetype ?? 'social', time, { seed: v.seed ?? v.id, day });
-        v.goal = goal;
+        const goal = place.goal;
         const anchor = goal === 'hall' ? v.gather : goal === 'roam' ? v.center
           : goal === 'work' ? v.work : v.home; // home/sleep
         const spread = goalSpread(goal);
@@ -227,66 +305,12 @@ export class SettlementManager {
    * Cada um vem com o objetivo ATUAL da rotina, para o interior priorizar quem já
    * estaria naquele tipo de lugar (o salão enche à noite, o posto de dia…).
    */
-  residentPool(theme) {
-    const time = this.game.dayNight?.time ?? 0.3;
-    const day = this._day ?? 0;
-    const out: any[] = [];
-    for (const v of this._villagers) {
-      if (v.theme !== theme || v.indoor) continue;
-      if (!this.game.world.entities.has(v.id)) continue;
-      const goal = routineGoal(v.archetype ?? 'social', time, { seed: v.seed ?? v.id, day });
-      out.push({ rec: v, goal });
-    }
-    return out;
-  }
-
   /**
-   * Recolhe um morador REAL para dentro de um interior (E32): guarda a posição no
-   * mundo, marca `indoor` (some da multidão lá fora — garante que ninguém está em
-   * dois lugares), e o planta no lugar dado. O `_wander` passa a ignorá-lo; a IA
-   * do interior assume. Devolvido à vila por `checkinResident`.
-   */
-  checkoutResident(rec, x, z, rot = 0, sit = false) {
-    const tr = this.game.world.get(rec.id, C.Transform);
-    const vel = this.game.world.get(rec.id, C.Velocity);
-    const r = this.game.world.get(rec.id, C.Renderable);
-    if (!tr) return false;
-    rec._out = { x: tr.x, z: tr.z, rot: tr.rot ?? 0 };
-    rec.indoor = true;
-    tr.x = x; tr.z = z; tr.rot = rot;
-    if (vel) { vel.vx = 0; vel.vz = 0; }
-    if (r) { rec._baseY = r.yOffset ?? 0; r.yOffset = sit ? -0.34 : 0; }
-    return true;
-  }
-
-  /**
-   * Devolve o morador à vila (E32/E33). Com uma `door` (porta externa do prédio),
-   * ele **sai pela porta**: fica escondido até o overworld voltar e então **emerge
-   * na porta** e retoma a rotina (anda pela cidade) — nada de reaparecer num lugar
-   * aleatório. Sem `door`, cai no comportamento antigo (restaura a posição salva).
-   */
-  checkinResident(rec, door?) {
-    const r = this.game.world.get(rec.id, C.Renderable);
-    if (r) { r.yOffset = rec._baseY ?? 0; r.idleGesture = null; }
-    rec._interior = null;
-    if (door) {
-      // Esconde e enfileira: emerge na porta (escalonado) quando a cidade voltar.
-      if (r?.object3d) r.object3d.visible = false;
-      const stagger = 0.2 + this._emerging.length * 0.55;
-      this._emerging.push({ rec, x: door.x, z: door.z, t: stagger });
-      return; // continua `indoor` (some da multidão) até emergir de fato
-    }
-    const tr = this.game.world.get(rec.id, C.Transform);
-    if (tr && rec._out) { tr.x = rec._out.x; tr.z = rec._out.z; tr.rot = rec._out.rot; }
-    if (r?.object3d) r.object3d.visible = true;
-    rec.indoor = false; rec._out = null;
-  }
-
-  /**
-   * Emergência pela porta (E33): quando o overworld está ativo, os moradores que
-   * saíram de um interior aparecem na porta externa (com leve dispersão), voltam
-   * a ser visíveis e retomam a rotina — dá pra vê-los saindo do prédio e indo
-   * embora pela cidade, em vez de sumirem/reaparecerem do nada.
+   * Emergência pela porta (E33/E34): quando o overworld está ativo, os moradores
+   * cujo cronograma acabou de tirá-los de um recinto aparecem na PORTA daquele
+   * recinto (com leve dispersão), voltam a ser visíveis e retomam a rotina — dá
+   * pra vê-los saindo do prédio e indo embora pela cidade, em vez de sumir/
+   * reaparecer do nada. Escalonado para não saírem todos de uma vez.
    */
   _emergeTick(dt) {
     if (!this._emerging.length) return;
@@ -303,8 +327,8 @@ export class SettlementManager {
         const c = rec.center ?? { x: e.x, z: e.z };
         tr.rot = Math.atan2(c.x - tr.x, c.z - tr.z); // vira-se para a vila e vai andar
       }
-      if (r?.object3d) r.object3d.visible = true;
-      rec.indoor = false; rec._out = null; rec.target = null; rec.wait = 0.2 + (rec.id % 5) * 0.1;
+      if (r?.object3d) { r.object3d.visible = true; r.yOffset = rec._baseY ?? 0; r.idleGesture = null; }
+      rec.insideVenue = null; rec._emergingFlag = false; rec.target = null; rec.wait = 0.2 + (rec.id % 5) * 0.1;
       this._emerging.splice(i, 1);
     }
   }

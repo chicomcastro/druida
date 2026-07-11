@@ -75,7 +75,6 @@ export class InteriorManager {
   _wallMats: any[];
   _lampMat: any;
   _props: any; // móveis temáticos, reconstruídos por visita (ADR 0104)
-  _rot: number; // cursor de rodízio dos comensais (E32)
 
   constructor(game) {
     this.game = game;
@@ -457,164 +456,68 @@ export class InteriorManager {
   }
 
   /**
-   * Popula o interior com os MORADORES REAIS da vila (E32). Cada assento do
-   * `_layout` recebe um aldeão de verdade — a mesma entidade que perambula lá
-   * fora, recolhida via `settlements.checkoutResident` (some da multidão externa,
-   * nunca em dois lugares). A escolha respeita a rotina: no salão à noite entra
-   * quem tem objetivo `hall`; no posto de dia, quem trabalha; etc. Se não há
-   * SettlementManager (testes), cai em figurantes efêmeros (`_spawnPatron`).
+   * Mostra os MORADORES REAIS que o CRONOGRAMA (E34) põe neste recinto agora.
+   * `settlements.residentsInVenue(vila, tema)` devolve exatamente quem está dentro
+   * daqui neste horário — a mesma entidade que anda lá fora (some da multidão
+   * enquanto está aqui). Não há sorteio nem rodízio: sair e voltar (mesmo horário)
+   * encontra as mesmas pessoas; outro dia/horário, pode ser diferente. Sem
+   * SettlementManager (testes), cai em figurantes efêmeros.
    */
   _populateInterior(theme, village) {
-    const seats = this._layout(theme).patrons.map((p) => ({ ...p, occupant: null, state: 'seated', _to: null, _refill: 0 }));
+    const seats = this._layout(theme).patrons;
     this.active.seats = seats;
-    const hasSM = !!this.game.settlements?.residentPool;
-    for (const seat of seats) {
-      const rec = hasSM ? this._nextResident(theme, village) : null;
-      if (rec) this._occupyResident(seat, rec, true);
-      else if (!hasSM) this._occupyPatron(seat, village, true); // fallback sem vila (testes)
-      // hasSM mas pool esgotado → assento vazio (todo mundo dentro é real)
+    const sm = this.game.settlements;
+    if (sm?.residentsInVenue) {
+      const occ = sm.residentsInVenue(village, theme.id).slice(0, seats.length);
+      occ.forEach((rec, i) => { this.active.residents.push(rec); this._showInRoom(rec, seats[i]); });
+    } else {
+      for (const seat of seats) this._spawnPatron(seat, village); // fallback sem vila (testes)
     }
-    this.active._turn = 9 + seats.length; // primeiro rodízio
-  }
-
-  /** Objetivos de rotina preferidos por tipo de casa (quem "estaria" ali). */
-  _prefGoals(theme) {
-    if (theme.id === 'hall') return ['hall', 'roam', 'work'];
-    if (theme.service === 'rest') return ['roam', 'hall', 'work'];
-    if (theme.service === 'shop') return ['work', 'roam', 'hall'];
-    return ['roam', 'home', 'hall']; // liderança / moradia
-  }
-
-  /** Próximo morador livre da vila, priorizando quem a rotina põe neste lugar. */
-  _nextResident(theme, village) {
-    const pool = this.game.settlements?.residentPool?.(village) ?? [];
-    if (!pool.length) return null;
-    const pref = this._prefGoals(theme);
-    const rank = (g) => { const i = pref.indexOf(g); return i < 0 ? 99 : i; };
-    pool.sort((a, b) => rank(a.goal) - rank(b.goal));
-    return pool[0].rec;
   }
 
   _seatWorld(seat) { return { x: ROOM.x + seat.x, z: ROOM.z + seat.z }; }
-  _door() { return { x: ROOM.x, z: ROOM.z + ROOM_R - 1.4 }; }
   _seatGesture(seat, id) { return seat.serving ? 'serve' : (id % 2 ? 'drink' : 'eat'); }
 
-  /** Aplica a pose sentada (altura + gesto de comer/beber/servir + rosto à câmera). */
-  _applySeatPose(seat, id) {
+  /** Traz o morador real (entidade da vila) pro assento: posição, pose e gesto. */
+  _showInRoom(rec, seat) {
     const w = this._seatWorld(seat);
-    const tr = this.game.world.get(id, C.Transform);
-    const vel = this.game.world.get(id, C.Velocity);
-    const r = this.game.world.get(id, C.Renderable);
+    const tr = this.game.world.get(rec.id, C.Transform);
+    const vel = this.game.world.get(rec.id, C.Velocity);
+    const r = this.game.world.get(rec.id, C.Renderable);
     if (tr) { tr.x = w.x; tr.z = w.z; tr.rot = seat.rot ?? 0.35; }
     if (vel) { vel.vx = 0; vel.vz = 0; }
-    if (r) { r.yOffset = seat.sit ? -0.34 : 0; r.idleGesture = this._seatGesture(seat, id); }
+    if (r) {
+      rec._baseY = r.yOffset ?? 0;
+      r.yOffset = seat.sit ? -0.34 : 0;
+      r.idleGesture = this._seatGesture(seat, rec.id);
+      if (r.object3d) r.object3d.visible = true;
+    }
   }
 
-  /** Recolhe um morador real ao assento (sentado agora, ou chegando pela porta). */
-  _occupyResident(seat, rec, seated) {
-    const w = seated ? this._seatWorld(seat) : this._door();
-    if (!this.game.settlements.checkoutResident(rec, w.x, w.z, seated ? (seat.rot ?? 0.35) : 0, seated && !!seat.sit)) return;
-    seat.occupant = { kind: 'resident', rec, id: rec.id };
-    this.active.residents.push(rec);
-    if (seated) this._applySeatPose(seat, rec.id);
-    else { seat._to = this._seatWorld(seat); seat.state = 'arriving'; }
+  /** Recolhe o morador real de volta ao recinto (escondido) — o cronograma cuida
+   * de tirá-lo pela porta quando a hora mudar. Não emerge na saída do jogador. */
+  _hideResident(rec) {
+    const r = this.game.world.get(rec.id, C.Renderable);
+    if (r) { r.yOffset = rec._baseY ?? 0; r.idleGesture = null; if (r.object3d) r.object3d.visible = false; }
   }
 
   /** Figurante efêmero (fallback quando não há vila): mesmo visual/pose. */
-  _occupyPatron(seat, village, seated) {
+  _spawnPatron(seat, village) {
     const looks = PATRON_LOOKS[village] ?? PATRON_LOOKS.druida;
     const i = this.active.patrons.length;
     const look = looks[i % looks.length];
     const g = buildVoxelGroup(makeVillagerSpec({ ...look, elder: !!look.elder }));
-    const w = seated ? this._seatWorld(seat) : this._door();
+    const w = this._seatWorld(seat);
     g.position.set(w.x, 0, w.z);
     this.game.renderer.add(g);
     const id = this.game.world.createEntity();
-    this.game.world.add(id, C.Transform, Transform(w.x, w.z, seated ? (seat.rot ?? 0.35) : 0));
+    this.game.world.add(id, C.Transform, Transform(w.x, w.z, seat.rot ?? 0.35));
     this.game.world.add(id, C.Velocity, Velocity(0, 0, 1));
-    this.game.world.add(id, C.Renderable, { object3d: g, baseScale: 1 });
+    this.game.world.add(id, C.Renderable, { object3d: g, baseScale: 1, yOffset: seat.sit ? -0.34 : 0, idleGesture: this._seatGesture(seat, id) });
     this.game.world.add(id, C.Collider, Collider(0.45, true));
     const line = seat.serving ? 'Serve-te, viajante — tem fartura hoje.' : 'Bom caldo, esse. Senta que sobra.';
     this.game.world.add(id, C.Interactable, { kind: 'villager', prompt: 'E — Morador', range: 2.2, used: false, lines: [line] });
-    seat.occupant = { kind: 'patron', id };
     this.active.patrons.push(id);
-    if (seated) this._applySeatPose(seat, id);
-    else { seat._to = this._seatWorld(seat); seat.state = 'arriving'; }
-  }
-
-  /**
-   * Tique de vida do interior (E32): move quem está chegando/saindo (deixa o
-   * `movementSystem` integrar a velocidade), repõe assentos vazios e, de tempos
-   * em tempos, manda um comensal embora (rodízio: gente vai e vem, como pedido).
-   */
-  _interiorTick(dt) {
-    const a = this.active;
-    if (!a?.seats) return;
-    for (const seat of a.seats) {
-      if (seat.state === 'arriving' || seat.state === 'leaving') this._stepMove(seat, dt);
-      else if (seat.state === 'empty') { seat._refill -= dt; if (seat._refill <= 0) this._fillSeat(seat); }
-    }
-    a._turn -= dt;
-    if (a._turn <= 0) {
-      a._turn = 12 + (a.seats.length % 5);
-      const busy = a.seats.some((s) => s.state !== 'seated');
-      const occ = a.seats.filter((s) => s.occupant && s.state === 'seated');
-      if (!busy && occ.length > 1) this._leaveSeat(occ[(this._rot = (this._rot ?? 0) + 1) % occ.length]);
-    }
-  }
-
-  /** Faz o ocupante se levantar e caminhar até a porta (vai embora). */
-  _leaveSeat(seat) {
-    seat.state = 'leaving';
-    seat._to = this._door();
-    const r = this.game.world.get(seat.occupant.id, C.Renderable);
-    if (r) { r.yOffset = 0; r.idleGesture = null; }
-  }
-
-  /** Chama um novo morador (ou figurante) pra ocupar um assento vago. */
-  _fillSeat(seat) {
-    const rec = this.game.settlements?.residentPool ? this._nextResident(this.active.theme, this.active.village) : null;
-    if (rec) this._occupyResident(seat, rec, false);
-    else if (!this.game.settlements?.residentPool) this._occupyPatron(seat, this.active.village, false);
-    else { seat.state = 'empty'; seat._refill = 4; } // vila esgotada: tenta de novo depois
-  }
-
-  /** Passo de caminhada (velocidade; o movementSystem integra e colide). */
-  _stepMove(seat, dt) {
-    const occ = seat.occupant;
-    if (!occ) { seat.state = 'empty'; seat._refill = 2; return; }
-    const tr = this.game.world.get(occ.id, C.Transform);
-    const vel = this.game.world.get(occ.id, C.Velocity);
-    const r = this.game.world.get(occ.id, C.Renderable);
-    if (!tr) { seat.occupant = null; seat.state = 'empty'; seat._refill = 2; return; }
-    const dx = seat._to.x - tr.x, dz = seat._to.z - tr.z, d = Math.hypot(dx, dz);
-    if (d < 0.35) {
-      if (vel) { vel.vx = 0; vel.vz = 0; }
-      if (seat.state === 'leaving') {
-        this._despawnOccupant(occ);
-        seat.occupant = null; seat.state = 'empty'; seat._refill = 1.5 + (occ.id % 3);
-      } else { // arriving
-        this._applySeatPose(seat, occ.id); seat.state = 'seated';
-      }
-      return;
-    }
-    if (vel) { vel.vx = (dx / d) * 1.6; vel.vz = (dz / d) * 1.6; }
-    tr.rot = Math.atan2(dx, dz);
-    if (r) { r.idleGesture = null; if (r.yOffset) r.yOffset = 0; } // de pé enquanto anda
-  }
-
-  /** Tira o ocupante de cena: morador real volta pra vila; figurante é destruído. */
-  _despawnOccupant(occ) {
-    if (occ.kind === 'resident') {
-      // Sai pela porta: emerge na porta externa e volta a andar pela cidade (E33).
-      this.game.settlements?.checkinResident?.(occ.rec, this.active?.returnPos);
-      const i = this.active.residents.indexOf(occ.rec);
-      if (i >= 0) this.active.residents.splice(i, 1);
-    } else {
-      if (this.game.world.entities.has(occ.id)) this.game.world.destroyEntity(occ.id);
-      const i = this.active.patrons.indexOf(occ.id);
-      if (i >= 0) this.active.patrons.splice(i, 1);
-    }
   }
 
   /** Taverna (ADR 0094): descansar cura o grupo, passa a noite e salva; a
@@ -640,7 +543,7 @@ export class InteriorManager {
     for (const pid of a.patrons ?? []) { // figurantes efêmeros (E31/E32)
       if (this.game.world.entities.has(pid)) this.game.world.destroyEntity(pid);
     }
-    for (const rec of a.residents ?? []) this.game.settlements?.checkinResident?.(rec, a.returnPos); // saem pela porta e voltam à cidade (E32/E33)
+    for (const rec of a.residents ?? []) this._hideResident(rec); // continuam no recinto (E34); o cronograma os tira pela porta quando a hora mudar
     if (a.kitchenId != null && this.game.world.entities.has(a.kitchenId)) this.game.world.destroyEntity(a.kitchenId);
     if (a.kitchenMesh) this.game.renderer.remove?.(a.kitchenMesh); // remove o caldeirão (E19.6)
     if (a.props) this.game.renderer.remove?.(a.props); // remove os móveis (ADR 0104)
@@ -660,6 +563,5 @@ export class InteriorManager {
       meal.expire -= dt;
       if (meal.expire <= 0) { this.game.meal = null; this.game.emit('objective', { text: 'O efeito da refeição passou.' }); }
     }
-    if (this.active) this._interiorTick(dt); // vida do interior: rodízio + caminhadas (E32)
   }
 }

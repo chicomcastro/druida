@@ -4,7 +4,6 @@ import { C } from '../src/core/ecs/components.js';
 import { SettlementManager } from '../src/world/SettlementManager.js';
 import { InteriorManager } from '../src/world/InteriorManager.js';
 import { interactionSystem } from '../src/systems/interaction.js';
-import { movementSystem } from '../src/systems/movement.js';
 import { rerollShop, shopCategory } from '../src/gameplay/economy.js';
 import { INTERIOR_THEMES, interiorTheme, TAVERN } from '../src/data/interiors.js';
 
@@ -275,82 +274,101 @@ describe('Interiores povoados e vivos (E31)', () => {
     expect(hall).toBeGreaterThan(shop);
   });
 
-  it('com vila, os ocupantes são MORADORES REAIS recolhidos (E32), não figurantes', () => {
+  // Helper (E34): roda o cronograma no overworld num dado horário/dia e devolve os
+  // recintos ocupados da vila (themeId → moradores dentro).
+  const driveSchedule = (g: any, sm: any, village: string, time: number, day = 0) => {
+    g.dayNight = { time }; sm._day = day;
+    // ~12s de simulação: quem foi escalado pra um recinto caminha até a porta e
+    // entra (ou entra pelo timeout, já que o movimento não roda neste unit test).
+    for (let i = 0; i < 120; i++) sm.update(0.1);
+    const byVenue: Record<string, any[]> = {};
+    for (const v of sm._villagers) if (v.theme === village && v.insideVenue) (byVenue[v.insideVenue] ??= []).push(v);
+    return byVenue;
+  };
+
+  it('os ocupantes vêm do CRONOGRAMA: moradores reais da vila, não figurantes (E34)', () => {
     const g = makeGame();
     const sm = new SettlementManager(g);
     g.settlements = sm; // no jogo o Game registra; no teste, à mão
-    const cinza = sm.list.find((s: any) => s.theme === 'lenhadores');
+    const clareira = sm.list.find((s: any) => s.theme === 'druida');
     const im = new InteriorManager(g);
-    addPlayer(g, 0, cinza.x, cinza.z);
-    g.groupCenter = { x: cinza.x, z: cinza.z };
-    im.enter('hall');
+    addPlayer(g, 0, clareira.x, clareira.z);
+    g.groupCenter = { x: clareira.x, z: clareira.z };
+    const byVenue = driveSchedule(g, sm, 'druida', 0.6); // entardecer: povo recolhido
+    const venueId = Object.keys(byVenue).find((k) => byVenue[k].length > 0);
+    expect(venueId).toBeTruthy();
+    im.enter(venueId!);
     expect(im.active.residents.length).toBeGreaterThan(0);
     expect(im.active.patrons.length).toBe(0); // com vila, ninguém é figurante efêmero
     for (const rec of im.active.residents) {
-      expect(rec.theme).toBe('lenhadores');    // morador da vila certa
-      expect(rec.indoor).toBe(true);           // marcado como dentro
+      expect(rec.theme).toBe('druida');
+      expect(rec.insideVenue).toBe(venueId); // realmente escalado pra este recinto
       expect(sm._villagers.includes(rec)).toBe(true); // é uma entidade real da vila
     }
   });
 
-  it('recolher um morador o tira da multidão externa e a saída o devolve (E32)', () => {
+  it('presença determinística: um lugar só, some da multidão, persiste ao sair/voltar (E34)', () => {
     const g = makeGame();
     const sm = new SettlementManager(g);
     g.settlements = sm;
-    const cinza = sm.list.find((s: any) => s.theme === 'lenhadores');
+    const clareira = sm.list.find((s: any) => s.theme === 'druida');
     const im = new InteriorManager(g);
-    addPlayer(g, 0, cinza.x, cinza.z);
-    g.groupCenter = { x: cinza.x, z: cinza.z };
-    im.enter('hall');
-    const rec = im.active.residents[0];
-    const out = { ...rec._out };
-    expect(rec.indoor).toBe(true);
-    // Enquanto dentro, o _wander do overworld o ignora (não anda lá fora).
-    const trBefore = { ...g.world.get(rec.id, C.Transform) };
+    addPlayer(g, 0, clareira.x, clareira.z);
+    g.groupCenter = { x: clareira.x, z: clareira.z };
+    const byVenue = driveSchedule(g, sm, 'druida', 0.6);
+    const venueId = Object.keys(byVenue).find((k) => byVenue[k].length > 0)!;
+    const rec = byVenue[venueId][0];
+    const r = g.world.get(rec.id, C.Renderable);
+    // Um lugar só + some da multidão externa (escondido) enquanto está no recinto.
+    expect(rec.insideVenue).toBe(venueId);
+    expect(r.object3d.visible).toBe(false);
+    // O _wander não o move (está num recinto).
+    const before = { ...g.world.get(rec.id, C.Transform) };
     sm._wander(0.1);
-    const trAfter = g.world.get(rec.id, C.Transform);
-    expect(trAfter.x).toBe(trBefore.x); expect(trAfter.z).toBe(trBefore.z);
-    // Sair: o morador SAI PELA PORTA (E33) — fica escondido até o overworld voltar
-    // e então emerge na porta externa (returnPos ≈ centro da vila no teste), volta
-    // a ser visível e retoma a rotina. Nada de reaparecer num lugar aleatório.
+    const after = g.world.get(rec.id, C.Transform);
+    expect(after.x).toBe(before.x); expect(after.z).toBe(before.z);
+    // Entrar mostra ele no recinto; SAIR o mantém lá (não some nem teleporta).
+    im.enter(venueId);
+    expect(im.active.residents.includes(rec)).toBe(true);
+    expect(r.object3d.visible).toBe(true);
     im.exit();
+    expect(rec.insideVenue).toBe(venueId);   // continua no recinto após o jogador sair
+    expect(r.object3d.visible).toBe(false);
+    // Re-avaliar o cronograma no MESMO horário/dia: continua lá (sair e voltar acha a mesma pessoa).
+    for (let i = 0; i < 3; i++) sm.update(0.1);
+    expect(rec.insideVenue).toBe(venueId);
+  });
+
+  it('o cronograma tira pela porta quando a hora muda; e varia por dia (E34)', () => {
+    const g = makeGame();
+    const sm = new SettlementManager(g);
+    g.settlements = sm;
+    const clareira = sm.list.find((s: any) => s.theme === 'druida');
+    addPlayer(g, 0, clareira.x, clareira.z);
+    g.groupCenter = { x: clareira.x, z: clareira.z };
+    const byVenue = driveSchedule(g, sm, 'druida', 0.6);
+    const venueId = Object.keys(byVenue).find((k) => byVenue[k].length > 0)!;
+    // Pega um morador que de manhã fica FORA (andarilho/caseiro) — trabalhadores
+    // ficam no posto (loja) de dia, então não serviriam pra observar a saída.
+    const inside = Object.values(byVenue).flat();
+    const rec = inside.find((v: any) => v.archetype === 'wanderer' || v.archetype === 'homebody') ?? inside[0];
+    const venue = sm._venues['druida'].find((v: any) => v.themeId === rec.insideVenue);
+    // Muda pra manhã: a rotina o põe fora → ele SAI PELA PORTA do recinto (emerge perto dela).
+    g.dayNight = { time: 0.1 };
     let steps = 0;
-    while (rec.indoor && steps < 60) { sm.update(0.3); steps++; }
-    expect(rec.indoor).toBe(false);
+    while (rec.insideVenue && steps < 100) { sm.update(0.3); steps++; }
+    expect(rec.insideVenue).toBeNull();
     const r = g.world.get(rec.id, C.Renderable);
     expect(r.object3d.visible).toBe(true);
     const tr = g.world.get(rec.id, C.Transform);
-    expect(Math.hypot(tr.x - cinza.x, tr.z - cinza.z)).toBeLessThan(2); // emergiu na porta
-    void out;
-  });
-
-  it('rodízio: comensais vão embora e chegam novos, sem quebrar (E32)', () => {
-    const g = makeGame();
-    const sm = new SettlementManager(g);
-    g.settlements = sm;
-    const cinza = sm.list.find((s: any) => s.theme === 'lenhadores');
-    const im = new InteriorManager(g);
-    addPlayer(g, 0, cinza.x, cinza.z);
-    g.groupCenter = { x: cinza.x, z: cinza.z };
-    im.enter('hall');
-    expect(im.active.residents.length).toBeGreaterThan(0);
-    // Roda a simulação (movimento + tique do interior) por ~40s: o rodízio
-    // manda gente à porta e chama novos. Deve haver transição e nada quebra.
-    let sawTransition = false;
-    for (let i = 0; i < 400; i++) {
-      movementSystem(g, 0.1);
-      im.update(0.1);
-      if (im.active.seats.some((s: any) => s.state !== 'seated')) sawTransition = true;
+    expect(Math.hypot(tr.x - venue.x, tr.z - venue.z)).toBeLessThan(8); // emergiu perto da porta do recinto
+    // Variação por dia: a ocupação do recinto no mesmo horário muda ao longo dos dias.
+    const sets = new Set<string>();
+    for (let day = 0; day < 12; day++) {
+      const bv = driveSchedule(g, sm, 'druida', 0.6, day);
+      sets.add((bv[venueId] ?? []).map((v: any) => v.id).sort().join(','));
     }
-    expect(sawTransition).toBe(true);                       // houve vai-e-vem
-    expect(im.active.residents.length).toBeGreaterThan(0);  // segue povoado
-    for (const rec of im.active.residents) expect(rec.indoor).toBe(true); // consistente
-    // Sair: todos saem pela porta e, com a cidade ativa, a fila de emergência
-    // esvazia — ninguém fica preso indoor.
-    im.exit();
-    for (let i = 0; i < 80; i++) sm.update(0.3);
-    expect(sm._villagers.every((v: any) => !v.indoor)).toBe(true);
-    expect(sm._emerging.length).toBe(0);
+    expect(sets.size).toBeGreaterThan(1);
   });
 
   it('o NPC encara a câmera (rosto/olhos à mostra, não de costas)', () => {
