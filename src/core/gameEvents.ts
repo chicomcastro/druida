@@ -39,7 +39,11 @@ export function bindGameEvents(game) {
       };
       (game._xpLog ??= []).push(src);
       if (game._xpLog.length > 40) game._xpLog.shift();
-      if (game.debugXp) console.log(`[xp] +${xpAmount} de "${src.kind}" (${src.team}${src.hasAI ? '' : ', sem IA'}) @(${src.x},${src.z}) → nível ${src.lvl}`);
+      if (game.debugXp) {
+        console.log(`[xp] +${xpAmount} de "${src.kind}" (${src.team}${src.hasAI ? '' : ', sem IA'}) @(${src.x},${src.z}) → nível ${src.lvl}`);
+        // Visível no MOBILE (sem console): mostra a fonte do XP num toast.
+        game.emit('objective', { text: `🔎 +${xpAmount} XP · ${src.kind} (${src.team}) @${src.x},${src.z}` });
+      }
     }
     const { essenceMin, essenceMax } = BALANCE.loot;
     // Elites carregam bônus de essência (ADR 0045).
