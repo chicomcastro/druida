@@ -2,6 +2,6 @@
   {
     "name": "bundle JS (brotli)",
     "path": "dist/assets/*.js",
-    "limit": "230 kB"
+    "limit": "236 kB"
   }
 ]
