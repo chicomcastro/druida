@@ -119,6 +119,15 @@ function statusAura(st) {
 function applyEmissive(obj, color, intensity) {
   obj.traverse((o) => {
     if (o.isMesh && o.material && o.material.emissive) {
+      // Clone-on-write: os materiais voxel são COMPARTILHADOS por cor (cache em
+      // voxelModels), então mexer no emissive de um vazava para TODOS os modelos
+      // daquela cor — o bug do "a calça pisca em todo mundo" ao acertar um único
+      // inimigo (E59). Cada malha que chega a piscar/tingir ganha sua própria
+      // cópia na 1ª vez; cenário estático nunca pisca, então nunca clona.
+      if (!o.userData._ownMat) {
+        o.material = o.material.clone();
+        o.userData._ownMat = true;
+      }
       o.material.emissive.setHex(color);
       o.material.emissiveIntensity = intensity;
     }

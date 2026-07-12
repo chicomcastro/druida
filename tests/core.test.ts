@@ -152,8 +152,8 @@ describe('Loot', () => {
 
 describe('Progressão', () => {
   it('xpForLevel usa a curva de balanceamento central', () => {
-    expect(xpForLevel(1)).toBe(38);
-    expect(xpForLevel(4)).toBe(Math.round(38 * Math.pow(4, 1.5)));
+    expect(xpForLevel(1)).toBe(64); // E57: curva inicial encarecida (era 38)
+    expect(xpForLevel(4)).toBe(Math.round(64 * Math.pow(4, 1.5)));
   });
 
   it('XP suficiente sobe de nível e concede pontos de encanto', () => {
