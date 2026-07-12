@@ -187,3 +187,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0180](0180-porta-interior-alinhada.md) | Porta do interior alinhada à entrada + 1 toque = 1 interação (E55) | Aceito |
 | [0181](0181-transparencia-por-oclusao.md) | Transparência por oclusão: cenário entre herói e câmera fica translúcido (E56) | Aceito |
 | [0182](0182-fix-combate-ataque.md) | Correções de combate: direção do arco do golpe, flash isolado por alvo, tremor comedido, curva de XP inicial (E57/E58/E59) | Aceito |
+| [0183](0183-combate-empolgante.md) | Combate empolgante: vila como refúgio (IA), combo alto sem estourar dano + perdão ao errar, golpes variados por swing (E60) | Aceito |

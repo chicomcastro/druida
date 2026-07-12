@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { VfxManager } from '../src/systems/vfx.js';
 import { buildMesh } from '../src/entities/meshes.js';
+import { animateBody } from '../src/systems/animation.js';
 
 /**
  * Feel de combate (E58/E59): o arco do golpe tem que apontar para onde o herói
@@ -61,6 +62,31 @@ describe('flash de dano não vaza entre modelos (E59)', () => {
     expect(legB.material.emissive.getHex()).toBe(0x000000); // B intacto
     expect(legA.material.emissive.getHex()).toBe(0xff3030); // só A piscou
     expect(legA.material).not.toBe(legB.material);           // agora tem cópia própria
+  });
+});
+
+function poseFor(kind: number, combo = 0) {
+  const body = buildMesh('druid');
+  // attack=1 (acabou de golpear), parado, sem recuo.
+  animateBody(body, 1 / 60, { moving: false, speed: 0, attack: 1, gait: 'biped', attackKind: kind, combo });
+  const p = body.userData.parts;
+  return { armRx: p.armR.rotation.x, armRz: p.armR.rotation.z, torsoY: p.torso?.rotation.y ?? 0, lungeZ: body.position.z };
+}
+
+describe('golpes variados por swing (E60)', () => {
+  it('cada kind produz uma pose distinta', () => {
+    const chop = poseFor(0), slashR = poseFor(1), slashL = poseFor(2), thrust = poseFor(3);
+    expect(chop.armRx).toBeLessThan(-1);           // machadada: braço bem à frente/baixo
+    expect(slashR.armRz).toBeGreaterThan(0.5);     // corte p/ um lado
+    expect(slashL.armRz).toBeLessThan(-0.5);       // corte p/ o outro (espelho)
+    expect(Math.sign(slashR.torsoY)).toBe(1);      // tronco gira em sentidos opostos
+    expect(Math.sign(slashL.torsoY)).toBe(-1);
+    expect(thrust.lungeZ).toBeGreaterThan(0);      // estocada projeta o corpo à frente
+  });
+
+  it('combo alto amplia a amplitude do golpe', () => {
+    const lo = poseFor(1, 0), hi = poseFor(1, 12);
+    expect(Math.abs(hi.armRz)).toBeGreaterThan(Math.abs(lo.armRz));
   });
 });
 
