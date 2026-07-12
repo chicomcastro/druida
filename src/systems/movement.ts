@@ -9,6 +9,7 @@ import { SpatialHash } from '../utils/SpatialHash.js';
 export function movementSystem(game, dt) {
   const { world } = game;
 
+  const corrupt = [];
   for (const [id, tr, vel] of world.query(C.Transform, C.Velocity)) {
     const st = world.get(id, C.StatusEffects);
     let vx = vel.vx, vz = vel.vz;
@@ -30,8 +31,20 @@ export function movementSystem(game, dt) {
       vz = kb ? kb.vz : 0;
     }
 
+    // Velocidade não-finita (NaN/∞) nunca integra (E64): senão corrompe a
+    // posição com NaN e o ente vira um "fantasma" inatingível/onipresente.
+    if (!Number.isFinite(vx)) vx = vel.vx = 0;
+    if (!Number.isFinite(vz)) vz = vel.vz = 0;
     tr.x += vx * dt;
     tr.z += vz * dt;
+    if (!Number.isFinite(tr.x) || !Number.isFinite(tr.z)) corrupt.push({ id, tr });
+  }
+
+  // Saneia posições corrompidas (E64): recupera o herói na origem; remove
+  // qualquer outro ente-fantasma (some sem 'kill', então sem XP indevido).
+  for (const { id, tr } of corrupt) {
+    if (world.has(id, C.PlayerControlled)) { tr.x = 0; tr.z = 0; }
+    else world.destroyEntity(id);
   }
 
   resolveCollisions(game);

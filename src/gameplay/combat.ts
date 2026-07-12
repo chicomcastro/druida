@@ -125,6 +125,11 @@ export function meleeArc(game, attackerId, opts: any) {
   let hits = 0;
   for (const [id, otherTr, fac, hp] of world.query(C.Transform, C.Faction, C.Health)) {
     if (id === attackerId || fac.team === team || hp.dead) continue;
+    // Posição não-finita (NaN) não pode ser atingida (E64): as comparações com
+    // NaN são sempre FALSE, então sem esta guarda um inimigo "fantasma" em
+    // NaN,NaN passava por range E arco e era acertado por TODO golpe, em
+    // qualquer direção — dando XP "sem inimigo".
+    if (!Number.isFinite(otherTr.x) || !Number.isFinite(otherTr.z)) continue;
     const dx = otherTr.x - tr.x;
     const dz = otherTr.z - tr.z;
     const d = Math.hypot(dx, dz);
