@@ -36,6 +36,12 @@ game.menus.showMain(
 // Exposto para depuração no console.
 (window as any).DRUIDA = game;
 
+// Rastreador de XP LIGADO por padrão (E64, temporário): a cada ganho de XP
+// aparece um toast com a fonte (`🔎 +N XP · espécie`), para caçar o "sobe de
+// nível sem inimigo" no celular sem depender do console. Desligável tocando 3×
+// no "Nível" (ou `DRUIDA.debugXp = false`). Remover quando o caso fechar.
+(game as any).debugXp = true;
+
 // Simulador sintético (E40): no console, `DRUIDA.sim.drive()` acopla o
 // jogador-robô ao P1 e o jogo passa a se jogar sozinho (coletando métricas);
 // `DRUIDA.sim.metrics.report()` mostra o balanceamento; a função devolvida por
