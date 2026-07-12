@@ -170,6 +170,21 @@ export class Hud {
     this.playersEl = this.root.querySelector('#hud-players');
     this.biomeEl = this.root.querySelector('#hud-top .biome');
     this.lvlEl = this.root.querySelector('#hud-top .lvl');
+    // Diagnóstico de XP no mobile (E61): tocar 3× no "Nível" liga/desliga o
+    // rastreador — com ele ligado, cada ganho de XP vira um toast com a fonte,
+    // para caçar o "sobe de nível sem inimigo" sem precisar de console.
+    if (this.lvlEl) {
+      this.lvlEl.style.cursor = 'pointer';
+      let taps = 0, tapT: any = 0;
+      this.lvlEl.addEventListener('click', () => {
+        taps++; clearTimeout(tapT); tapT = setTimeout(() => { taps = 0; }, 600);
+        if (taps >= 3) {
+          taps = 0;
+          game.debugXp = !game.debugXp;
+          this.toast(game.debugXp ? '🔎 Rastreador de XP LIGADO' : 'Rastreador de XP desligado', 2200);
+        }
+      });
+    }
     this.xpEl = this.root.querySelector('#hud-xp > i');
     this.bossEl = this.root.querySelector('#hud-boss');
     this.toastEl = this.root.querySelector('#hud-toast');
