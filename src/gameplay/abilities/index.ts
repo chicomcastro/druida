@@ -14,6 +14,7 @@ function aoeDamage(game, x, z, radius, damage, team, opts = {}) {
   const r2 = radius * radius;
   for (const [id, tr, fac, hp] of world.query(C.Transform, C.Faction, C.Health)) {
     if (fac.team === team || hp.dead) continue;
+    if (!Number.isFinite(tr.x) || !Number.isFinite(tr.z)) continue; // NaN não é atingível (E64)
     const dx = tr.x - x, dz = tr.z - z;
     if (dx * dx + dz * dz <= r2) {
       applyDamage(game, id, damage, { ...opts, fromX: x, fromZ: z });

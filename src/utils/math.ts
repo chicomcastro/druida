@@ -11,7 +11,9 @@ export const dist = (ax, az, bx, bz) => Math.sqrt(dist2(ax, az, bx, bz));
 
 export function normalize(x, z) {
   const len = Math.hypot(x, z);
-  if (len < 1e-6) return { x: 0, z: 0, len: 0 };
+  // `!(len > eps)` (não `len < eps`) também pega NaN: `NaN < eps` é FALSE e
+  // deixaria passar `NaN/NaN`, propagando NaN pela velocidade/posição (E64).
+  if (!(len > 1e-6)) return { x: 0, z: 0, len: 0 };
   return { x: x / len, z: z / len, len };
 }
 
