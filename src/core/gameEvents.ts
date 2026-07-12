@@ -23,7 +23,24 @@ export function bindGameEvents(game) {
     if (game.fauna?.isFauna?.(e.id)) return;
     // XP + essência + drops.
     const def = e.loot ?? {};
-    grantXp(game, def.xp ?? ENEMIES[e.killKind]?.xp ?? 6);
+    const xpAmount = def.xp ?? ENEMIES[e.killKind]?.xp ?? 6;
+    grantXp(game, xpAmount);
+    // Diagnóstico de XP (E61): registra a FONTE de cada ganho para caçar o
+    // "sobe de nível sem inimigo". Anel dos últimos 40 em `DRUIDA._xpLog`; com
+    // `DRUIDA.debugXp = true` também loga no console. Se subir de nível e o log
+    // ficar VAZIO, o XP não é a causa (é o contador de combo). Custo nulo ocioso.
+    {
+      const r = game.world.get(e.id, C.Renderable);
+      const fac = game.world.get(e.id, C.Faction);
+      const src = {
+        kind: r?.kind ?? e.killKind ?? '?', xp: xpAmount,
+        team: fac?.team ?? '?', hasAI: !!game.world.get(e.id, C.AI),
+        x: Math.round(e.x ?? 0), z: Math.round(e.z ?? 0), lvl: game.progress.level,
+      };
+      (game._xpLog ??= []).push(src);
+      if (game._xpLog.length > 40) game._xpLog.shift();
+      if (game.debugXp) console.log(`[xp] +${xpAmount} de "${src.kind}" (${src.team}${src.hasAI ? '' : ', sem IA'}) @(${src.x},${src.z}) → nível ${src.lvl}`);
+    }
     const { essenceMin, essenceMax } = BALANCE.loot;
     // Elites carregam bônus de essência (ADR 0045).
     const essence = Math.max(1, Math.round(essenceMin + Math.random() * (essenceMax - essenceMin))) + (def.essenceBonus ?? 0);
