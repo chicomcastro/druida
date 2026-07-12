@@ -68,11 +68,20 @@ function resolveCollisions(game) {
       const dz = b.tr.z - a.tr.z;
       const min = a.col.radius + b.col.radius;
       const d2 = dx * dx + dz * dz;
-      if (d2 >= min * min || d2 === 0) continue;
-      const d = Math.sqrt(d2) || 0.0001;
-      const overlap = (min - d) / 2;
-      const nx = dx / d, nz = dz / d;
+      if (d2 >= min * min) continue;
       if (a.static && b.static) continue;
+      // Coincidentes (d≈0): antes o par era PULADO (sem direção de empurrão),
+      // então dois entes no mesmo ponto ficavam grudados — dois modelos iguais no
+      // mesmo lugar brigam no z-buffer e PISCAM (E62, aldeões "um dentro do
+      // outro"). Aqui uma normal determinística (por id) dá o rumo do desempate.
+      let d = Math.sqrt(d2), nx, nz;
+      if (d < 1e-4) {
+        const ang = ((a.id * 2654435761) % 360) * (Math.PI / 180); // hash → ângulo estável
+        nx = Math.cos(ang); nz = Math.sin(ang); d = 0;
+      } else {
+        nx = dx / d; nz = dz / d;
+      }
+      const overlap = (min - d) / 2;
       if (a.static) {
         b.tr.x += nx * overlap * 2; b.tr.z += nz * overlap * 2;
       } else if (b.static) {

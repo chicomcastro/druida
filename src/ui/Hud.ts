@@ -174,16 +174,23 @@ export class Hud {
     // rastreador — com ele ligado, cada ganho de XP vira um toast com a fonte,
     // para caçar o "sobe de nível sem inimigo" sem precisar de console.
     if (this.lvlEl) {
+      // O HUD costuma ser "click-through" (pointer-events:none) p/ não roubar o
+      // input do jogo — então precisamos reabilitar o toque SÓ neste alvo, senão
+      // tocar no "Nível" não faz nada (era por isso que não ligava no celular).
+      this.lvlEl.style.pointerEvents = 'auto';
       this.lvlEl.style.cursor = 'pointer';
       let taps = 0, tapT: any = 0;
-      this.lvlEl.addEventListener('click', () => {
-        taps++; clearTimeout(tapT); tapT = setTimeout(() => { taps = 0; }, 600);
+      const bump = (ev: any) => {
+        ev?.preventDefault?.();
+        taps++; clearTimeout(tapT); tapT = setTimeout(() => { taps = 0; }, 1200);
         if (taps >= 3) {
           taps = 0;
           game.debugXp = !game.debugXp;
-          this.toast(game.debugXp ? '🔎 Rastreador de XP LIGADO' : 'Rastreador de XP desligado', 2200);
+          this.toast(game.debugXp ? '🔎 Rastreador de XP LIGADO — ataque e veja a fonte' : 'Rastreador de XP desligado', 2600);
         }
-      });
+      };
+      this.lvlEl.addEventListener('click', bump);
+      this.lvlEl.addEventListener('touchend', bump);
     }
     this.xpEl = this.root.querySelector('#hud-xp > i');
     this.bossEl = this.root.querySelector('#hud-boss');

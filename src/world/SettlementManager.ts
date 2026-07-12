@@ -348,39 +348,6 @@ export class SettlementManager {
       const sp = Math.hypot(vel.vx, vel.vz);
       if (sp > 0.06) tr.rot = turnToward(tr.rot ?? 0, Math.atan2(vel.vx, vel.vz), dt);
     }
-    this._deOverlap();
-  }
-
-  /**
-   * Desamontoa aldeões coincidentes (E61): a `separationForce` só agia enquanto
-   * ANDANDO, então parados (esperando / perto do jogador / no alvo) dois podiam
-   * ficar "um dentro do outro" — e duas malhas idênticas no mesmo ponto brigam
-   * no z-buffer e PISCAM. Aqui uma correção posicional direta, todo frame,
-   * empurra os pares próximos (só os visíveis/fora de recinto). Barato: pares
-   * distantes saem no primeiro teste; vilas diferentes nunca se cruzam.
-   */
-  _deOverlap() {
-    const MIN = 0.9;
-    const vs = this._villagers;
-    for (let i = 0; i < vs.length; i++) {
-      const a = vs[i];
-      if (a.insideVenue || !this.game.world.entities.has(a.id)) continue;
-      const atr = this.game.world.get(a.id, C.Transform);
-      if (!atr) continue;
-      for (let j = i + 1; j < vs.length; j++) {
-        const b = vs[j];
-        if (b.insideVenue) continue;
-        const btr = this.game.world.get(b.id, C.Transform);
-        if (!btr) continue;
-        let dx = atr.x - btr.x, dz = atr.z - btr.z;
-        const d = Math.hypot(dx, dz);
-        if (d >= MIN) continue;
-        if (d > 1e-3) { dx /= d; dz /= d; } else { dx = 1; dz = 0; } // coincidentes → separa no eixo x
-        const push = (MIN - d) * 0.5;
-        atr.x += dx * push; atr.z += dz * push;
-        btr.x -= dx * push; btr.z -= dz * push;
-      }
-    }
   }
 
   /**

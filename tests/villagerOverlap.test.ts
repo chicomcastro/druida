@@ -1,45 +1,52 @@
 import { describe, it, expect } from 'vitest';
 import { World } from '../src/core/ecs/World.js';
-import { C, Transform } from '../src/core/ecs/components.js';
-import { SettlementManager } from '../src/world/SettlementManager.js';
+import { C, Transform, Velocity, Collider } from '../src/core/ecs/components.js';
+import { movementSystem } from '../src/systems/movement.js';
 
 /**
- * De-overlap de aldeões (E61): dois moradores no MESMO ponto (parados) eram
- * empurrados para longe? Antes ficavam "um dentro do outro" e piscavam
- * (z-fighting). O passe posicional os separa todo frame.
+ * Desempate de coincidentes na colisão (E62): dois entes SÓLIDOS exatamente no
+ * mesmo ponto eram PULADOS pelo resolvedor (sem direção de empurrão) e ficavam
+ * grudados — dois modelos iguais no mesmo lugar piscam no z-buffer (o "aldeão
+ * dentro do outro"). Agora uma normal determinística os separa.
  */
-describe('aldeões não ficam um dentro do outro (E61)', () => {
-  it('_deOverlap separa moradores coincidentes', () => {
+function solid(world: any, x: number, z: number, dyn = true) {
+  const id = world.createEntity();
+  world.add(id, C.Transform, Transform(x, z));
+  if (dyn) world.add(id, C.Velocity, Velocity(0, 0, 1));
+  world.add(id, C.Collider, Collider(0.55, true));
+  return id;
+}
+
+describe('colisão separa coincidentes (E62)', () => {
+  it('dois sólidos no MESMO ponto se separam (não ficam grudados)', () => {
     const world = new World();
-    const sm: any = Object.create(SettlementManager.prototype);
-    sm.game = { world };
-    const mk = (x: number, z: number) => {
-      const id = world.createEntity();
-      world.add(id, C.Transform, Transform(x, z));
-      return { id, insideVenue: null };
-    };
-    // Dois exatamente no mesmo ponto + um terceiro colado.
-    sm._villagers = [mk(0, 0), mk(0, 0), mk(0.2, 0.1)];
-
-    for (let i = 0; i < 40; i++) sm._deOverlap();
-
-    const pos = sm._villagers.map((v: any) => world.get(v.id, C.Transform));
-    const dist = (a: any, b: any) => Math.hypot(a.x - b.x, a.z - b.z);
-    expect(dist(pos[0], pos[1])).toBeGreaterThan(0.85);
-    expect(dist(pos[0], pos[2])).toBeGreaterThan(0.85);
-    expect(dist(pos[1], pos[2])).toBeGreaterThan(0.85);
+    const game: any = { world };
+    const a = solid(world, 0, 0), b = solid(world, 0, 0);
+    for (let i = 0; i < 30; i++) movementSystem(game, 1 / 60);
+    const ta = world.get(a, C.Transform), tb = world.get(b, C.Transform);
+    const d = Math.hypot(ta.x - tb.x, ta.z - tb.z);
+    expect(d).toBeGreaterThan(1.0); // separados até ~soma dos raios (1.1)
   });
 
-  it('não mexe em quem está dentro de recinto (escondido)', () => {
+  it('sólidos próximos (sobrepostos) também se afastam', () => {
     const world = new World();
-    const sm: any = Object.create(SettlementManager.prototype);
-    sm.game = { world };
-    const a = world.createEntity(); world.add(a, C.Transform, Transform(0, 0));
-    const b = world.createEntity(); world.add(b, C.Transform, Transform(0, 0));
-    sm._villagers = [{ id: a, insideVenue: null }, { id: b, insideVenue: 'tavern' }];
-    sm._deOverlap();
-    // b está escondido num recinto → não é empurrado.
-    expect(world.get(b, C.Transform).x).toBe(0);
-    expect(world.get(b, C.Transform).z).toBe(0);
+    const game: any = { world };
+    const a = solid(world, 0, 0), b = solid(world, 0.2, 0.1);
+    for (let i = 0; i < 30; i++) movementSystem(game, 1 / 60);
+    const ta = world.get(a, C.Transform), tb = world.get(b, C.Transform);
+    expect(Math.hypot(ta.x - tb.x, ta.z - tb.z)).toBeGreaterThan(1.0);
+  });
+
+  it('o desempate é determinístico (sem gerar NaN)', () => {
+    const world = new World();
+    const game: any = { world };
+    const a = solid(world, 0, 0), b = solid(world, 0, 0);
+    // A estabilidade vem da normal por id — não pode gerar NaN.
+    for (let i = 0; i < 5; i++) movementSystem(game, 1 / 60);
+    for (const id of [a, b]) {
+      const tr = world.get(id, C.Transform);
+      expect(Number.isFinite(tr.x)).toBe(true);
+      expect(Number.isFinite(tr.z)).toBe(true);
+    }
   });
 });
