@@ -791,7 +791,11 @@ export class SettlementManager {
     game.world.add(id, C.Transform, Transform(wx, wz, angleTo(wx, wz, s.x, s.z)));
     game.world.add(id, C.Velocity, Velocity(0, 0, 1.2));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: v.role === 'child' ? 0.72 : 1 });
-    game.world.add(id, C.Collider, Collider(0.55, true));
+    // Raio de colisão ~ largura do modelo (E65): era 0.55, mas o boneco MCD é
+    // bem mais largo (~1u), então a 1.1u de distância eles ficavam colados
+    // VISUALMENTE ("altamente colidindo") mesmo sem sobrepor os colisores. 0.85
+    // dá espaço pessoal de verdade — os modelos deixam de se interpenetrar.
+    game.world.add(id, C.Collider, Collider(0.85, true));
     // Anciãos ficam no posto; os demais seguem uma rotina de dia/noite (E22).
     if (!v.elder) {
       const worker = (v.radius ?? 7) <= 3; // postos de trabalho (raio curto) = trabalhadores
