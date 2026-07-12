@@ -12,11 +12,19 @@ export function interactionSystem(game, dt) {
 
   for (const [, pTr, pc, hp, intent] of world.query(C.Transform, C.PlayerControlled, C.Health, C.Intent)) {
     if (pc.downed || hp.dead) continue;
+    // Só o interativo MAIS PRÓXIMO em alcance conta por jogador: um toque de E =
+    // uma ação. Sem isso, entrar numa casa (que teleporta o jogador pra junto da
+    // saída e cria a porta de saída) dispararia enter E exit na MESMA chamada.
+    let best: any = null, bestD = Infinity, bestIid = -1;
     for (const [iid, itr, inter] of world.query(C.Transform, C.Interactable)) {
       if (inter.used) continue;
       const d = dist(pTr.x, pTr.z, itr.x, itr.z);
       if (d > (inter.range ?? 3)) continue;
-      if (d < promptD) { promptD = d; prompt = inter.prompt; }
+      if (d < bestD) { bestD = d; best = inter; bestIid = iid; }
+    }
+    if (best) {
+      if (bestD < promptD) { promptD = bestD; prompt = best.prompt; }
+      const iid = bestIid, inter = best;
       if (intent.interact) {
         if (inter.kind === 'merchant') {
           if (inter.lines) game.emit('dialogue', { lines: inter.lines }); // fofoca da família (ADR 0095)

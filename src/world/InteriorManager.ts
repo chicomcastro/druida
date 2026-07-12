@@ -199,7 +199,12 @@ export class InteriorManager {
     // decide a decoração de sotaque do interior (rede no Vau, toras em Cinzafolha…).
     const village = this.game.settlements?.settlementAt?.(returnPos.x, returnPos.z)?.theme ?? 'druida';
     this.active = { themeId: theme.id, theme, returnPos, npcId: null, village, venueId: venueId ?? theme.id, patrons: [], residents: [], seats: [] };
-    this._teleport(ROOM.x, ROOM.z - this._rz + 3);
+    // Entra JUNTO à porta (parede sul, +z), não no fundo da sala (E55): a porta do
+    // interior passa a corresponder à porta do modelo externo — você atravessa a
+    // porta e aparece nela, de frente pra sala (NPC/balcão à frente), com a saída
+    // logo atrás. Antes surgia na parede oposta, como se tivesse teleportado.
+    this._teleport(ROOM.x, ROOM.z + this._rz - 3);
+    for (const [, tr] of this.game.world.query(C.Transform, C.PlayerControlled)) tr.rot = Math.PI; // encara o interior (-z)
     this.active.npcId = this._spawnNpc(theme);
     this.active.props = this._buildProps(theme, village); // móveis temáticos + sotaque da vila (ADR 0104/0163)
     this.active.kitchenId = theme.kitchen ? this._buildKitchen() : null; // caldeirão (E19.6)
