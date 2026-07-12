@@ -450,4 +450,40 @@ describe('Interação — porta abre o interior', () => {
     expect(g.inDungeon).toBe(true);
     expect(im.active.theme.id).toBe('weapons');
   });
+
+  it('entra JUNTO à porta (não no fundo) e NÃO sai na mesma tecla (E55)', () => {
+    const g = makeGame();
+    const im = new InteriorManager(g); g.interiors = im;
+    g.menus = { openShop() {}, openStash() {} };
+    const pid = addPlayer(g, 0, 0, 0);
+    im.enter('weapons', 'armeiro');
+    const ptr = g.world.get(pid, C.Transform);
+    const exit: any = [...g.world.query(C.Transform, C.Interactable)].find(([, , i]: any) => i.kind === 'house_exit');
+    const dExit = Math.hypot(ptr.x - exit[1].x, ptr.z - exit[1].z);
+    expect(dExit).toBeLessThan(4);        // aparece na porta, não na parede oposta
+    // Pressionar E ao chegar (perto da saída) não deve sair no mesmo quadro:
+    // só o interativo mais próximo age por toque (a porta de entrada já agiu).
+    expect(g.inDungeon).toBe(true);
+    expect(im.active).toBeTruthy();
+  });
+
+  it('um toque de E aciona só o interativo MAIS PRÓXIMO (E55)', () => {
+    const g = makeGame();
+    g.menus = { openShop() {}, openStash() {} };
+    const pid = addPlayer(g, 0, 0, 0);
+    const far = g.world.createEntity();
+    g.world.add(far, C.Transform, { x: 2.5, z: 0, rot: 0 });
+    g.world.add(far, C.Interactable, { kind: 'chest', range: 3, used: false });
+    const near = g.world.createEntity();
+    g.world.add(near, C.Transform, { x: 0.6, z: 0, rot: 0 });
+    let villagerTalked = 0;
+    g.on('dialogue', () => { villagerTalked++; });
+    g.world.add(near, C.Interactable, { kind: 'villager', lines: ['oi'], range: 3, used: false });
+    let stashOpened = 0;
+    g.menus.openStash = () => { stashOpened++; };
+    g.world.get(pid, C.Intent).interact = true;
+    interactionSystem(g, 0.016);
+    expect(villagerTalked).toBe(1); // o mais próximo (aldeão) agiu
+    expect(stashOpened).toBe(0);    // o baú, mais longe, não
+  });
 });
