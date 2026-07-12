@@ -1,6 +1,7 @@
 import { GameLoop } from './GameLoop.js';
 import { Renderer } from './render/Renderer.js';
 import { IsoCamera } from './render/IsoCamera.js';
+import { OcclusionFade } from './render/OcclusionFade.js';
 import { InputManager } from './input/InputManager.js';
 import { World } from './ecs/World.js';
 import { C } from './ecs/components.js';
@@ -73,7 +74,7 @@ import { Telemetry } from '../gameplay/telemetry.js';
  */
 export class Game {
   // Subsistemas (tipados como any por ora — endurecer depois; ADR 0021).
-  world: any; renderer: any; camera: any; input: any; vfx: any; audio: any;
+  world: any; renderer: any; camera: any; occlusion: any; input: any; vfx: any; audio: any;
   hud: any; menus: any; minimap: any; worldMap: any; tutorial: any; dmgNumbers: any;
   worldManager: any; blockGround: any; terrain: any; lightPool: any; settlements: any; purity: any; quests: any; sideQuests: any; dayNight: any; telemetry: any; poi: any; landmarks: any; forage: any; farm: any; events: any; dungeon: any; interiors: any; fauna: any; hazards: any; story: any; loop: any;
   inDungeon: boolean;
@@ -101,6 +102,7 @@ export class Game {
     this.world = new World();
     this.renderer = new Renderer(canvas);
     this.camera = new IsoCamera();
+    this.occlusion = new OcclusionFade(); // cenário entre herói e câmera fica translúcido (E56)
     this.input = new InputManager(this.camera);
     this.vfx = new VfxManager(this);
     this.audio = new AudioManager(this);
@@ -432,6 +434,12 @@ export class Game {
     this.renderer.followSky?.(this.groupCenter);
     // Hora do mundo escurece a cena (suspensa na masmorra — céu não existe lá).
     if (!this.inDungeon) this.renderer.applyDayNight(this.dayNight.nightAmount(), this.dayNight.weather ? 0.8 : 1);
+    // Oclusão (E56): o que fica entre o herói e a câmera fica translúcido. Reúne
+    // as posições dos jogadores e as raízes de entidade (que NÃO devem sumir).
+    const occPlayers: any[] = [], occRoots = new Set<any>();
+    for (const [, tr] of this.world.query(C.Transform, C.PlayerControlled)) occPlayers.push({ x: tr.x, y: 0, z: tr.z });
+    for (const [, r] of this.world.query(C.Renderable)) if (r.object3d) occRoots.add(r.object3d);
+    this.occlusion.update(this.renderer.scene, this.camera.cam, occPlayers, occRoots, this.dt);
     this.renderer.render(this.camera.cam);
     this.hud.update();
     this.minimap.update();
