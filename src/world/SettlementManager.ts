@@ -986,6 +986,10 @@ export class SettlementManager {
     ]);
     // Pegadas dos marcos fixos do hub (validador ADR 0085).
     w.fp(0, 0, 3.4, 3.4, 'carvalho-mãe');
+    // Colisor SÓLIDO do tronco da Carvalho-Mãe (E64): faltava — só havia pegada
+    // (que apenas ORIENTA o steering), então jogador e aldeões atravessavam a
+    // árvore. Agora o tronco bloqueia de verdade (a copa fica livre por cima).
+    w.collider(0, 0, 1.7);
     w.fp(5, 5, 2.4, 2.4, 'fogueira');
     w.fp(-5, 5, 3.2, 1.8, 'jardim-oeste');
     w.fp(5, -5, 1.8, 3.2, 'jardim-leste');
