@@ -33,6 +33,20 @@ antes de renderizar:
   nunca some.
 - 415 testes verdes, `tsc` limpo, `vite build` ok.
 
+## Adendo (E64) — modelo inteiro + folhagem instanciada
+Playtest: ao passar atrás de uma casa, só a PAREDE atingida ficava translúcida
+(o telhado continuava opaco), e as árvores da floresta não somiam.
+- **Modelo inteiro:** a "unidade" de fade deixou de ser a malha atingida e passou
+  a ser o **modelo** — o filho direto do container de topo (a casa dentro do
+  grupo-da-vila). Ao mirar uma parede, a casa inteira esmaece junto.
+- **Folhagem instanciada:** `InstancedMesh` (árvores) não aceita opacidade por
+  instância (todas dividem 1 material), então a instância na frente **encolhe e
+  some** (volta ao sair). Para não piscar (a instância encolhida sairia do raio),
+  o manter/soltar é **geométrico** — distância da posição-base da árvore ao
+  corredor herói→câmera —, imune à escala atual.
+- Travado por testes: grupo (parede+telhado somem juntos e restauram) e
+  instância (a da frente encolhe, a de longe fica intacta).
+
 ## Futuro
 Cull espacial dos candidatos (hoje o raycast varre os grupos de cenário) se a
 vila crescer muito; opção de fade por dithering (alpha-test) em vez de blend para

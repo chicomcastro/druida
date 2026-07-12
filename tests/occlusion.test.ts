@@ -38,6 +38,49 @@ describe('OcclusionFade (E56)', () => {
     expect(box.material.opacity).toBe(1);
   });
 
+  it('esmaece o MODELO INTEIRO (grupo), não só a malha atingida (E64)', () => {
+    const scene = new THREE.Scene();
+    const cam = makeCam();
+    // "Casa": um grupo com 2 malhas (parede + telhado) sobre a linha herói→câmera.
+    const house = new THREE.Group();
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 2), new THREE.MeshStandardMaterial({ color: 0x8a6b4a }));
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 3), new THREE.MeshStandardMaterial({ color: 0x5f8a3d }));
+    wall.position.set(5.5, 6, 5.5); roof.position.set(5.5, 8, 5.5);
+    house.add(wall, roof);
+    scene.add(house);
+    scene.updateMatrixWorld(true);
+
+    const occ = new OcclusionFade(); occ.every = 1;
+    for (let i = 0; i < 30; i++) occ.update(scene, cam, [{ x: 0, y: 0, z: 0 }], new Set(), 1 / 60);
+    // AMBAS as malhas ficam translúcidas, mesmo o raio tendo tocado só uma.
+    expect(wall.material.opacity).toBeLessThan(0.4);
+    expect(roof.material.opacity).toBeLessThan(0.4);
+
+    house.position.set(80, 0, -80); scene.updateMatrixWorld(true);
+    for (let i = 0; i < 60; i++) occ.update(scene, cam, [{ x: 0, y: 0, z: 0 }], new Set(), 1 / 60);
+    expect(wall.material.opacity).toBe(1);
+    expect(roof.material.opacity).toBe(1);
+  });
+
+  it('folhagem instanciada na frente ENCOLHE (some) e volta ao sair (E64)', () => {
+    const scene = new THREE.Scene();
+    const cam = makeCam();
+    const inst = new THREE.InstancedMesh(new THREE.BoxGeometry(2, 4, 2), new THREE.MeshStandardMaterial(), 2);
+    const m = new THREE.Matrix4();
+    m.makeTranslation(5.5, 6, 5.5); inst.setMatrixAt(0, m);      // árvore NA frente
+    m.makeTranslation(80, 6, -80); inst.setMatrixAt(1, m);       // árvore longe
+    inst.instanceMatrix.needsUpdate = true;
+    inst.geometry.computeBoundingSphere();
+    scene.add(inst);
+    scene.updateMatrixWorld(true);
+
+    const scaleOf = (i: number) => { const mm = new THREE.Matrix4(); inst.getMatrixAt(i, mm); const s = new THREE.Vector3(); mm.decompose(new THREE.Vector3(), new THREE.Quaternion(), s); return s.x; };
+    const occ = new OcclusionFade(); occ.every = 1;
+    for (let i = 0; i < 40; i++) occ.update(scene, cam, [{ x: 0, y: 0, z: 0 }], new Set(), 1 / 60);
+    expect(scaleOf(0)).toBeLessThan(0.3); // a da frente encolheu
+    expect(scaleOf(1)).toBeCloseTo(1, 3); // a de longe intacta
+  });
+
   it('não apaga entidades (jogador/inimigos) mesmo entre herói e câmera', () => {
     const scene = new THREE.Scene();
     const cam = makeCam();
