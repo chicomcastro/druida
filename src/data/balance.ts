@@ -15,7 +15,12 @@ export const BALANCE = {
   },
 
   progression: {
-    xpBase: 38,
+    // E57: L1→L2 custava só 38 XP (~6 comuns), então a PRIMEIRA refrega despejava
+    // 3–4 níveis de uma vez ("subo de nível toda vez que ataco, até uns 4, aí
+    // para" — a curva alcançava os comuns e estagnava). xpBase 38→64 encarece os
+    // primeiros níveis para serem conquistados, sem tocar no poder (nível só dá
+    // ponto de encanto/talento — poder vem do gear; ADR 0175/0182).
+    xpBase: 64,
     xpExp: 1.5,
     enchantPointsPerLevel: 1,
   },

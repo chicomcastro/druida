@@ -82,10 +82,14 @@ export function bindGameEvents(game) {
   // o "peso" do encadeamento no timing certo.
   game.on('combo', (e) => {
     game.hitStop = Math.max(game.hitStop, 0.03 + 0.006 * Math.min(e.count, 8));
-    game.camera.addShake(0.08 + 0.02 * Math.min(e.count, 6));
+    // Shake bem sutil: o combo dispara a CADA acerto encadeado, então o tranco
+    // antigo (0.08–0.2) somava e deixava a tela tremendo o tempo todo ao atacar
+    // (E59). O peso do combo já vem do hit-stop; o shake fica só como tempero.
+    game.camera.addShake(0.02 + 0.006 * Math.min(e.count, 6));
   });
   game.on('kill', (e) => {
-    game.camera.addShake(e.bossName ? 0.8 : 0.18);
+    // Morte comum quase não treme (some entre golpes num pack); chefe é evento.
+    game.camera.addShake(e.bossName ? 0.8 : 0.08);
     game.hitStop = Math.max(game.hitStop, e.bossName ? 0.12 : 0.045); // hit-stop
   });
 

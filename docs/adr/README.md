@@ -186,3 +186,4 @@ autônomo do Druida. Cada ADR é curto: contexto, decisão e consequências.
 | [0086](0086-janelas.md) | Janelas com moldura à altura do olho (M20.2) | Aceito |
 | [0180](0180-porta-interior-alinhada.md) | Porta do interior alinhada à entrada + 1 toque = 1 interação (E55) | Aceito |
 | [0181](0181-transparencia-por-oclusao.md) | Transparência por oclusão: cenário entre herói e câmera fica translúcido (E56) | Aceito |
+| [0182](0182-fix-combate-ataque.md) | Correções de combate: direção do arco do golpe, flash isolado por alvo, tremor comedido, curva de XP inicial (E57/E58/E59) | Aceito |

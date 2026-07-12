@@ -258,12 +258,18 @@ export class VfxManager {
     });
     const m = new THREE.Mesh(geo, mat);
     m.rotation.x = -Math.PI / 2;
-    m.rotation.z = -angle;
+    // O arco (centrado no +X local do anel) tem que apontar para a MESMA direção
+    // que o herói encara e que o `meleeArc` acerta — a convenção (sin θ, cos θ),
+    // com θ=0 → +Z. Deitado o anel (rot.x=-90°), `rot.z = θ - π/2` faz o centro
+    // do arco cair em (sin θ, cos θ) no mundo. Antes usava `-θ`, que apontava em
+    // (cos θ, sin θ): defasado do rumo (0→90° conforme o ângulo), então o feedback
+    // saía "pro lado/pra trás" em vez de para onde o jogador olha (E58).
+    m.rotation.z = angle - Math.PI / 2;
     m.position.set(x, 0.12, z);
     // Varredura: o arco gira no sentido do golpe enquanto some — leitura de
     // movimento em vez de um decalque estático.
     this._add(m, 0.22, (fx, t) => {
-      m.rotation.z = -angle - (1 - t) * arc * 0.9;
+      m.rotation.z = (angle - Math.PI / 2) + (1 - t) * arc * 0.9;
       mat.opacity = 0.75 * t;
     });
     // Faíscas de impacto na ponta do golpe, na cor do elemento.
