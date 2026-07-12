@@ -52,7 +52,11 @@ export class VfxManager {
     this.scene = game.renderer.scene;
     this.fx = [];
 
-    game.on('meleeSwing', (e) => this.swing(e));
+    game.on('meleeSwing', (e) => {
+      // Puxa o combo/índice do atacante p/ variar e escalar a VFX do golpe (E60).
+      const pc = game.world?.get?.(e.id, C.PlayerControlled);
+      this.swing({ ...e, combo: pc?.combo ?? 0, swingIndex: pc?.swingIndex ?? 0 });
+    });
     game.on('vfxRing', (e) => this.ring(e.x, e.z, e.radius, e.color));
     game.on('vfxMarker', (e) => this.marker(e.x, e.z, e.radius, e.delay));
     game.on('vfxCone', (e) => this.ring(e.x, e.z, 2.5, e.color, 0.25));
@@ -250,10 +254,16 @@ export class VfxManager {
     }
   }
 
-  swing({ x, z, angle, range = 2, arc = 1, color = 0xffffff }) {
-    const geo = new THREE.RingGeometry(0.3, range, 18, 1, -arc, arc * 2);
+  swing({ x, z, angle, range = 2, arc = 1, color = 0xffffff, combo = 0, swingIndex = 0 }) {
+    // Escala/brilho crescem com o combo (E60): golpes encadeados ficam maiores e
+    // mais luminosos — recompensa visual do streak. O lado da varredura alterna
+    // por swing (esquerda/direita), casando com as poses laterais da animação.
+    const boost = 1 + Math.min(combo, 12) * 0.05;   // até +60% de alcance visual
+    const vRange = range * boost;
+    const dir = swingIndex % 2 === 0 ? 1 : -1;
+    const geo = new THREE.RingGeometry(0.3, vRange, 18, 1, -arc, arc * 2);
     const mat = new THREE.MeshBasicMaterial({
-      color, transparent: true, opacity: 0.75, side: THREE.DoubleSide,
+      color, transparent: true, opacity: Math.min(1, 0.75 + combo * 0.02), side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending, depthWrite: false,
     });
     const m = new THREE.Mesh(geo, mat);
@@ -268,14 +278,17 @@ export class VfxManager {
     m.position.set(x, 0.12, z);
     // Varredura: o arco gira no sentido do golpe enquanto some — leitura de
     // movimento em vez de um decalque estático.
+    const op0 = mat.opacity;
     this._add(m, 0.22, (fx, t) => {
-      m.rotation.z = (angle - Math.PI / 2) + (1 - t) * arc * 0.9;
-      mat.opacity = 0.75 * t;
+      m.rotation.z = (angle - Math.PI / 2) + dir * (1 - t) * arc * 0.9;
+      mat.opacity = op0 * t;
     });
-    // Faíscas de impacto na ponta do golpe, na cor do elemento.
-    const tipX = x + Math.sin(angle) * range * 0.8;
-    const tipZ = z + Math.cos(angle) * range * 0.8;
-    for (let i = 0; i < 3; i++) {
+    // Faíscas de impacto na ponta do golpe, na cor do elemento — mais faíscas
+    // quanto maior o combo (o golpe "pega fogo").
+    const tipX = x + Math.sin(angle) * vRange * 0.8;
+    const tipZ = z + Math.cos(angle) * vRange * 0.8;
+    const sparks = 3 + Math.min(6, Math.floor(combo / 3));
+    for (let i = 0; i < sparks; i++) {
       const a = angle + (Math.random() - 0.5) * arc;
       this._spawn(tipX, 0.7, tipZ, color, 0.32, Math.sin(a) * 4, 1.5 + Math.random() * 2, Math.cos(a) * 4, 0.8);
     }

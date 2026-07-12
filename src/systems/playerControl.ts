@@ -106,6 +106,7 @@ export function playerControlSystem(game, dt) {
       if (pc.attackTimer <= 0) {
         // Primeiro golpe da sequência: abre a janela de combo.
         pc.attackTimer = total; pc.castTotal = total;
+        pc.swingIndex = (pc.swingIndex ?? 0) + 1; // alterna a animação do golpe (E60)
         castAbility(game, id, formDef.basic, aimAngle);
       } else {
         // Cast em andamento: avalia o timing do encadeamento.
@@ -115,11 +116,18 @@ export function playerControlSystem(game, dt) {
           pc.combo = Math.min((pc.combo ?? 0) + 1, COMBO.cap);
           pc.comboExpire = total * COMBO.graceMul;
           pc.attackTimer = total; pc.castTotal = total;
+          pc.swingIndex = (pc.swingIndex ?? 0) + 1; // próxima pose do encadeamento
           castAbility(game, id, formDef.basic, aimAngle);
           game.emit('combo', { id, count: pc.combo, quality: r.quality });
         } else {
-          pc.combo = 0;
+          // Errar o timing não zera mais o combo de vez (E60): mantém uma fração
+          // para o encadeamento perdoar um deslize sem matar a empolgação. NÃO
+          // adianta o golpe (senão dava pra mashar e furar a cadência/DPS) — só
+          // custa um respiro; e renova a graça pra um quase-acerto não derrubar
+          // o streak sozinho.
+          pc.combo = Math.floor((pc.combo ?? 0) * COMBO.missKeepFrac);
           pc.attackTimer = Math.min(pc.castTotal || total, pc.attackTimer + COMBO.missPenalty);
+          pc.comboExpire = total * COMBO.graceMul;
           game.emit('comboBreak', { id, progress: p });
         }
       }

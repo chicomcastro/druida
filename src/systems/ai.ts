@@ -19,8 +19,12 @@ export function aiSystem(game, dt) {
     if (world.get(id, C.Health)?.dead) { vel.vx = vel.vz = 0; continue; }
 
     const isAlly = ai.behavior.startsWith('ally');
-    const target = isAlly ? nearestEnemy(world, tr) : nearestPlayer(game, tr);
-    if (!target) { vel.vx = vel.vz = 0; continue; }
+    // Zona segura (E60): inimigos NÃO perseguem quem está numa vila/hub — a
+    // Clareira inicial e as vilas viram refúgio de verdade (fim do "sobe de
+    // nível parado na cidade", enquanto os bichos rondam a borda). No mundo
+    // aberto a caçada segue normal.
+    const target = isAlly ? nearestEnemy(world, tr) : nearestPlayer(game, tr, true);
+    if (!target) { vel.vx = vel.vz = 0; ai.state = 'idle'; ai.windup = 0; continue; }
 
     const d = dist(tr.x, tr.z, target.tr.x, target.tr.z);
     const rooted = st && (st.root > 0 || st.stun > 0);
@@ -100,11 +104,14 @@ export function aiSystem(game, dt) {
   }
 }
 
-function nearestPlayer(game, tr) {
+function nearestPlayer(game, tr, skipSafe = false) {
   const { world } = game;
   let best = null, bestD = Infinity;
   for (const [id, pTr, pc, hp] of world.query(C.Transform, C.PlayerControlled, C.Health)) {
     if (pc.downed || hp.dead) continue;
+    // Refúgio (E60): quem está numa vila/hub não é alvo — inimigos ignoram e
+    // rondam a borda em vez de invadir a cidade.
+    if (skipSafe && game.settlements?.isSafe?.(pTr.x, pTr.z, 0)) continue;
     const d = dist(tr.x, tr.z, pTr.x, pTr.z);
     if (d < bestD) { bestD = d; best = { id, tr: pTr }; }
   }

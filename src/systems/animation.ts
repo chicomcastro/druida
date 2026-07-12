@@ -19,6 +19,10 @@ export interface AnimState {
   gesture?: 'eat' | 'drink' | 'serve' | null;
   /** Semente de fase do gesto (id do ente) — desincroniza os aldeões à mesa. */
   gestureSeed?: number;
+  /** Qual golpe da sequência (E60): 0 machadada, 1/2 cortes laterais, 3 estocada. */
+  attackKind?: number;
+  /** Contagem de combo atual — dá amplitude/brilho ao golpe conforme sobe. */
+  combo?: number;
 }
 
 export function animateBody(body: any, dt: number, st: AnimState): void {
@@ -45,6 +49,7 @@ export function animateBody(body: any, dt: number, st: AnimState): void {
   if (body.position) {
     const step = (0.5 - 0.5 * Math.cos(ph * 2)) * 0.075 * amp;
     body.position.y = step * walk + idle * (1 - walk);
+    body.position.z = 0; // investida (estocada) re-aplica abaixo; zera pra não derivar
   }
 
   // --- Locomoção por gait --------------------------------------------------
@@ -121,12 +126,41 @@ export function animateBody(body: any, dt: number, st: AnimState): void {
     headX = 0.08 * Math.sin(ph * 0.5);
   }
 
-  // --- Sobreposição de ataque (investida) ----------------------------------
+  // --- Sobreposição de ataque: golpes VARIADOS por swing (E60) -------------
+  // Cada golpe da sequência usa uma pose distinta (machadada de cima, cortes
+  // laterais espelhados, estocada). O combo dá amplitude — quanto mais alto o
+  // streak, mais amplo e "pesado" o movimento, tornando encadear empolgante.
+  // Inimigos (sem attackKind/combo) caem na estocada padrão.
   if (a > 0) {
-    if (parts.armR) parts.armR.rotation.x = -1.5 * a; // braço/arma à frente
-    if (parts.armL) parts.armL.rotation.x = -0.4 * a;
-    if (parts.weapon) parts.weapon.rotation.x = -0.4 * a;
-    headX = -0.35 * a; // investida de cabeça (gore p/ quadrúpedes)
+    const kind = (((st.attackKind ?? 3) % 4) + 4) % 4;
+    const flair = 1 + Math.min(st.combo ?? 0, 12) * 0.03; // até +36% de amplitude
+    const A = Math.min(1.4, a * flair);
+    if (parts.armR) { parts.armR.rotation.x = 0; parts.armR.rotation.z = 0; }
+    if (kind === 0) {
+      // Machadada de cima: braço desce à frente, tronco projeta.
+      if (parts.armR) parts.armR.rotation.x = -1.9 * A;
+      if (parts.armL) parts.armL.rotation.x = -0.5 * a;
+      headX = -0.4 * a;
+    } else if (kind === 1) {
+      // Corte horizontal (direita→esquerda): varredura + giro do tronco.
+      if (parts.armR) { parts.armR.rotation.x = -0.9 * A; parts.armR.rotation.z = 1.3 * A; }
+      if (parts.armL) parts.armL.rotation.z = 0.35 * a;
+      if (parts.torso) parts.torso.rotation.y = 0.45 * A;
+      headX = -0.2 * a;
+    } else if (kind === 2) {
+      // Corte horizontal (esquerda→direita): espelho.
+      if (parts.armR) { parts.armR.rotation.x = -0.9 * A; parts.armR.rotation.z = -1.3 * A; }
+      if (parts.armL) parts.armL.rotation.z = -0.2 * a;
+      if (parts.torso) parts.torso.rotation.y = -0.45 * A;
+      headX = -0.2 * a;
+    } else {
+      // Estocada: braço reto + investida do corpo pra frente.
+      if (parts.armR) parts.armR.rotation.x = -1.4 * A;
+      if (parts.armL) parts.armL.rotation.x = -0.6 * a;
+      if (body.position) body.position.z = 0.18 * a;
+      headX = -0.45 * a;
+    }
+    if (parts.weapon) parts.weapon.rotation.x = -0.35 * a;
   } else if (parts.weapon) {
     // Arma acompanha a passada com um leve atraso (peso na mão).
     parts.weapon.rotation.x = -Math.sin(ph - 0.6) * 0.08 * amp;

@@ -7,13 +7,15 @@
  * sweet spot, pior. Tudo em data para tunar no playtest (Gate B).
  */
 export const COMBO = {
-  earlyEnd: 0.60,   // antes disso: cedo demais
+  earlyEnd: 0.56,   // antes disso: cedo demais (janela alargada — E60, menos punitivo)
   sweet: 0.75,      // ponto ideal
-  lateEnd: 0.90,    // depois disso: tarde demais
-  cap: 8,           // teto de stacks
-  dmgPerStack: 0.12, // +12% de dano por stack
-  graceMul: 1.6,    // combo expira em castTotal × isto sem novo acerto
-  missPenalty: 0.3, // s extra de recuperação ao errar
+  lateEnd: 0.94,    // depois disso: tarde demais (janela alargada)
+  cap: 40,          // teto da CONTAGEM exibida (streak alto = empolgante)
+  dmgCap: 8,        // stacks que contam para o DANO (teto de balanceamento — não muda)
+  dmgPerStack: 0.12, // +12% de dano por stack (até dmgCap → +96% no máximo, como antes)
+  graceMul: 1.8,    // combo expira em castTotal × isto sem novo acerto (um tico mais generoso)
+  missPenalty: 0.18, // s extra de recuperação ao errar (era 0.3)
+  missKeepFrac: 0.5, // ao errar o timing, mantém esta fração do combo (não zera de vez)
 };
 
 /**
@@ -30,7 +32,11 @@ export function evalCombo(p: number, widen = 0): { ok: boolean; quality: number 
   return { ok: true, quality: Math.max(0, quality) };
 }
 
-/** Multiplicador de dano para uma contagem de combo. */
+/**
+ * Multiplicador de dano para uma contagem de combo. O bônus satura em `dmgCap`
+ * stacks (teto de balanceamento), mas a CONTAGEM exibida vai bem mais alto
+ * (`cap`) — o streak sobe e empolga sem estourar o dano.
+ */
 export function comboMul(count: number): number {
-  return 1 + Math.min(count, COMBO.cap) * COMBO.dmgPerStack;
+  return 1 + Math.min(count, COMBO.dmgCap) * COMBO.dmgPerStack;
 }
