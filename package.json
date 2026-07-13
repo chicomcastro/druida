@@ -27,7 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "@fontsource/cinzel": "^5.2.8",
-    "three": "^0.169.0"
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@size-limit/file": "^12.1.0",
