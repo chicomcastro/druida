@@ -56,7 +56,11 @@ function resolveCollisions(game) {
   let maxR = 0.5;
   for (const [id, tr, col] of world.query(C.Transform, C.Collider)) {
     if (!col.solid) continue;
-    ents.push({ id, tr, col, static: !world.has(id, C.Velocity) });
+    ents.push({
+      id, tr, col,
+      static: !world.has(id, C.Velocity),
+      player: world.has(id, C.PlayerControlled),
+    });
     if (col.radius > maxR) maxR = col.radius;
   }
 
@@ -95,9 +99,18 @@ function resolveCollisions(game) {
         nx = dx / d; nz = dz / d;
       }
       const overlap = (min - d) / 2;
+      // Estático (parede/casa/árvore) NUNCA se move → só o outro recua (2×), mesmo
+      // que o outro seja o herói (senão ele atravessaria a estrutura).
+      // Já entre DINÂMICOS, o herói é IMÓVEL para NPCs/inimigos (E67): antes um
+      // aldeão esbarrando empurrava o herói pela tela ("os npcs entram no player e
+      // o arrastam"). Contra o herói, só o NPC recua; herói↔herói empurram os dois.
       if (a.static) {
         b.tr.x += nx * overlap * 2; b.tr.z += nz * overlap * 2;
       } else if (b.static) {
+        a.tr.x -= nx * overlap * 2; a.tr.z -= nz * overlap * 2;
+      } else if (a.player && !b.player) {
+        b.tr.x += nx * overlap * 2; b.tr.z += nz * overlap * 2;
+      } else if (b.player && !a.player) {
         a.tr.x -= nx * overlap * 2; a.tr.z -= nz * overlap * 2;
       } else {
         a.tr.x -= nx * overlap; a.tr.z -= nz * overlap;

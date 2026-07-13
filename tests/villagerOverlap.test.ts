@@ -3,6 +3,16 @@ import { World } from '../src/core/ecs/World.js';
 import { C, Transform, Velocity, Collider } from '../src/core/ecs/components.js';
 import { movementSystem } from '../src/systems/movement.js';
 
+/** Ente sólido, opcionalmente marcado como jogador (E67). */
+function actor(world: any, x: number, z: number, dyn = true, player = false) {
+  const id = world.createEntity();
+  world.add(id, C.Transform, Transform(x, z));
+  if (dyn) world.add(id, C.Velocity, Velocity(0, 0, 1));
+  world.add(id, C.Collider, Collider(0.55, true));
+  if (player) world.add(id, C.PlayerControlled, { index: 0, downed: false });
+  return id;
+}
+
 /**
  * Desempate de coincidentes na colisão (E62): dois entes SÓLIDOS exatamente no
  * mesmo ponto eram PULADOS pelo resolvedor (sem direção de empurrão) e ficavam
@@ -48,5 +58,31 @@ describe('colisão separa coincidentes (E62)', () => {
       expect(Number.isFinite(tr.x)).toBe(true);
       expect(Number.isFinite(tr.z)).toBe(true);
     }
+  });
+});
+
+describe('herói imóvel para NPCs dinâmicos (E67)', () => {
+  it('um NPC esbarrando NÃO arrasta o jogador — só o NPC recua', () => {
+    const world = new World();
+    const game: any = { world };
+    const player = actor(world, 0, 0, true, true);
+    const npc = actor(world, 0.4, 0, true, false); // sobreposto ao herói
+    for (let i = 0; i < 30; i++) movementSystem(game, 1 / 60);
+    const pt = world.get(player, C.Transform), nt = world.get(npc, C.Transform);
+    // O herói não saiu da origem; o NPC foi empurrado para longe.
+    expect(Math.hypot(pt.x, pt.z)).toBeLessThan(0.01);
+    expect(Math.hypot(nt.x - pt.x, nt.z - pt.z)).toBeGreaterThan(1.0);
+  });
+
+  it('o jogador AINDA é bloqueado por estruturas estáticas (não atravessa parede)', () => {
+    const world = new World();
+    const game: any = { world };
+    const player = actor(world, 0.3, 0, true, true);
+    const wall = actor(world, 0, 0, false, false); // estático (sem Velocity)
+    for (let i = 0; i < 30; i++) movementSystem(game, 1 / 60);
+    const pt = world.get(player, C.Transform), wt = world.get(wall, C.Transform);
+    // A parede não se moveu; o herói foi empurrado para fora dela.
+    expect(Math.hypot(wt.x, wt.z)).toBeLessThan(0.01);
+    expect(Math.hypot(pt.x - wt.x, pt.z - wt.z)).toBeGreaterThan(1.0);
   });
 });

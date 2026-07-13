@@ -47,6 +47,21 @@ Playtest: ao passar atrás de uma casa, só a PAREDE atingida ficava translúcid
 - Travado por testes: grupo (parede+telhado somem juntos e restauram) e
   instância (a da frente encolhe, a de longe fica intacta).
 
+## Adendo (E67) — folhagem instanciada por VARREDURA (o raio errava troncos)
+Playtest: as árvores da floresta ainda não somiam. Causa: o `InstancedMesh` era
+descoberto pelo **raio fino** herói→câmera, que acerta a casa larga mas ERRA o
+tronco de 0.55u por onde o herói "passa no meio" — a linha só amostra um fio.
+- **Descoberta geométrica:** a folhagem instanciada deixou de depender do raio.
+  A cada `every` frames, `_scanInstances` varre as instâncias VISÍVEIS (escala >
+  0.05, ignorando slots escondidos do pool) dentro de ~12u XZ de algum jogador e
+  testa a esfera-limite de cada uma contra o corredor herói→câmera
+  (`_segDist2 < rad²`). Assim TODA árvore no caminho encolhe, por mais fina que
+  seja — imune à espessura da geometria.
+- Modelos normais (casas/torres/Carvalho-Mãe) seguem no raycast (largos, o raio
+  acerta) — só a folhagem instanciada mudou para varredura.
+- Travado por testes: tronco fino (0.5u) no corredor encolhe pela varredura; slot
+  escondido (escala 0) nunca é "crescido" por engano.
+
 ## Futuro
 Cull espacial dos candidatos (hoje o raycast varre os grupos de cenário) se a
 vila crescer muito; opção de fade por dithering (alpha-test) em vez de blend para

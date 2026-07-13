@@ -29,3 +29,21 @@ Carvalho-Mãe do centro. Faltava qualquer noção de desvio.
   dentro da Carvalho-Mãe e 0 pares sobrepostos** na Clareira. 336 testes verdes.
 - Follow-up possível: seguir explicitamente as células de rua (`streetCells`) para
   priorizar caminhar nos caminhos, além de só desviar de obstáculos.
+
+## Adendo (E67) — colisão parou de brigar com o steering + herói imóvel
+Playtest (mobile): "npcs mais bugados do que nunca" — empurra-empurra na saída
+das casas e nos pontos de reunião, e o herói era **arrastado** ao ser esbarrado.
+Duas causas e correções:
+- **Raio de colisão × raio de separação (empurra-empurra):** o E66 subiu o
+  colisor do aldeão para 0.85 (distância mínima 1.7u entre centros), MAIOR que o
+  raio de separação do steering (1.5u). Havia uma faixa (1.5–1.7u) onde a
+  **colisão empurrava forte** mas o steering nem tentava afastar → oscilação. Fix:
+  colisor 0.85 → **0.7** (min 1.4u) e raio de separação 1.5 → **2.0u** (busca de
+  vizinhos ±2.6u). Agora o steering mantém o espaçamento SUAVE bem antes do push
+  rígido — a colisão vira só uma rede de segurança rara.
+- **Herói imóvel para NPCs/inimigos dinâmicos:** em `resolveCollisions`, um
+  dinâmico esbarrando no jogador agora empurra **só a si mesmo** (o herói é uma
+  "parede" para eles). Herói↔estático (parede/casa/árvore) e herói↔herói seguem
+  como antes — o herói não atravessa estruturas e ainda separa de outro P2.
+- Travado por testes (`villagerOverlap.test.ts`): NPC esbarrando não move o herói;
+  o herói ainda é bloqueado por estático.
