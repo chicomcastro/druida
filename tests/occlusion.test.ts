@@ -81,6 +81,45 @@ describe('OcclusionFade (E56)', () => {
     expect(scaleOf(1)).toBeCloseTo(1, 3); // a de longe intacta
   });
 
+  it('folhagem FINA no corredor some via varredura geométrica (E67)', () => {
+    // Tronco estreito (0.5u): o raio fino ERRAVA troncos assim (o herói "passa
+    // entre" as árvores), mas a varredura geométrica pega qualquer instância cujo
+    // corpo (esfera-limite) cruze o corredor herói→câmera, por mais fina que seja.
+    const scene = new THREE.Scene();
+    const cam = makeCam();
+    const inst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 3, 0.5), new THREE.MeshStandardMaterial(), 2);
+    const m = new THREE.Matrix4();
+    m.makeTranslation(2, 2.5, 2); inst.setMatrixAt(0, m);    // fina, perto do herói, no corredor
+    m.makeTranslation(80, 3, -80); inst.setMatrixAt(1, m);   // longe
+    inst.instanceMatrix.needsUpdate = true;
+    inst.geometry.computeBoundingSphere();
+    scene.add(inst);
+    scene.updateMatrixWorld(true);
+
+    const scaleOf = (i: number) => { const mm = new THREE.Matrix4(); inst.getMatrixAt(i, mm); const s = new THREE.Vector3(); mm.decompose(new THREE.Vector3(), new THREE.Quaternion(), s); return s.x; };
+    const occ = new OcclusionFade(); occ.every = 1;
+    for (let i = 0; i < 40; i++) occ.update(scene, cam, [{ x: 0, y: 0, z: 0 }], new Set(), 1 / 60);
+    expect(scaleOf(0)).toBeLessThan(0.3); // encolheu (a varredura pegou)
+    expect(scaleOf(1)).toBeCloseTo(1, 3); // a de longe intacta
+  });
+
+  it('slot escondido (árvore não colocada) nunca é "crescido" pela varredura (E67)', () => {
+    // Instância em escala 0 / y=-1000 (o pool esconde slots livres): a varredura
+    // deve IGNORÁ-la, senão uma árvore-fantasma apareceria no corredor.
+    const scene = new THREE.Scene();
+    const cam = makeCam();
+    const inst = new THREE.InstancedMesh(new THREE.BoxGeometry(2, 4, 2), new THREE.MeshStandardMaterial(), 1);
+    const m = new THREE.Matrix4();
+    // escondido: posição na origem do corredor, mas escala 0
+    m.compose(new THREE.Vector3(3, -1000, 3), new THREE.Quaternion(), new THREE.Vector3(0, 0, 0));
+    inst.setMatrixAt(0, m); inst.instanceMatrix.needsUpdate = true;
+    inst.geometry.computeBoundingSphere();
+    scene.add(inst); scene.updateMatrixWorld(true);
+    const occ = new OcclusionFade(); occ.every = 1;
+    for (let i = 0; i < 10; i++) occ.update(scene, cam, [{ x: 0, y: 0, z: 0 }], new Set(), 1 / 60);
+    expect(occ.inst.size).toBe(0); // não rastreou o slot escondido
+  });
+
   it('não apaga entidades (jogador/inimigos) mesmo entre herói e câmera', () => {
     const scene = new THREE.Scene();
     const cam = makeCam();

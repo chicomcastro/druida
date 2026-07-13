@@ -41,36 +41,36 @@ export class OcclusionFade {
   update(scene: any, cam: any, players: { x: number; y: number; z: number }[], entityRoots: Set<any>, dt: number) {
     this._tick++;
     if (this._tick % this.every === 0 && players.length) {
-      // Candidatos: filhos de topo visíveis que não são luz nem entidade. Inclui
-      // grupos (o raycast recursivo varre suas malhas) e a folhagem instanciada.
-      const candidates = scene.children.filter(
-        (o: any) => o.visible && !(o instanceof THREE.Light) && !entityRoots.has(o),
-      );
-      const candSet = new Set<any>(candidates);
+      // Candidatos: filhos de topo visíveis que não são luz nem entidade. Separa
+      // MODELOS (grupos/malhas — raycast recursivo) da FOLHAGEM instanciada
+      // (varredura geométrica), pois o raio fino acha a casa larga mas ERRA o
+      // tronco fino da árvore por onde o herói passa "no meio" (E67).
+      const meshCands: any[] = [];
+      const instCands: any[] = [];
+      for (const o of scene.children) {
+        if (!o.visible || o instanceof THREE.Light || entityRoots.has(o)) continue;
+        if (o.isInstancedMesh) instCands.push(o); else meshCands.push(o);
+      }
+      const candSet = new Set<any>(meshCands);
       const hitUnits = new Set<any>();
       for (const p of players) {
         this._origin.set(p.x, (p.y ?? 0) + 1.0, p.z); // mira o tronco do herói
         this._dir.subVectors(cam.position, this._origin).normalize();
         this._ray.set(this._origin, this._dir);
         this._ray.far = cam.position.distanceTo(this._origin) - 0.5;
-        for (const h of this._ray.intersectObjects(candidates, true)) {
+        for (const h of this._ray.intersectObjects(meshCands, true)) {
           const o = h.object;
           if (!o?.isMesh || !o.material || this._underEntity(o, entityRoots)) continue;
-          if (o.isInstancedMesh) {
-            // Descoberta (instância em tamanho cheio): registra p/ acompanhar. Se
-            // decidíssemos ocultar SÓ pelo raio, a instância encolhida deixaria de
-            // ser atingida e voltaria a crescer → piscava. O manter/soltar é
-            // GEOMÉTRICO abaixo (pela posição-base), imune à escala atual.
-            if (h.instanceId != null) this._ensureInst(o, h.instanceId, o.uuid + '#' + h.instanceId);
-          } else {
-            const unit = this._modelRoot(o, candSet);
-            if (unit) hitUnits.add(unit);
-          }
+          const unit = this._modelRoot(o, candSet);
+          if (unit) hitUnits.add(unit);
         }
       }
       for (const u of hitUnits) this._ensureUnit(u).target = this.fadeOpacity;
       for (const [u, r] of this.faded) if (!hitUnits.has(u)) r.target = 1;
-      // Instâncias: alvo pela posição-base vs. o corredor herói→câmera.
+      // Folhagem instanciada: em vez do raio (que erra troncos finos), varre
+      // GEOMETRICAMENTE as instâncias perto do herói e testa cada uma contra o
+      // corredor herói→câmera. Assim TODA árvore no caminho some, mesmo estreita.
+      this._scanInstances(instCands, players, cam);
       for (const [, r] of this.inst) r.target = this._instOccluding(r, players, cam) ? 0 : 1;
     }
 
@@ -139,16 +139,38 @@ export class OcclusionFade {
     });
   }
 
-  /** Guarda a matriz-base + posição-mundo + raio da instância (p/ encolher/manter). */
-  _ensureInst(mesh: any, id: number, key: string) {
-    if (this.inst.has(key)) return;
-    const base = new THREE.Matrix4();
-    mesh.getMatrixAt(id, base);
-    base.decompose(this._p, this._q, this._s);
-    const pos = this._p.clone().applyMatrix4(mesh.matrixWorld); // mundo da instância
-    const geomR = mesh.geometry?.boundingSphere?.radius ?? 2;
-    const rad = geomR * Math.max(this._s.x, this._s.y, this._s.z || 1);
-    this.inst.set(key, { mesh, id, base, cur: 1, target: 0, pos, rad } as any);
+  /**
+   * Varre as instâncias visíveis perto dos jogadores e registra as que caem no
+   * corredor herói→câmera (E67). Substitui a descoberta por raio, que errava
+   * troncos finos. Barato: roda a cada `every` frames e só olha instâncias dentro
+   * de `cull` no plano XZ de algum jogador (a folhagem no caminho fica rente ao
+   * herói, pois a câmera está no alto).
+   */
+  _scanInstances(instCands: any[], players: { x: number; y: number; z: number }[], cam: any) {
+    const cull = 12, cull2 = cull * cull;
+    for (const mesh of instCands) {
+      if (mesh.geometry && !mesh.geometry.boundingSphere) mesh.geometry.computeBoundingSphere();
+      const geomR = mesh.geometry?.boundingSphere?.radius ?? 2;
+      const count = mesh.count ?? 0;
+      for (let id = 0; id < count; id++) {
+        const key = mesh.uuid + '#' + id;
+        if (this.inst.has(key)) continue; // já rastreada (usa base guardada)
+        mesh.getMatrixAt(id, this._m);
+        this._m.decompose(this._p, this._q, this._s);
+        const sMax = Math.max(this._s.x, this._s.y, this._s.z);
+        if (sMax < 0.05) continue; // slot escondido (árvore não colocada)
+        this._p.applyMatrix4(mesh.matrixWorld); // mundo da instância
+        let near = false;
+        for (const p of players) {
+          const dx = this._p.x - p.x, dz = this._p.z - p.z;
+          if (dx * dx + dz * dz < cull2) { near = true; break; }
+        }
+        if (!near) continue;
+        const rad = geomR * sMax;
+        const rec = { mesh, id, base: this._m.clone(), cur: 1, target: 0, pos: this._p.clone(), rad } as any;
+        if (this._instOccluding(rec, players, cam)) this.inst.set(key, rec);
+      }
+    }
   }
 
   /** A instância (pela posição-base) está no corredor herói→câmera? */

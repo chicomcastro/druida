@@ -330,9 +330,11 @@ export class SettlementManager {
       for (const o of this._villagers) {
         if (o === v) continue;
         const otr = game.world.get(o.id, C.Transform);
-        if (otr && Math.abs(otr.x - tr.x) < 2 && Math.abs(otr.z - tr.z) < 2) neighbors.push({ x: otr.x, z: otr.z });
+        if (otr && Math.abs(otr.x - tr.x) < 2.6 && Math.abs(otr.z - tr.z) < 2.6) neighbors.push({ x: otr.x, z: otr.z });
       }
-      const sep = separationForce(tr.x, tr.z, neighbors, 1.5);
+      // Raio de separação 2.0u > min de colisão (1.4u): o steering afasta os
+      // vizinhos ANTES do push rígido, para não haver empurra-empurra (E67).
+      const sep = separationForce(tr.x, tr.z, neighbors, 2.0);
       const avoid = avoidForce(tr.x - cx, tr.z - cz, v.fps ?? [], 2.0);
       const dir = steer(desire, sep, avoid);
       // Velocidade SUAVIZADA (E46): sem o filtro, quando o steering inverte na
@@ -791,11 +793,13 @@ export class SettlementManager {
     game.world.add(id, C.Transform, Transform(wx, wz, angleTo(wx, wz, s.x, s.z)));
     game.world.add(id, C.Velocity, Velocity(0, 0, 1.2));
     game.world.add(id, C.Renderable, { object3d: g, baseScale: v.role === 'child' ? 0.72 : 1 });
-    // Raio de colisão ~ largura do modelo (E65): era 0.55, mas o boneco MCD é
-    // bem mais largo (~1u), então a 1.1u de distância eles ficavam colados
-    // VISUALMENTE ("altamente colidindo") mesmo sem sobrepor os colisores. 0.85
-    // dá espaço pessoal de verdade — os modelos deixam de se interpenetrar.
-    game.world.add(id, C.Collider, Collider(0.85, true));
+    // Raio de colisão ~ largura do modelo (E67): 0.85 (min 1.7u entre centros)
+    // era MAIOR que o raio de separação do steering (1.5u), então havia uma faixa
+    // onde a COLISÃO empurrava forte mas o steering nem tentava afastar → empurra-
+    // empurra constante ("mais bugados que nunca"). 0.7 (min 1.4u) fica ABAIXO do
+    // raio de separação (agora 2.0u): o steering mantém o espaçamento suave e a
+    // colisão vira só uma rede de segurança rara. Boneco MCD tem ~1u → gap ~0.4u.
+    game.world.add(id, C.Collider, Collider(0.7, true));
     // Anciãos ficam no posto; os demais seguem uma rotina de dia/noite (E22).
     if (!v.elder) {
       const worker = (v.radius ?? 7) <= 3; // postos de trabalho (raio curto) = trabalhadores

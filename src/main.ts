@@ -36,11 +36,12 @@ game.menus.showMain(
 // Exposto para depuração no console.
 (window as any).DRUIDA = game;
 
-// Rastreador de XP LIGADO por padrão (E64, temporário): a cada ganho de XP
-// aparece um toast com a fonte (`🔎 +N XP · espécie`), para caçar o "sobe de
-// nível sem inimigo" no celular sem depender do console. Desligável tocando 3×
-// no "Nível" (ou `DRUIDA.debugXp = false`). Remover quando o caso fechar.
-(game as any).debugXp = true;
+// Rastreador de XP (E64→E67): ligável tocando 3× no "Nível" (ou
+// `DRUIDA.debugXp = true`) — mostra um toast com a fonte de cada ganho de XP
+// (`🔎 +N XP · espécie`). Ficou LIGADO por padrão enquanto caçávamos o "sobe de
+// nível sem inimigo" (era um inimigo em NaN,NaN, resolvido no E65). Confirmado o
+// fim do bug, volta a DESLIGADO por padrão — sem toast a cada kill.
+(game as any).debugXp = false;
 
 // Simulador sintético (E40): no console, `DRUIDA.sim.drive()` acopla o
 // jogador-robô ao P1 e o jogo passa a se jogar sozinho (coletando métricas);
